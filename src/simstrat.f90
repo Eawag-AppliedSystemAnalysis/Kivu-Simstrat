@@ -139,7 +139,7 @@ program simstrat_main
    call mod_v%assign_shear_stress(simdata%model%ty)
 
    ! Set mod_s (transport module) to have nuh as nu and to manipulate S based on dS
-   call mod_s%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nuh, simdata%model%S, simdata%grid%ubnd_vol)
+   call mod_s%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nus, simdata%model%S, simdata%grid%ubnd_vol)
    call mod_s%assign_external_source(simdata%model%dS)
 
    ! Set up K and eps state vars with keps discretization and avh as nu

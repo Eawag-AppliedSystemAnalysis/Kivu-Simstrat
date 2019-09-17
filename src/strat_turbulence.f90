@@ -72,7 +72,7 @@ contains
          state%P(2:ubnd_fce - 1) = state%P(2:ubnd_fce - 1)*state%num(2:ubnd_fce - 1)*grid%meanint(1:ubnd_vol - 1)**2
          ! Equation 5 (right) of Goudsmit, 2002
          state%B = 0
-         state%B(2:ubnd_fce - 1) = -state%nuh(2:ubnd_fce - 1)*state%NN(2:ubnd_fce - 1)
+         state%B(2:ubnd_fce - 1) = -state%nus(2:ubnd_fce - 1)*state%NN(2:ubnd_fce - 1)
 
          return
       end associate

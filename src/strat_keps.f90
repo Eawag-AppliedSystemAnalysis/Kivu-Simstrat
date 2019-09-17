@@ -231,6 +231,7 @@ contains
 
             state%num(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + 1.5e-6_RK
             state%nuh(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + 1.5e-7_RK
+            state%nus(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + 1.5e-9_RK
 
          end do
 

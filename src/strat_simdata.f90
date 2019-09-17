@@ -148,7 +148,7 @@ module strat_simdata
       real(RK), dimension(:), allocatable :: k, ko ! Turbulent kinetic energy (TKE) [J/kg]
       real(RK), dimension(:), allocatable :: avh
       real(RK), dimension(:), allocatable :: eps ! TKE dissipation rate [W/kg]
-      real(RK), dimension(:), allocatable :: num, nuh ! Turbulent viscosity (momentum) and diffusivity (temperature)
+      real(RK), dimension(:), allocatable :: num, nuh, nus ! Turbulent viscosity (momentum) and diffusivity (temperature, salinity)
       real(RK), dimension(:), allocatable :: P, B ! Shear stress production [W/kg], buoyancy production [W/kg]
       real(RK), dimension(:), allocatable :: NN ! Brunt-Väisälä frequency [s-2]
       real(RK), dimension(:), allocatable :: cmue1, cmue2 ! Model constants
@@ -251,6 +251,7 @@ contains
       allocate (self%eps(state_size + 1))
       allocate (self%num(state_size + 1))
       allocate (self%nuh(state_size + 1))
+      allocate (self%nus(state_size + 1))
       allocate (self%P(state_size + 1))
       allocate (self%B(state_size + 1))
       allocate (self%NN(state_size + 1))
@@ -289,6 +290,7 @@ contains
       self%eps = 0.0_RK
       self%num = 0.0_RK
       self%nuh = 0.0_RK
+      self%nus = 0.0_RK
       self%P = 0.0_RK
       self%B = 0.0_RK
       self%NN = 0.0_RK
