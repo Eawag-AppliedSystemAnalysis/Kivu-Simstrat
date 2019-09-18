@@ -16,6 +16,7 @@ module strat_stability
       class(StaggeredGrid), pointer :: grid
       class(ModelConfig), pointer :: model_cfg
       class(ModelParam), pointer :: model_param
+      logical couple_aed2
 
    contains
       procedure, pass :: init => stability_module_init
@@ -37,6 +38,8 @@ contains
       self%grid => grid
       self%model_cfg => model_cfg
       self%model_param => model_param
+
+      self%couple_aed2 = model_cfg%couple_aed2
    end subroutine
 
    ! Update state variables
@@ -47,7 +50,7 @@ contains
       real(RK), dimension(self%grid%ubnd_fce) :: beta
 
       ! Do buoyancy update (update NN)
-      call self%update_NN(state%T, state%S, state%rho, state%NN)
+      call self%update_NN(state)
 
       ! Update cmue depending on selected stabilty function
       if (self%model_cfg%stability_func == 1) then
@@ -66,31 +69,49 @@ contains
    end subroutine
 
    ! Compute NN from T and salinity
-   subroutine stability_module_update_NN(self, T, S, rho, NN)
+   subroutine stability_module_update_NN(self, state)
       implicit none
       class(StabilityModule) :: self
-
-      ! Global variables
-      real(RK), dimension(:), intent(in) :: T, S
-      real(RK), dimension(:), intent(inout) :: NN, rho
+      class(ModelState) :: state
 
       ! Local variables
-      real(RK) :: buoy(self%grid%length_fce)
-      real(RK) :: rho0t(self%grid%length_fce), rho0st(self%grid%length_fce)
+      real(RK) :: buoy(self%grid%length_vol)
+      real(RK) :: rho0t(self%grid%length_vol), rho0st(self%grid%length_vol), rho0_co2(self%grid%length_vol), rho0_ch4(self%grid%length_vol)
+      real(RK) :: ch4(self%grid%length_vol), co2(self%grid%length_vol), dic(self%grid%length_vol), pH(self%grid%length_vol)
+      real(RK) :: k1(self%grid%length_vol)
       integer :: i
 
-      associate (grd=>self%grid)
+      associate (grd=>self%grid, T=>state%T, S=>state%S, NN=>state%NN, rho=>state%rho)
 
-         do i = 1, grd%ubnd_fce - 1
+         ! Get gas concentrations from AED2
+         if (self%couple_aed2) then
+            do i = 1, state%n_AED2
+               select case(trim(state%AED2_names(i)))
+               case('CAR_ch4')
+                  ch4 = state%AED2_state(:,i)/1000
+               end select
+            end do
+            do i = 1, state%n_AED2_diag
+               select case(trim(state%AED2_diagnames(i)))
+               case('CAR_CO2')
+                  co2 = state%AED2_diagstate(:,i)/1000
+               end select
+            end do
+         end if
+
+         do i = 1, grd%ubnd_vol
+            ! According to Chen Millero, changed according "Double diffusion in Lake Kivu" from Schmid et al., 2010
             rho0t(i) = 0.9998395_RK + T(i)*(6.7914e-5_RK + T(i)*(-9.0894e-6_RK + T(i)* &
                                               (1.0171e-7_RK + T(i)*(-1.2846e-9_RK + T(i)*(1.1592e-11_RK + T(i)*(-5.0125e-14_RK))))))
-            rho0st(i) = (8.181e-4_RK + T(i)*(-3.85e-6_RK + T(i)*(4.96e-8_RK)))*S(i)
-            rho(i) = rho_0*(rho0t(i) + rho0st(i))
+            rho0st(i) = (7.5-4_RK + T(i)*(-3.85e-6_RK + T(i)*(4.96e-8_RK)))*S(i)
+            rho0_co2(i) = 0.0125*co2(i)
+            rho0_ch4(i) = -0.02*ch4(i)
+            rho(i) = rho_0*(rho0t(i) + rho0st(i) + rho0_co2(i) + rho0_ch4(i))
 
             buoy(i) = -g*(rho(i) - rho_0)/rho_0
          end do
 
-         NN(2:grd%ubnd_fce - 1) = grd%meanint(1:grd%ubnd_vol - 1)*(buoy(2:grd%ubnd_fce - 1) - buoy(1:grd%ubnd_fce - 2))
+         NN(2:grd%ubnd_fce - 1) = grd%meanint(1:grd%ubnd_vol - 1)*(buoy(2:grd%ubnd_vol) - buoy(1:grd%ubnd_vol - 1))
          NN(1) = NN(2)
          NN(grd%ubnd_fce) = NN(grd%ubnd_fce - 1)
 

@@ -46,7 +46,8 @@ module simstrat_aed2
       integer  :: w_adv_ctr    ! Scheme for vertical advection (0 if not used)
 
       character(len=48),pointer :: names(:)
-      character(len=48),allocatable :: bennames(:)
+      character(len=48),pointer :: bennames(:)
+      character(len=48),pointer :: diagnames(:)
 
       integer,allocatable,dimension(:) :: externalid
 
@@ -149,8 +150,10 @@ contains
 
          ! Allocate memory for AED2 state and inflow matrix used by Simstrat
          state%AED2_state => self%cc
+         state%AED2_diagstate => self%cc_diag
          allocate(state%AED2_inflow(self%grid%nz_grid, n_vars)) ! Add benthic variables or not?
          state%n_AED2 = n_vars ! + n_vars_ben, Add benthic variables or not?
+         state%n_AED2_diag = n_vars_diag
 
          ! Define column pointer (which is the object that is handed over to AED2 at every timestep)
          ! It containes external (Simstrat) variables like T and S, but also the variables of this (SimstratAED2) module
@@ -159,8 +162,11 @@ contains
 
          ! Assign name, min and max values of variables, print names to screen
          call assign_var_names(self)
-         allocate(state%AED2_names(n_vars + n_vars_ben))
+         allocate(state%AED2_names(n_vars))
          state%AED2_names => self%names
+
+         allocate(state%AED2_diagnames(n_vars_diag))
+         state%AED2_diagnames => self%diagnames
 
          ! Now set initial values of AED2 variables
          v = 0 ; sv = 0;

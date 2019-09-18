@@ -141,8 +141,10 @@ module strat_simdata
       real(RK), dimension(:, :), allocatable :: Q_inp ! Horizontal inflow [m^3/s]
       real(RK), dimension(:), pointer :: rho ! Water density [kg/m^3]
       real(RK), dimension(:,:), pointer :: AED2_state ! State matrix of AED2 variables
+      real(RK), dimension(:,:), pointer :: AED2_diagstate ! State matrix of AED2 variables
       real(RK), dimension(:,:), pointer :: AED2_inflow ! Inflow matrix of AED2 variables
       character(len=48), dimension(:), pointer :: AED2_names ! Names of AED2 state variables used in the simulation
+      character(len=48), dimension(:), pointer :: AED2_diagnames ! Names of AED2 state variables used in the simulation
    
       ! Variables located on z_upp grid
       real(RK), dimension(:), allocatable :: k, ko ! Turbulent kinetic energy (TKE) [J/kg]
@@ -198,7 +200,7 @@ module strat_simdata
       logical, dimension(1:4) :: has_surface_input, has_deep_input
       logical :: has_surface_input_AED2, has_deep_input_AED2
       integer :: nz_input
-      integer :: n_AED2
+      integer :: n_AED2, n_AED2_diag
 
 
    contains
