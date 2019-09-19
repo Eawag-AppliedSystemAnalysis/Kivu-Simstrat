@@ -103,10 +103,13 @@ contains
             ! According to Chen Millero, changed according "Double diffusion in Lake Kivu" from Schmid et al., 2010
             rho0t(i) = 0.9998395_RK + T(i)*(6.7914e-5_RK + T(i)*(-9.0894e-6_RK + T(i)* &
                                               (1.0171e-7_RK + T(i)*(-1.2846e-9_RK + T(i)*(1.1592e-11_RK + T(i)*(-5.0125e-14_RK))))))
-            rho0st(i) = (7.5-4_RK + T(i)*(-3.85e-6_RK + T(i)*(4.96e-8_RK)))*S(i)
-            rho0_co2(i) = 0.0125*co2(i)
-            rho0_ch4(i) = -0.02*ch4(i)
-            rho(i) = rho_0*(rho0t(i) + rho0st(i) + rho0_co2(i) + rho0_ch4(i))
+            rho0st(i) = (7.5e-4_RK + T(i)*(-3.85e-6_RK + T(i)*(4.96e-8_RK)))*S(i)
+
+            if (self%couple_aed2) then
+               rho0_co2(i) = 0.0125*co2(i)
+               rho0_ch4(i) = -0.02*ch4(i)
+               rho0t(i) = rho0t(i) + rho0_co2(i) + rho0_ch4(i)
+            end if
 
             buoy(i) = -g*(rho(i) - rho_0)/rho_0
          end do
