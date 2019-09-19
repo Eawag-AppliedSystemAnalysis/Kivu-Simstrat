@@ -249,7 +249,7 @@ contains
             !Variable on volume grid
             call self%output_files(i)%open(output_config%PathOut//'/'//trim(self%output_config%output_vars(i)%name)//'_out.dat', n_cols=self%n_depths+1, status_ok=status_ok)
             call self%output_files(i)%add('')
-            call self%output_files(i)%add(self%output_config%zout, real_fmt='(F12.3)')
+            call self%output_files(i)%add(self%output_config%zout, real_fmt='(F12.4)')
          else if (self%output_config%output_vars(i)%face_grid) then
             ! Variable on face grid
             call self%output_files(i)%open(output_config%PathOut//'/'//trim(self%output_config%output_vars(i)%name)//'_out.dat', n_cols=self%n_depths+1, status_ok=status_ok)
