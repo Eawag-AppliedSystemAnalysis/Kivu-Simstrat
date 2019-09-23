@@ -144,7 +144,7 @@ contains
 
          ! Define variables that should be written
          if (output_cfg%output_all) then
-            output_cfg%number_output_vars = 24
+            output_cfg%number_output_vars = 25
             output_cfg%output_var_names = [character(len=12) :: 'V','U','T','S','num','nuh','nus','NN','k','eps','P','B','Ps','HA','HW','HK','HV','Rad0','TotalIceH','BlackIceH','WhiteIceH','SnowH','WaterH','Qvert']
          else
             output_cfg%number_output_vars = size(output_cfg%output_var_names)
@@ -320,6 +320,13 @@ contains
                   self%simdata%output_cfg%output_vars(i)%values => self%simdata%model%Q_vert
                   self%simdata%output_cfg%output_vars(i)%volume_grid = .false.
                   self%simdata%output_cfg%output_vars(i)%face_grid = .true.
+
+               case('rho')
+                  ! Vertical advection [m3 s-1]
+                  self%simdata%output_cfg%output_vars(i)%name = "rho"
+                  self%simdata%output_cfg%output_vars(i)%values => self%simdata%model%rho
+                  self%simdata%output_cfg%output_vars(i)%volume_grid = .true.
+                  self%simdata%output_cfg%output_vars(i)%face_grid = .false.
 
                case default
                   call warn('Output variable specified in config file not found: ' // trim(output_cfg%output_var_names(i)))
