@@ -88,13 +88,13 @@ contains
             do i = 1, state%n_AED2
                select case(trim(state%AED2_names(i)))
                case('CAR_ch4')
-                  ch4 = state%AED2_state(:,i)/1000
+                  ch4 = state%AED2_state(:,i)/1e6 ! mol/L
                end select
             end do
             do i = 1, state%n_AED2_diag
                select case(trim(state%AED2_diagnames(i)))
                case('CAR_CO2')
-                  co2 = state%AED2_diagstate(:,i)/1000
+                  co2 = state%AED2_diagstate(:,i)/1e6 ! mol/L
                end select
             end do
          end if
@@ -106,10 +106,11 @@ contains
             rho0st(i) = (7.5e-4_RK + T(i)*(-3.85e-6_RK + T(i)*(4.96e-8_RK)))*S(i)
 
             if (self%couple_aed2) then
-               rho0_co2(i) = 0.0125*co2(i)
-               rho0_ch4(i) = -0.02*ch4(i)
+               rho0_co2(i) = 0.0125*co2(i)   ! Schmid et al., 2010
+               rho0_ch4(i) = -0.02*ch4(i)    ! Schmid et al., 2010
                rho0t(i) = rho0t(i) + rho0_co2(i) + rho0_ch4(i)
             end if
+            rho(i) = rho_0*(rho0t(i) + rho0st(i))
 
             buoy(i) = -g*(rho(i) - rho_0)/rho_0
          end do

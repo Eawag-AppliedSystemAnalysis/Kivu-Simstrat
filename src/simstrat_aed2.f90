@@ -475,7 +475,7 @@ contains
       boundaries = 0.
       sources = 0.
 
-      call euleri_create_LES_MFQ_AED2(self, state%AED2_state(:,var_index), state%num, sources, boundaries, lower_diag, main_diag, upper_diag, rhs, state%dt)
+      call euleri_create_LES_MFQ_AED2(self, state%AED2_state(:,var_index), state%nus, sources, boundaries, lower_diag, main_diag, upper_diag, rhs, state%dt)
       call solve_tridiag_thomas(lower_diag, main_diag, upper_diag, rhs, state%AED2_state(:,var_index), self%grid%ubnd_vol)
 
    end subroutine
