@@ -249,7 +249,7 @@ contains
             !Variable on volume grid
             call self%output_files(i)%open(output_config%PathOut//'/'//trim(self%output_config%output_vars(i)%name)//'_out.dat', n_cols=self%n_depths+1, status_ok=status_ok)
             call self%output_files(i)%add('')
-            call self%output_files(i)%add(self%output_config%zout, real_fmt='(F12.4)')
+            call self%output_files(i)%add(self%output_config%zout, real_fmt='(F12.3)')
          else if (self%output_config%output_vars(i)%face_grid) then
             ! Variable on face grid
             call self%output_files(i)%open(output_config%PathOut//'/'//trim(self%output_config%output_vars(i)%name)//'_out.dat', n_cols=self%n_depths+1, status_ok=status_ok)
@@ -312,15 +312,15 @@ contains
             ! Interpolate state on volume grid
             call self%grid%interpolate_from_vol(self%output_config%output_vars(i)%values, self%output_config%zout, values_on_zout, self%n_depths, self%output_config%output_depth_reference)
             ! Write state
-            call self%output_files(i)%add(values_on_zout, real_fmt='(ES14.4)')
+            call self%output_files(i)%add(values_on_zout, real_fmt='(ES14.5)')
          else if (self%output_config%output_vars(i)%face_grid) then
             ! Interpolate state on face grid
             call self%grid%interpolate_from_face(self%output_config%output_vars(i)%values, self%output_config%zout, values_on_zout, self%n_depths, self%output_config%output_depth_reference)
             ! Write state
-            call self%output_files(i)%add(values_on_zout, real_fmt='(ES14.4)')
+            call self%output_files(i)%add(values_on_zout, real_fmt='(ES14.5)')
          else
             ! If only value at surface
-            call self%output_files(i)%add(self%output_config%output_vars(i)%values_surf, real_fmt='(ES14.4)')
+            call self%output_files(i)%add(self%output_config%output_vars(i)%values_surf, real_fmt='(ES14.5)')
          end if
          ! Advance to next row
          call self%output_files(i)%next_row()
@@ -329,11 +329,11 @@ contains
       if (self%model_config%couple_aed2) then
         do i = 1, self%n_vars_AED2
           ! Write datum
-          call self%output_files(i + self%n_vars)%add(datum, real_fmt='(F12.4)')
+          call self%output_files(i + self%n_vars)%add(datum, real_fmt='(F12.5)')
           ! Interpolate state on volume grid
           call self%grid%interpolate_from_vol(self%output_config%output_vars_aed2%values(:,i), self%output_config%zout, values_on_zout, self%n_depths, self%output_config%output_depth_reference)
           ! Write state
-          call self%output_files(i + self%n_vars)%add(values_on_zout, real_fmt='(ES14.4)')
+          call self%output_files(i + self%n_vars)%add(values_on_zout, real_fmt='(ES14.5)')
           ! Advance to next row
           call self%output_files(i + self%n_vars)%next_row()
         end do
