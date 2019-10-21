@@ -8,6 +8,7 @@ module strat_stability
    use strat_consts
    use strat_grid
    use strat_simdata
+   use utilities
    implicit none
    private
 
@@ -76,12 +77,9 @@ contains
 
       ! Local variables
       real(RK) :: buoy(self%grid%length_vol)
-      real(RK) :: rho0t(self%grid%length_vol), rho0st(self%grid%length_vol), rho0_co2(self%grid%length_vol), rho0_ch4(self%grid%length_vol)
-      real(RK) :: ch4(self%grid%length_vol), co2(self%grid%length_vol), dic(self%grid%length_vol), pH(self%grid%length_vol)
-      real(RK) :: k1(self%grid%length_vol)
       integer :: i
 
-      associate (grd=>self%grid, T=>state%T, S=>state%S, NN=>state%NN, rho=>state%rho)
+      associate (grd=>self%grid, T=>state%T, S=>state%S, co2=>state%co2, ch4=> state%ch4, NN=>state%NN, rho=>state%rho)
 
          ! Get gas concentrations from AED2
          if (self%couple_aed2) then
@@ -100,18 +98,11 @@ contains
          end if
 
          do i = 1, grd%ubnd_vol
-            ! According to Chen Millero, changed according "Double diffusion in Lake Kivu" from Schmid et al., 2010
-            rho0t(i) = 0.9998395_RK + T(i)*(6.7914e-5_RK + T(i)*(-9.0894e-6_RK + T(i)* &
-                                              (1.0171e-7_RK + T(i)*(-1.2846e-9_RK + T(i)*(1.1592e-11_RK + T(i)*(-5.0125e-14_RK))))))
-            rho0st(i) = (7.5e-4_RK + T(i)*(-3.85e-6_RK + T(i)*(4.96e-8_RK)))*S(i)
-
             if (self%couple_aed2) then
-               rho0_co2(i) = 0.0125*co2(i)   ! Schmid et al., 2010
-               rho0_ch4(i) = -0.02*ch4(i)    ! Schmid et al., 2010
-               rho0t(i) = rho0t(i) + rho0_co2(i) + rho0_ch4(i)
+               call calc_density_aed2(rho(i),T(i),S(i),co2(i),ch4(i))
+            else
+               call calc_density(rho(i),T(i),S(i))
             end if
-            rho(i) = rho_0*(rho0t(i) + rho0st(i))
-
             buoy(i) = -g*(rho(i) - rho_0)/rho_0
          end do
 

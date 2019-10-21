@@ -115,7 +115,6 @@ module strat_simdata
       real(RK) :: C10_constant
       real(RK) :: CD
       real(RK) :: fgeo
-      real(RK) :: k_min
       real(RK) :: p_sw
       real(RK) :: p_lw
       real(RK) :: p_windf
@@ -135,16 +134,16 @@ module strat_simdata
 
       ! Variables located on z_cent grid
       ! Note that for these variables the value at 0 z.b. U(0) is not used
-      real(RK), dimension(:), allocatable :: U, V ! Water velocities [m/s]
+      real(RK), dimension(:), allocatable :: U, V, co2, ch4 ! Water velocities [m/s]
       real(RK), dimension(:), pointer :: T, S ! Temperature [°C], Salinity [‰]
       real(RK), dimension(:), allocatable :: dS ! Source/sink for salinity
       real(RK), dimension(:, :), allocatable :: Q_inp ! Horizontal inflow [m^3/s]
       real(RK), dimension(:), pointer :: rho ! Water density [kg/m^3]
       real(RK), dimension(:,:), pointer :: AED2_state ! State matrix of AED2 variables
       real(RK), dimension(:,:), pointer :: AED2_diagstate ! State matrix of AED2 variables
-      real(RK), dimension(:,:), pointer :: AED2_inflow ! Inflow matrix of AED2 variables
       character(len=48), dimension(:), pointer :: AED2_names ! Names of AED2 state variables used in the simulation
       character(len=48), dimension(:), pointer :: AED2_diagnames ! Names of AED2 state variables used in the simulation
+      integer :: n_pH
    
       ! Variables located on z_upp grid
       real(RK), dimension(:), allocatable :: k, ko ! Turbulent kinetic energy (TKE) [J/kg]
@@ -172,7 +171,6 @@ module strat_simdata
       real(RK) :: T_atm ! Air temp at surface
       real(RK), dimension(:), allocatable :: rad, rad_vol ! Solar radiation (in water)
       real(RK), dimension(:), allocatable :: Q_vert ! Vertical exchange between boxes
-      real(RK), dimension(:,:), allocatable :: Q_plunging ! Result of lateral_rho, used in lateral_rho_AED2
       real(RK), dimension(9,12) :: albedo_data  ! Experimental monthly albedo data for determination of current water albedo
       real(RK) :: albedo_water   ! Current water albedo
       integer :: lat_number ! Latitude band (used for determination of albedo)
@@ -196,10 +194,6 @@ module strat_simdata
       real(RK) :: cde, cm0
       real(RK) ::  fsed
       real(RK), dimension(:), allocatable     :: fgeo_add
-      logical :: has_advection
-      logical, dimension(1:4) :: has_surface_input, has_deep_input
-      logical :: has_surface_input_AED2, has_deep_input_AED2
-      integer :: nz_input
       integer :: n_AED2, n_AED2_diag
 
 
@@ -240,10 +234,11 @@ contains
       !            https://en.wikipedia.org/wiki/Off-by-one_error#Fencepost_error ;-)
       allocate (self%U(state_size))
       allocate (self%V(state_size))
+      allocate (self%co2(state_size))
+      allocate (self%ch4(state_size))
       allocate (self%T(state_size))
       allocate (self%S(state_size))
       allocate (self%dS(state_size))
-      allocate (self%Q_inp(1:4, state_size + 1))
       allocate (self%rho(state_size))
       allocate (self%avh(state_size))
 
@@ -284,8 +279,9 @@ contains
       self%T = 0.0_RK
       self%S = 0.0_RK
       self%dS = 0.0_RK
-      self%Q_inp = 0.0_RK
       self%rho = 0.0_RK
+      self%co2 = 0.0_RK
+      self%ch4 = 0.0_RK
 
       self%k = 0.0_RK
       self%ko = 0.0_RK
@@ -320,6 +316,7 @@ contains
       self%hk = 0.0_RK 
       self%hv = 0.0_RK 
       self%rad0 = 0.0_RK
+      self%n_pH = 0
 
       ! init pointers
       allocate(self%uv10)

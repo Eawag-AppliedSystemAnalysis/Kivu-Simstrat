@@ -5,6 +5,7 @@
 
 module utilities
    use strat_kinds
+   use strat_consts
    implicit none
 
    type, public :: string
@@ -398,6 +399,70 @@ contains
          current_day = current_day_new
       end if
 
+   end subroutine
+
+   ! Calculate density as a function of T and S
+   subroutine calc_density(rho, T, S)
+      implicit none
+
+      ! Arguments
+      real(RK), intent(in) :: T, S
+      real(RK), intent(out) :: rho
+
+      ! Local variables
+      real(RK) :: rho0t, rho0st
+
+      ! According to Chen Millero, changed according "Double diffusion in Lake Kivu" from Schmid et al., 2010
+      rho0t = 0.9998395_RK + T*(6.7914e-5_RK + T*(-9.0894e-6_RK + T*(1.0171e-7_RK + T*(-1.2846e-9_RK + T*(1.1592e-11_RK + T*(-5.0125e-14_RK))))))
+      rho0st = (7.5e-4_RK + T*(-3.85e-6_RK + T*(4.96e-8_RK)))*S
+
+      rho = rho_0*(rho0t + rho0st)
+   end subroutine
+
+      ! Transform CO2 to DIC (analogous to AED2 carbon module)
+   subroutine calc_co2_from_dic(CO2, T, S, DIC, pH)
+      implicit none
+
+      ! Arguments
+      real(RK), intent(in) :: T, S, DIC, pH
+      real(RK), intent(out) :: CO2
+
+      ! Local variables
+      real(RK) :: T_K, pK1, pK2, K1, K2, H
+
+      T_K = T + 273.15
+
+      ! Calculation taken from AED2 carbon module
+      pK1 = 3670.7/T_K - 62.008+9.7944*log(T_K) - 0.0118*S + 0.000116*(S**2)
+      K1  = 10.**(-pK1)  ! this is on the SWS pH scale in mol/kg-SW
+      pK2 = 1394.7/T_K + 4.777 - 0.0184*S + 0.000118*(S**2)
+      K2  = 10.**(-pK2)
+
+      H = 10.**(-pH)
+      CO2 = DIC*H*H/(H*H + K1*H + K1*K2)
+      CO2 = CO2/1e6 ! Transform to mol/L
+
+   end subroutine
+
+   ! Compute density as a function of T, S, CO2 and CH4
+   subroutine calc_density_aed2(rho, T, S, co2, ch4)
+      implicit none
+
+      ! Arguments
+      real(RK), intent(in) :: T, S, co2, ch4
+      real(RK), intent(out) :: rho
+
+      ! Local variables
+      real(RK) :: rho0t, rho0st, rho0_co2, rho0_ch4
+
+      ! According to Chen Millero, changed according "Double diffusion in Lake Kivu" from Schmid et al., 2010
+      rho0t = 0.9998395_RK + T*(6.7914e-5_RK + T*(-9.0894e-6_RK + T*(1.0171e-7_RK + T*(-1.2846e-9_RK + T*(1.1592e-11_RK + T*(-5.0125e-14_RK))))))
+      rho0st = (7.5e-4_RK + T*(-3.85e-6_RK + T*(4.96e-8_RK)))*S
+
+      rho0_co2 = 0.0125*co2   ! Schmid et al., 2010
+      rho0_ch4 = -0.02*ch4    ! Schmid et al., 2010
+
+      rho = rho_0*(rho0t + rho0st + rho0_co2 + rho0_ch4)
    end subroutine
 
 end module utilities
