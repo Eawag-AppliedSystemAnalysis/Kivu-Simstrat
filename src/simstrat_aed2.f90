@@ -446,7 +446,7 @@ contains
       sources = 0.
 
       if (var_index == state%n_pH) state%AED2_state(:,state%n_pH) = 10.**(-state%AED2_state(:,state%n_pH))
-      call euleri_create_LES_MFQ_AED2(self, state%AED2_state(:,var_index), state%nus, sources, boundaries, lower_diag, main_diag, upper_diag, rhs, state%dt)
+      call euleri_create_LES_MFQ_AED2(self, state%AED2_state(:,var_index), state%nug, sources, boundaries, lower_diag, main_diag, upper_diag, rhs, state%dt)
       call solve_tridiag_thomas(lower_diag, main_diag, upper_diag, rhs, state%AED2_state(:,var_index), self%grid%ubnd_vol)
       if (var_index == state%n_pH) state%AED2_state(:,state%n_pH) = -log10(state%AED2_state(:,state%n_pH))
 

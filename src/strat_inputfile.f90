@@ -366,6 +366,7 @@ contains
          model%num(1:grid%nz_grid + 1) = 0.0_RK
          model%nuh(1:grid%nz_grid + 1) = 0.0_RK
          model%nus(1:grid%nz_grid + 1) = 0.0_RK
+         model%nug(1:grid%nz_grid + 1) = 0.0_RK
 
          model%tx = 0.0_RK
          model%ty = 0.0_RK
