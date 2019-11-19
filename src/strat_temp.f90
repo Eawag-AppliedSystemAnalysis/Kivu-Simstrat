@@ -37,9 +37,9 @@ contains
          state%rad(self%grid%ubnd_fce) = state%rad0/rho_0/cp ![°C*m/s]  , rad is on faces
 
          ! Heat flux
-         do i=2, ubnd_fce
-            state%heat_flux(i) = cp/alpha*state%nuh(i)*(state%T(i + 1) - state%T(i))/(grid%h(i + 1) - grid%h(i - 1))
-         end
+         do i=2, ubnd_vol-1
+            state%heat_flux(i) = -cp/alpha*state%nuh(i)*(state%T(i + 1) - state%T(i))/(grid%h(i + 1) + grid%h(i - 1))*2
+         end do
 
          ! Radiation reaching a layer is equal to radiation in the layer above minus absorption
          do i = ubnd_fce - 1, 1, -1

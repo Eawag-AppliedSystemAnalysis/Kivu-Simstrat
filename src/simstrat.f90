@@ -54,6 +54,7 @@ program simstrat_main
 
    character(len=100) :: arg
    character(len=:), allocatable :: ParName
+   integer :: i
 
    ! Print some information
    write (6, *) 'Simstrat version '//version

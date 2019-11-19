@@ -229,10 +229,18 @@ contains
                write(6, *) 'Dissipation negative'
             end if
 
-            state%num(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + 1.5e-6_RK
-            state%nuh(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + 1.44e-7_RK
-            state%nus(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + 1.2e-9_RK
-            state%nug(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + 1.9e-9_RK
+            if (state%NN(i) > 1e-4_RK .or. state%R_rho(i) < 1 .or. state%R_rho(i) > 10) then
+               state%num(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + 1.5e-6_RK
+               state%nuh(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + 1.4e-7_RK
+               state%nus(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + 1.2e-9_RK
+               state%nug(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + 1.9e-9_RK
+            else
+               state%num(i) = 1.5e-6_RK
+               state%nuh(i) = 1e-6_RK
+               state%nus(i) = state%nuh(i)/30
+               state%nug(i) = state%nus(i)
+            end if
+
 
          end do
 

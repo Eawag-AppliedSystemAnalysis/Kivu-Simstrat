@@ -110,6 +110,16 @@ contains
          NN(1) = NN(2)
          NN(grd%ubnd_fce) = NN(grd%ubnd_fce - 1)
 
+         ! Compute density ratio
+         do i = 3,grd%ubnd_vol - 2
+            state%R_rho(i) = (7.5e-4*(state%S(i - 2) - state%S(i + 2)) + 0.0125*(co2(i - 2) - co2(i + 2)) - 0.02*(ch4(i - 2) - ch4(i + 2))) &
+            /(2.5e-4*(state%T(i - 2) - state%T(i + 2)))
+         end do
+         state%R_rho(1) = state%R_rho(3)
+         state%R_rho(2) = state%R_rho(3)
+         state%R_rho(grd%ubnd_vol) = state%R_rho(grd%ubnd_vol - 2)
+         state%R_rho(grd%ubnd_vol - 1) = state%R_rho(grd%ubnd_vol - 2)
+
       end associate
    end subroutine
 
