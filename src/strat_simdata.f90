@@ -74,6 +74,7 @@ module strat_simdata
       integer :: max_length_input_data
       logical :: couple_aed2
       integer :: turbulence_model
+      logical :: apparent_diffusivity
       logical :: split_a_seiche
       integer :: stability_func
       integer :: flux_condition
