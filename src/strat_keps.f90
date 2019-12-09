@@ -215,6 +215,7 @@ contains
             self%var(ubnd_fce)=   self%var(ubnd_fce-1)+(state%cde*((state%ko(ubnd_fce-1))**1.5_RK)/(kappa*(z0 +grid%h(ubnd_vol)))**2)*grid%h(ubnd_vol)
          end if
 
+         state%keps_counter = state%keps_counter + 1
          ! check lower limit of eps / update num
          do i = 1, ubnd_fce
             if (state%NN(i) > 0) then
@@ -229,6 +230,7 @@ contains
                write(6, *) 'Dissipation negative'
             end if
 
+
             if (self%cfg%apparent_diffusivity) then
                if (state%NN(i) > 1e-4_RK .or. state%R_rho(i) < 1 .or. state%R_rho(i) > 10) then
                   state%num(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + 1.5e-6_RK
@@ -242,10 +244,17 @@ contains
                   state%nug(i) = state%nus(i)
                end if
             else
-               state%num(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + 1.5e-6_RK
-               state%nuh(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + 1.4e-7_RK
-               state%nus(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + 1.2e-9_RK
-               state%nug(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + 1.9e-9_RK
+               !if (mod(state%keps_counter,3)==0) then
+                  state%num(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + 1.5e-6_RK
+                  state%nuh(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + 1.4e-7_RK
+                  state%nus(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + 1.2e-9_RK
+                  state%nug(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + 1.9e-9_RK
+               !else
+               !   state%num(i) = 1.5e-6_RK
+               !   state%nuh(i) = 1.4e-7_RK
+               !   state%nus(i) = 1.2e-9_RK
+               !   state%nug(i) = 1.9e-9_RK     
+               !end if             
             end if
 
 

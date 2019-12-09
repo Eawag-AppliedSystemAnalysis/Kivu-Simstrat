@@ -146,6 +146,7 @@ module strat_simdata
       character(len=48), dimension(:), pointer :: AED2_names ! Names of AED2 state variables used in the simulation
       character(len=48), dimension(:), pointer :: AED2_diagnames ! Names of AED2 state variables used in the simulation
       integer :: n_pH
+      integer :: keps_counter
    
       ! Variables located on z_upp grid
       real(RK), dimension(:), allocatable :: k, ko ! Turbulent kinetic energy (TKE) [J/kg]
@@ -325,6 +326,7 @@ contains
       self%hv = 0.0_RK 
       self%rad0 = 0.0_RK
       self%n_pH = 0
+      self%keps_counter = 0
 
       ! init pointers
       allocate(self%uv10)
