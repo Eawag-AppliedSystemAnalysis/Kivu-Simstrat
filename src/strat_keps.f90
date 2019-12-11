@@ -203,7 +203,7 @@ contains
    subroutine eps_var_post_solve(self, state)
       class(EpsModelVar), intent(inout) :: self
       class(ModelState), intent(inout) :: state
-      integer :: i
+      integer :: i,j
       real(RK) ::epslim
       associate (grid=>self%grid, &
                  ubnd_fce=>self%grid%ubnd_fce, &
@@ -257,6 +257,10 @@ contains
                !end if             
             end if
 
+            ! Heat flux
+            do j=2, ubnd_vol-1
+               state%heat_flux(j) = -cp/alpha*state%nuh(j)*(state%T(j) - state%T(j - 1))/(grid%h(j) + grid%h(j - 1))*2
+            end do
 
          end do
 
