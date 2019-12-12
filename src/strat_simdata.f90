@@ -140,7 +140,7 @@ module strat_simdata
       real(RK), dimension(:), allocatable :: dS ! Source/sink for salinity
       real(RK), dimension(:, :), allocatable :: Q_inp ! Horizontal inflow [m^3/s]
       real(RK), dimension(:), pointer :: rho ! Water density [kg/m^3]
-      real(RK), dimension(:), allocatable :: heat_flux ! Heat flux [W m-2]
+      real(RK), dimension(:), allocatable :: heat_flux, salt_flux ! Heat flux [W m-2], salt_flux 
       real(RK), dimension(:,:), pointer :: AED2_state ! State matrix of AED2 variables
       real(RK), dimension(:,:), pointer :: AED2_diagstate ! State matrix of AED2 variables
       character(len=48), dimension(:), pointer :: AED2_names ! Names of AED2 state variables used in the simulation
@@ -246,6 +246,7 @@ contains
       allocate (self%rho(state_size))
       allocate (self%avh(state_size))
       allocate (self%heat_flux(state_size))
+      allocate (self%salt_flux(state_size))
 
       ! Values on z_upp grid
       allocate (self%k(state_size + 1))
@@ -290,6 +291,7 @@ contains
       self%co2 = 0.0_RK
       self%ch4 = 0.0_RK
       self%heat_flux = 0.0_RK
+      self%salt_flux = 0.0_RK
 
       self%k = 0.0_RK
       self%ko = 0.0_RK

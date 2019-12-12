@@ -140,7 +140,7 @@ contains
 
          ! Define variables that should be written
          if (output_cfg%output_all) then
-            output_cfg%number_output_vars = 27
+            output_cfg%number_output_vars = 28
             output_cfg%output_var_names = [character(len=12) :: 'V','U','T','S','num','nuh','nus','NN','k','eps','P','B','Ps','HA','HW','HK','HV','Rad0','TotalIceH','BlackIceH','WhiteIceH','SnowH','WaterH','Qvert','rho','HeatFlux', 'Density ratio']
          else
             output_cfg%number_output_vars = size(output_cfg%output_var_names)
@@ -342,6 +342,13 @@ contains
                   ! Vertical heat flux [W m-2]
                   self%simdata%output_cfg%output_vars(i)%name = "HeatFlux"
                   self%simdata%output_cfg%output_vars(i)%values => self%simdata%model%heat_flux
+                  self%simdata%output_cfg%output_vars(i)%volume_grid = .true.
+                  self%simdata%output_cfg%output_vars(i)%face_grid = .false.
+
+               case('SaltFlux')
+                  ! Vertical heat flux [W m-2]
+                  self%simdata%output_cfg%output_vars(i)%name = "SaltFlux"
+                  self%simdata%output_cfg%output_vars(i)%values => self%simdata%model%salt_flux
                   self%simdata%output_cfg%output_vars(i)%volume_grid = .true.
                   self%simdata%output_cfg%output_vars(i)%face_grid = .false.
 

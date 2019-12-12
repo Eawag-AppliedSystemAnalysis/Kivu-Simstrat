@@ -312,12 +312,12 @@ contains
             ! Interpolate state on volume grid
             call self%grid%interpolate_from_vol(self%output_config%output_vars(i)%values, self%output_config%zout, values_on_zout, self%n_depths, self%output_config%output_depth_reference)
             ! Write state
-            call self%output_files(i)%add(values_on_zout, real_fmt='(ES14.6)')
+            call self%output_files(i)%add(values_on_zout, real_fmt='(ES14.9)')
          else if (self%output_config%output_vars(i)%face_grid) then
             ! Interpolate state on face grid
             call self%grid%interpolate_from_face(self%output_config%output_vars(i)%values, self%output_config%zout, values_on_zout, self%n_depths, self%output_config%output_depth_reference)
             ! Write state
-            call self%output_files(i)%add(values_on_zout, real_fmt='(ES14.6)')
+            call self%output_files(i)%add(values_on_zout, real_fmt='(ES14.9)')
          else
             ! If only value at surface
             call self%output_files(i)%add(self%output_config%output_vars(i)%values_surf, real_fmt='(ES14.5)')

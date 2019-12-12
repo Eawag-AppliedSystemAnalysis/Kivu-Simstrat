@@ -260,6 +260,7 @@ contains
             ! Heat flux
             do j=2, ubnd_vol-1
                state%heat_flux(j) = -cp/alpha*state%nuh(j)*(state%T(j) - state%T(j - 1))/(grid%h(j) + grid%h(j - 1))*2
+               state%salt_flux(j) = -nus(j)*(state%S(j) - state%S(j - 1))/(grid%h(j) + grid%h(j - 1))*2
             end do
 
          end do
