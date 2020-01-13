@@ -232,7 +232,7 @@ contains
 
 
             if (self%cfg%apparent_diffusivity) then
-               if (state%NN(i) > 1e-4_RK .or. state%R_rho(i) < 1 .or. state%R_rho(i) > 10) then
+               if (state%R_rho(i) < 1 .or. state%R_rho(i) > 10) then
                   state%num(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + 1.5e-6_RK
                   state%nuh(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + 1.4e-7_RK
                   state%nus(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + 1.2e-9_RK
