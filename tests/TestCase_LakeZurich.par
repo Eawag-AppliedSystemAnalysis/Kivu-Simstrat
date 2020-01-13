@@ -11,7 +11,7 @@
     "Inflow salinity"     : "TestCase_LakeZurich/Sinp.dat"
   },
   "Output" : {
-    "Path"  : "TestCase_LakeZurich/Results/",                     ! Path to result folder
+    "Path"  : "TestCase_LakeZurich/Results/",           ! Path to result folder
     "Depths" : 1,                                       ! Output depths can be an integer (interpreted as interval in m), a list with depths or a path to a file (containing an integer or a list)
     "Times"  : 96,                                      ! Output times can be a number (interpreted as frequency 1/days), a list with times or a path to a file (containing a number or a list)
     "OutputDepthReference": "surface",                  ! "surface": depth of output variables is referenced to lake level, "bottom": depth of output variables is referenced to lake bottom
@@ -47,12 +47,20 @@
     "NZones"                  : 1,                      ! Not implemented
     "ZoneHeights"             : [1,2,3]                 ! Not implemented
   },
+  
   "Simulation" : {
     "Timestep s"        : 300,                          ! Simulation timestep in seconds
     "Start year"        : 1900,                         ! Starting year
     "Start d"           : 35001,                        ! Simulation start in days since 01.01. of starting year
     "End d"             : 35732,                        ! Simulation end
     "DisplaySimulation" : 1                             ! 0: No display, 1: Display when output is written, 2: Display every iteration
+    "Timestep s"                  : 300,                ! Simulation timestep in seconds
+    "Start year"                  : 1900,               ! Starting year
+    "Start d"                     : 35001,              ! Simulation start in days since 01.01. of starting year
+    "End d"                       : 35182,              ! Simulation end
+    "DisplaySimulation"           : 0,                  ! 0: No display, 1: Display when output is written, 2: Display every iteration
+    "Continue from last snapshot" : true                ! If true simulation continues from last snapshot (if present in output folder). Default: false
+
   },
   "ModelParameters" : {
     "lat"           : 47.3,                             ! Latitude in [°]
