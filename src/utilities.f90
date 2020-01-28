@@ -465,4 +465,31 @@ contains
       rho = rho_0*(rho0t + rho0st + rho0_co2 + rho0_ch4)
    end subroutine
 
+   subroutine calc_rho_ratio(r_rho, T1, T2, S1, S2, co2_1, co2_2, ch4_1, ch4_2, depth)
+      implicit none
+
+      ! Arguments
+      real(RK), intent(in) :: T1, T2, S1, S2, co2_1, co2_2, ch4_1, ch4_2, depth
+      real(RK), intent(out) :: r_rho
+
+      ! Local variables
+      real(RK) :: alpha, beta_S, beta_co2, beta_ch4, T, S, P
+
+      T = (T1 + T2)/2
+      S = (S1 + S2)/2
+      P = depth/9.81
+
+      ! According to Chen Millero, changed according "Double diffusion in Lake Kivu" from Schmid et al., 2010
+      alpha = -68.00_RK + 18.2091_RK*T - 0.30866_RK*T**2 + 5.3445e-3_RK*T**3 - 6.0721e-5_RK*T**4 + 3.1441e-7_RK*T**5 + &
+       (4.599_RK - 0.1999_RK*T + 2.790e-3_RK*T**2)*S + (0.3682_RK - 1.52e-2_RK*T+ 1.91e-4_RK*T**2 - 4.613e-3_RK*S)*P
+      alpha = alpha*1e-6
+      beta_S = (7.5e-4_RK + T*(-3.85e-6_RK + T*(4.96e-8_RK)))
+
+      beta_co2 = 0.0125   ! Schmid et al., 2010
+      beta_ch4 = -0.02    ! Schmid et al., 2010
+
+      r_rho = (beta_S*(S1-S2) + beta_co2*(co2_1-co2_2) + beta_ch4*(ch4_1-ch4_2))/(alpha*(T1-T2))
+      !write(6,*) alpha, beta_S, r_rho
+   end subroutine
+
 end module utilities
