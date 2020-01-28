@@ -140,8 +140,8 @@ contains
 
          ! Define variables that should be written
          if (output_cfg%output_all) then
-            output_cfg%number_output_vars = 28
-            output_cfg%output_var_names = [character(len=12) :: 'V','U','T','S','num','nuh','nus','NN','k','eps','P','B','Ps','HA','HW','HK','HV','Rad0','TotalIceH','BlackIceH','WhiteIceH','SnowH','WaterH','Qvert','rho','HeatFlux', 'Density ratio']
+            output_cfg%number_output_vars = 29
+            output_cfg%output_var_names = [character(len=12) :: 'V','U','T','S','num','nuh','nus','nug','NN','k','eps','P','B','Ps','HA','HW','HK','HV','Rad0','TotalIceH','BlackIceH','WhiteIceH','SnowH','WaterH','Qvert','rho','HeatFlux', 'Density ratio']
          else
             output_cfg%number_output_vars = size(output_cfg%output_var_names)
          end if
@@ -209,6 +209,13 @@ contains
                   ! Turbulent diffusivity for salinity [m2 s]
                   self%simdata%output_cfg%output_vars(i)%name = "nus"
                   self%simdata%output_cfg%output_vars(i)%values => self%simdata%model%nus
+                  self%simdata%output_cfg%output_vars(i)%volume_grid = .false.
+                  self%simdata%output_cfg%output_vars(i)%face_grid = .true.
+
+               case('nug')
+                  ! Turbulent diffusivity for gases [m2 s]
+                  self%simdata%output_cfg%output_vars(i)%name = "nug"
+                  self%simdata%output_cfg%output_vars(i)%values => self%simdata%model%nug
                   self%simdata%output_cfg%output_vars(i)%volume_grid = .false.
                   self%simdata%output_cfg%output_vars(i)%face_grid = .true.
 
