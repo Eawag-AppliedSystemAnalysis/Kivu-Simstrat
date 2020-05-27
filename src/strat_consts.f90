@@ -25,6 +25,19 @@
      real(RK), parameter     :: eps_min = 1.0e-30_RK ! Min value allowed for TKE dissipation
      real(RK), parameter     :: avh_min = 1.0e-8_RK ! Min value allowed for turbulent viscosity at boundaries
 
+    ! *** Molecular diffusivities ***
+    real(RK), parameter      :: num_mol = 1.5e-6_RK
+    real(RK), parameter      :: nuh_mol = 1.4e-7_RK
+    real(RK), parameter      :: nus_mol = 1.2e-9_RK
+    real(RK), parameter      :: nug_mol = 1.9e-9_RK
+    real(RK), parameter      :: nut_mol = 2.3e-9_RK
+
+    ! *** Decay ***
+    real(RK), parameter      :: decay_tr = 1.7828e-9_RK
+    real(rk), parameter      :: decay_s = 0.0_RK
+    real(rk), parameter      :: decay_ho = 0.0_RK
+    real(rk), parameter      :: decay_la = 8.17e-11_RK
+
     ! *** Ice Parameters
      real(RK), parameter     :: k_ice = 2.22_RK ! Thermal conductivity ice at 0°C WaterTemp (W K-1 m-1)
      real(RK), parameter     :: k_snow = 0.2_RK ! Thermal conductivity snow at 0°C WaterTemp (W K-1 m-1)

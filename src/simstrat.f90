@@ -19,7 +19,7 @@ program simstrat_main
    use strat_keps
    use strat_turbulence
    use strat_ice
-   use strat_transport
+   use strat_transport_reaction
    use strat_absorption
    use strat_advection
    use simstrat_aed2
@@ -42,7 +42,7 @@ program simstrat_main
    type(UVModelVar) :: mod_u, mod_v
    type(KModelVar) :: mod_k
    type(EpsModelVar) :: mod_eps
-   type(TransportModVar) :: mod_s
+   type(TransportReactionModVar) :: mod_s, mod_tr, mod_heavy_oxygen, mod_light_ar
    type(TurbulenceModule) :: mod_turbulence
    type(IceModule) :: mod_ice
    type(AbsorptionModule) :: mod_absorption
@@ -135,9 +135,25 @@ program simstrat_main
    call mod_v%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%num, simdata%model%V, simdata%grid%ubnd_vol)
    call mod_v%assign_shear_stress(simdata%model%ty)
 
-   ! Set mod_s (transport module) to have nuh as nu and to manipulate S based on dS
+   ! Set mod_s (transport-reaction module) to have nuh as nu and to manipulate S based on dS
    call mod_s%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nus, simdata%model%S, simdata%grid%ubnd_vol)
    call mod_s%assign_external_source(simdata%model%dS)
+   call mod_s%assign_decay_constant(decay_s)
+
+   ! Set mod_tritium (transport-reaction module) to have nut as nu
+   call mod_tr%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nut, simdata%model%Tr, simdata%grid%ubnd_vol)
+   call mod_tr%assign_external_source(simdata%model%dTr)
+   call mod_tr%assign_decay_constant(decay_tr)
+
+   ! Set mod_heavy_oxygen (18O) (transport module-reaction) to have nut as nu
+   call mod_heavy_oxygen%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nut, simdata%model%heavy_oxygen, simdata%grid%ubnd_vol)
+   call mod_heavy_oxygen%assign_external_source(simdata%model%dHO)
+   call mod_heavy_oxygen%assign_decay_constant(decay_ho)
+
+   ! Set mod_light_ar (39Ar) (transport module-reaction) to have nug as nu
+   call mod_light_ar%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nug, simdata%model%light_ar, simdata%grid%ubnd_vol)
+   call mod_light_ar%assign_external_source(simdata%model%dLA)
+   call mod_light_ar%assign_decay_constant(decay_la)
 
    ! Set up K and eps state vars with keps discretization and avh as nu
    call mod_k%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc_keps, simdata%model%avh, simdata%model%K, simdata%grid%ubnd_fce)
@@ -275,6 +291,15 @@ contains
 
          ! Update and solve transportation terms (here: Salinity S only)
          call mod_S%update(simdata%model, simdata%model_param)
+
+         ! Update and solve transportation terms (here: Tritium only)
+         call mod_Tr%update(simdata%model, simdata%model_param)
+
+         ! Update and solve transportation terms (here: Heavy oxygen only)
+         call mod_heavy_oxygen%update(simdata%model, simdata%model_param)
+
+         ! Update and solve transportation terms (here: 39Ar only)
+         call mod_light_ar%update(simdata%model, simdata%model_param)
 
          ! update turbulence states
          call mod_turbulence%update(simdata%model, simdata%model_param)

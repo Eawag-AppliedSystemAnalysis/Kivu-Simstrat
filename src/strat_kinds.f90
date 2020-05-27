@@ -9,7 +9,7 @@ module strat_kinds
    ! Common constants
    integer, parameter, public :: RK = kind(0.d0) !Real kind
    character(len=3), parameter, public :: version = '2.2'
-   integer, parameter, public :: n_simstrat = 4
+   integer, parameter, public :: n_simstrat = 7
 
    ! Common Types
    type, abstract, public :: LinSysSolver
