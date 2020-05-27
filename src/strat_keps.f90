@@ -205,6 +205,7 @@ contains
       class(ModelState), intent(inout) :: state
       integer :: i,j
       real(RK) ::epslim
+      real(RK) :: log_NN
       associate (grid=>self%grid, &
                  ubnd_fce=>self%grid%ubnd_fce, &
                  ubnd_vol=>self%grid%ubnd_vol)
@@ -232,36 +233,79 @@ contains
 
 
             if (self%cfg%apparent_diffusivity) then
-               if (state%R_rho(i) < 1 .or. state%R_rho(i) > 10) then
-                  state%num(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + 1.5e-6_RK
-                  state%nuh(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + 1.4e-7_RK
-                  state%nus(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + 1.2e-9_RK
-                  state%nug(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + 1.9e-9_RK
+               ! Below 120 m (where double diffusive staircases exist)
+               if (grid%z_volume(i) < 365) then
+
+                  ! If stratification is negative, then use k-eps-model to mix
+                  if ((state%NN(i) < 0.0_RK)) then
+                     state%num(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + num_mol
+                     state%nuh(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nuh_mol
+                     state%nus(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nus_mol
+                     state%nug(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nug_mol
+                     state%nut(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nut_mol
+                  else
+                     ! Otherwise use the apparent diffusivity parameterization of double diffusive staircases
+
+                     ! Use molecular diffusion of momentum (no real reason for this...)
+                     state%num(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + num_mol
+
+                     if (state%NN(i) <= 0) state%NN(i) = 1e-15_RK
+                     log_NN = log(state%NN(i))
+
+
+                     ! Between 120 and 170 m
+                     if (grid%z_volume(i) > 3316) then
+                        ! From Kapp-N2 loglog regression new
+                        !state%nuh(i) = exp(-0.5573*log_NN - 18.86)
+                        !state%nus(i) = exp(-0.6511*log_NN - 23.24)
+
+                        ! From Kapp-N2 loglog regression new new (29.4.2020)
+                        state%nuh(i) = exp(-0.7184*log_NN - 21.22)
+                        state%nus(i) = exp(-0.8202*log_NN - 25.79)
+
+                        !if (state%nuh(i) < 1e-6+nuh_mol) state%nuh(i) = 1e-6+nuh_mol
+                        !if (state%nus(i) < 1e-8+nus_mol) state%nus(i) = 1e-8+nus_mol
+
+                     else
+                        ! From Kapp-N2 loglog regression new new (8.4.2020)
+                        !state%nuh(i) = 0.4e-9*(log_NN + 1)**4
+                        !state%nus(i) = exp(-0.6587*log_NN - 22.95)
+
+                        ! From Kapp-N2 loglog regression new new new (29.4.2020)
+                        !state%nuh(i) = 0.4e-9*(log_NN + 1)**4
+                        state%nuh(i) = exp(-0.7184*log_NN - 19.90)
+                        state%nus(i) = exp(-0.8202*log_NN - 24.41)
+
+                     end if
+
+                  end if
                else
-                  state%num(i) = 1.5e-6_RK
-                  state%nuh(i) = 1e-6_RK
-                  state%nus(i) = state%nuh(i)/30
-                  state%nug(i) = state%nus(i)
+                     state%num(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + num_mol
+                     state%nuh(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nuh_mol
+                     state%nus(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nus_mol
+                     state%nug(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nug_mol
+                     state%nut(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nut_mol       
                end if
+
             else
-               !if (mod(state%keps_counter,3)==0) then
-                  state%num(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + 1.5e-6_RK
-                  state%nuh(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + 1.4e-7_RK
-                  state%nus(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + 1.2e-9_RK
-                  state%nug(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + 1.9e-9_RK
-               !else
-               !   state%num(i) = 1.5e-6_RK
-               !   state%nuh(i) = 1.4e-7_RK
-               !   state%nus(i) = 1.2e-9_RK
-               !   state%nug(i) = 1.9e-9_RK     
-               !end if             
+               state%num(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + num_mol
+               state%nuh(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nuh_mol
+               state%nus(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nus_mol
+               state%nug(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nug_mol
+               state%nut(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nut_mol
             end if
 
-            ! Heat flux
-            do j=2, ubnd_vol-1
-               state%heat_flux(j) = -cp/alpha*state%nuh(j)*(state%T(j) - state%T(j - 1))/(grid%h(j) + grid%h(j - 1))*2
-               state%salt_flux(j) = -nus(j)*(state%S(j) - state%S(j - 1))/(grid%h(j) + grid%h(j - 1))*2
-            end do
+            ! Diffusion cannot be lower than molecular
+            if (state%nuh(i) < nuh_mol) state%nuh(i) = nuh_mol
+            if (state%nus(i) < nus_mol) state%nus(i) = nus_mol
+
+            ! We assume that diffusivity of gases is equal to diffusivity of salts
+            state%nug(i) = state%nus(i)!/nus_mol*nug_mol
+            state%nut(i) = state%nug(i)
+
+            ! Calculate heat flux
+            state%heat_flux(i) = -cp*rho_0*state%nuh(i)*(state%T(i) - state%T(i - 1))/(grid%h(i) + grid%h(i - 1))*2           
+            state%salt_flux(i) = -state%nus(i)*(state%S(i) - state%S(i - 1))/(grid%h(i) + grid%h(i - 1))*2
 
          end do
 
