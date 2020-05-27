@@ -159,7 +159,11 @@ contains
             else
                cee3 = ce3
             end if
-            Prod = ce1*state%eps(i)/state%ko(i)*(state%P(i) + state%P_Seiche(i)) ! New code plus seiche
+            if(grid%z_volume(i)<365) then 
+               Prod = ce1*state%eps(i)/state%ko(i)*state%P(i)
+            else
+               Prod = ce1*state%eps(i)/state%ko(i)*(state%P(i) + state%P_Seiche(i)) ! New code plus seiche
+            end if
             Buoy = cee3*state%eps(i)/state%ko(i)*state%B(i)
             Diss = ce2*state%eps(i)*state%eps(i)/state%ko(i)
 
