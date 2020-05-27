@@ -32,11 +32,16 @@
     real(RK), parameter      :: nug_mol = 1.9e-9_RK
     real(RK), parameter      :: nut_mol = 2.3e-9_RK
 
+    ! *** Molecular diffusivities noble gases ***
+    real(RK), parameter      :: nu_he_mol = 7.4e-9_RK ! Wise et al., 1968, at 25°C
+    real(RK), parameter      :: nu_ne_mol = 3.4e-9_RK ! Wise et al., 1968, at 25°C
+    real(RK), parameter      :: nu_ar_mol = 2.5e-9_RK ! Wise et al., 1966, at 25°C
+    real(RK), parameter      :: nu_kr_mol = 1.93e-9_RK ! Wise et al., 1968, at 25°C
+
     ! *** Decay ***
     real(RK), parameter      :: decay_tr = 1.7828e-9_RK
-    real(rk), parameter      :: decay_s = 0.0_RK
-    real(rk), parameter      :: decay_ho = 0.0_RK
     real(rk), parameter      :: decay_la = 8.17e-11_RK
+    real(RK), parameter      :: no_decay = 0.0_RK
 
     ! *** Ice Parameters
      real(RK), parameter     :: k_ice = 2.22_RK ! Thermal conductivity ice at 0°C WaterTemp (W K-1 m-1)
