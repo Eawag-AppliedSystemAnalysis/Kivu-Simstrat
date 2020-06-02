@@ -43,6 +43,7 @@ program simstrat_main
    type(KModelVar) :: mod_k
    type(EpsModelVar) :: mod_eps
    type(TransportReactionModVar) :: mod_s, mod_tr, mod_heavy_oxygen, mod_light_ar
+   type(TransportReactionModVar) :: mod_He, mod_Ne, mod_Ar, mod_Kr
    type(TurbulenceModule) :: mod_turbulence
    type(IceModule) :: mod_ice
    type(AbsorptionModule) :: mod_absorption
@@ -143,17 +144,37 @@ program simstrat_main
    ! Set mod_tritium (transport-reaction module) to have nut as nu
    call mod_tr%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nut, simdata%model%Tr, simdata%grid%ubnd_vol)
    call mod_tr%assign_external_source(simdata%model%dTr)
-   call mod_tr%assign_decay_constant(no_decay)
+   call mod_tr%assign_decay_constant(decay_tr)
 
    ! Set mod_heavy_oxygen (18O) (transport module-reaction) to have nut as nu
    call mod_heavy_oxygen%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nut, simdata%model%heavy_oxygen, simdata%grid%ubnd_vol)
    call mod_heavy_oxygen%assign_external_source(simdata%model%dHO)
    call mod_heavy_oxygen%assign_decay_constant(no_decay)
 
-   ! Set mod_light_ar (39Ar) (transport module-reaction) to have nug as nu
-   call mod_light_ar%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nug, simdata%model%light_ar, simdata%grid%ubnd_vol)
+   ! Set mod_light_argon (39Ar) (transport module-reaction) to have nut as nu
+   call mod_light_ar%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nut, simdata%model%light_ar, simdata%grid%ubnd_vol)
    call mod_light_ar%assign_external_source(simdata%model%dLA)
    call mod_light_ar%assign_decay_constant(decay_la)
+
+   ! Set mod_He (transport module-reaction) to have nug as nu
+   call mod_He%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nu_he, simdata%model%He, simdata%grid%ubnd_vol)
+   call mod_He%assign_external_source(simdata%model%dHe)
+   call mod_He%assign_decay_constant(no_decay)
+
+   ! Set mod_Ne (39Ar) (transport module-reaction) to have nug as nu
+   call mod_Ne%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nu_ne, simdata%model%Ne, simdata%grid%ubnd_vol)
+   call mod_Ne%assign_external_source(simdata%model%dNe)
+   call mod_Ne%assign_decay_constant(no_decay)
+
+   ! Set mod_Ar (39Ar) (transport module-reaction) to have nug as nu
+   call mod_Ar%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nu_ar, simdata%model%Ar, simdata%grid%ubnd_vol)
+   call mod_Ar%assign_external_source(simdata%model%dAr)
+   call mod_Ar%assign_decay_constant(no_decay)
+
+   ! Set mod_Kr (transport module-reaction) to have nug as nu
+   call mod_Kr%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nu_kr, simdata%model%Kr, simdata%grid%ubnd_vol)
+   call mod_Kr%assign_external_source(simdata%model%dKr)
+   call mod_Kr%assign_decay_constant(no_decay)
 
    ! Set up K and eps state vars with keps discretization and avh as nu
    call mod_k%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc_keps, simdata%model%avh, simdata%model%K, simdata%grid%ubnd_fce)
@@ -300,6 +321,18 @@ contains
 
          ! Update and solve transportation terms (here: 39Ar only)
          call mod_light_ar%update(simdata%model, simdata%model_param)
+
+         ! Update and solve transportation terms (here: He)
+         call mod_He%update(simdata%model, simdata%model_param)
+
+         ! Update and solve transportation terms (here: Ne)
+         call mod_Ne%update(simdata%model, simdata%model_param)
+
+         ! Update and solve transportation terms (here: Ar)
+         call mod_Ar%update(simdata%model, simdata%model_param)
+
+         ! Update and solve transportation terms (here: Kr)
+         call mod_Kr%update(simdata%model, simdata%model_param)
 
          ! update turbulence states
          call mod_turbulence%update(simdata%model, simdata%model_param)

@@ -23,6 +23,10 @@ module strat_simdata
       character(len=:), allocatable          :: TrinpName
       character(len=:), allocatable          :: HOinpName
       character(len=:), allocatable          :: LAinpName
+      character(len=:), allocatable          :: HeinpName
+      character(len=:), allocatable          :: NeinpName
+      character(len=:), allocatable          :: ArinpName
+      character(len=:), allocatable          :: KrinpName
       real(RK), dimension(:), allocatable    :: read_grid_array_from_json
       real(RK) :: read_grid_value_from_json
       integer :: grid_input_type
@@ -140,7 +144,9 @@ module strat_simdata
       ! Note that for these variables the value at 0 z.b. U(0) is not used
       real(RK), dimension(:), allocatable :: U, V, co2, ch4 ! Water velocities [m/s]
       real(RK), dimension(:), pointer :: T, S, Tr, heavy_oxygen, light_AR, R_rho ! Temperature [°C], Salinity [‰], 18O [-], 39Ar [-], Density ratio [-]
+      real(RK), dimension(:), pointer :: He, Ne, Ar, Kr ! Noble gas concentrations [ccSTP/g]
       real(RK), dimension(:), allocatable :: dS, dTr, dHO, dLA ! Source/sink for salinity, tritium, heavy oxygen, 39Ar
+      real(RK), dimension(:), pointer :: dHe, dNe, dAr, dKr ! Source/sink for noble gas concentrations [ccSTP/g]
       real(RK), dimension(:, :), allocatable :: Q_inp ! Horizontal inflow [m^3/s]
       real(RK), dimension(:), pointer :: rho ! Water density [kg/m^3]
       real(RK), dimension(:), allocatable :: heat_flux, salt_flux ! Heat flux [W m-2], salt_flux 
@@ -156,6 +162,7 @@ module strat_simdata
       real(RK), dimension(:), allocatable :: avh
       real(RK), dimension(:), allocatable :: eps ! TKE dissipation rate [W/kg]
       real(RK), dimension(:), allocatable :: num, nuh, nus, nug, nut ! Turbulent viscosity (momentum) and diffusivity (temperature, salinity, gases, water)
+      real(RK), dimension(:), allocatable :: nu_he, nu_ne, nu_ar, nu_kr ! Noble gas diffusivities
       real(RK), dimension(:), allocatable :: P, B ! Shear stress production [W/kg], buoyancy production [W/kg]
       real(RK), dimension(:), allocatable :: NN ! Brunt-Väisälä frequency [s-2]
       real(RK), dimension(:), allocatable :: cmue1, cmue2 ! Model constants
@@ -247,11 +254,19 @@ contains
       allocate (self%Tr(state_size))
       allocate (self%heavy_oxygen(state_size))
       allocate (self%light_ar(state_size))
+      allocate (self%He(state_size))
+      allocate (self%Ne(state_size))
+      allocate (self%Ar(state_size))
+      allocate (self%Kr(state_size))
       allocate (self%R_rho(state_size))
       allocate (self%dS(state_size))
       allocate (self%dTr(state_size))
       allocate (self%dHO(state_size))
       allocate (self%dLA(state_size))
+      allocate (self%dHe(state_size))
+      allocate (self%dNe(state_size))
+      allocate (self%dAr(state_size))
+      allocate (self%dKr(state_size))
       allocate (self%rho(state_size))
       allocate (self%avh(state_size))
       allocate (self%heat_flux(state_size))
@@ -266,6 +281,10 @@ contains
       allocate (self%nus(state_size + 1))
       allocate (self%nug(state_size + 1))
       allocate (self%nut(state_size + 1))
+      allocate (self%nu_he(state_size + 1))
+      allocate (self%nu_ne(state_size + 1))
+      allocate (self%nu_ar(state_size + 1))
+      allocate (self%nu_kr(state_size + 1))
       allocate (self%P(state_size + 1))
       allocate (self%B(state_size + 1))
       allocate (self%NN(state_size + 1))
@@ -299,11 +318,19 @@ contains
       self%Tr = 0.0_RK
       self%heavy_oxygen = 0.0_RK
       self%light_ar = 0.0_RK
+      self%He = 0.0_RK
+      self%Ne = 0.0_RK
+      self%Ar = 0.0_RK
+      self%Kr = 0.0_RK
       self%R_rho = 0.0_RK
       self%dS = 0.0_RK
       self%dTr = 0.0_RK
       self%dHO = 0.0_RK
       self%dLA = 0.0_RK
+      self%dHe = 0.0_RK
+      self%dNe = 0.0_RK
+      self%dAr = 0.0_RK
+      self%dKr = 0.0_RK
       self%rho = 0.0_RK
       self%co2 = 0.0_RK
       self%ch4 = 0.0_RK
@@ -318,6 +345,10 @@ contains
       self%nus = 0.0_RK
       self%nug = 0.0_RK
       self%nut = 0.0_RK
+      self%nu_he = 0.0_RK
+      self%nu_ne = 0.0_RK
+      self%nu_ar = 0.0_RK
+      self%nu_kr = 0.0_RK
       self%P = 0.0_RK
       self%B = 0.0_RK
       self%NN = 0.0_RK

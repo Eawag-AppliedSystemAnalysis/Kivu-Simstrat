@@ -65,6 +65,7 @@ contains
       real(RK) :: dh, dh_i(1:2), h_div_2, h_mult_2 ! depth differences
       real(RK) :: dU(self%grid%nz_grid), dV(self%grid%nz_grid), dTemp(self%grid%nz_grid)
       real(RK) :: dS(self%grid%nz_grid), dTr(self%grid%nz_grid), dHO(self%grid%nz_grid), dLA(self%grid%nz_grid)
+      real(RK) :: dHe(self%grid%nz_grid), dNe(self%grid%nz_grid), dAr(self%grid%nz_grid), dKr(self%grid%nz_grid)
       real(RK) :: dt_i(1:2) ! first and second time step
       real(RK) :: AreaFactor_adv(1:self%grid%nz_grid)
       integer :: i, t_i
@@ -148,6 +149,7 @@ contains
       integer :: i, top
       real(RK) :: dU(self%grid%nz_grid), dV(self%grid%nz_grid), dTemp(self%grid%nz_grid)
       real(RK) :: dS(self%grid%nz_grid), dTr(self%grid%nz_grid), dHO(self%grid%nz_grid), dLA(self%grid%nz_grid)
+      real(RK) :: dHe(self%grid%nz_grid), dNe(self%grid%nz_grid), dAr(self%grid%nz_grid), dKr(self%grid%nz_grid)
       integer :: outflow_above, outflow_below
 
       associate(ubnd_vol => self%grid%ubnd_vol, &
@@ -186,6 +188,11 @@ contains
                dHO(i) = -(top*outflow_above*Q_vert(i + 1) - outflow_below*Q_vert(i))*state%heavy_oxygen(i)
                dLA(i) = -(top*outflow_above*Q_vert(i + 1) - outflow_below*Q_vert(i))*state%light_ar(i)
 
+               dHe(i) = -(top*outflow_above*Q_vert(i + 1) - outflow_below*Q_vert(i))*state%He(i)
+               dNe(i) = -(top*outflow_above*Q_vert(i + 1) - outflow_below*Q_vert(i))*state%Ne(i)
+               dAr(i) = -(top*outflow_above*Q_vert(i + 1) - outflow_below*Q_vert(i))*state%Ar(i)
+               dKr(i) = -(top*outflow_above*Q_vert(i + 1) - outflow_below*Q_vert(i))*state%Kr(i)
+
                ! Calculate the advective flow into cell i from below
                if (i > 1 .and. Q_vert(i ) > 0) then
                   dU(i) = dU(i) + Q_vert(i)*state%U(i - 1)
@@ -195,6 +202,11 @@ contains
                   dTr(i) = dTr(i) + Q_vert(i)*state%Tr(i - 1)
                   dHO(i) = dHO(i) + Q_vert(i)*state%heavy_oxygen(i - 1)
                   dLA(i) = dLA(i) + Q_vert(i)*state%light_ar(i - 1)
+
+                  dHe(i) = dHe(i) + Q_vert(i)*state%He(i - 1)
+                  dNe(i) = dNe(i) + Q_vert(i)*state%Ne(i - 1)
+                  dAr(i) = dAr(i) + Q_vert(i)*state%Ar(i - 1)
+                  dKr(i) = dKr(i) + Q_vert(i)*state%Kr(i - 1)
                end if
 
                ! Calculate the advective flow into cell i from above (- sign in front because Q_vert is negative if there is inflow)
@@ -206,6 +218,11 @@ contains
                   dTr(i) = dTr(i) - Q_vert(i + 1)*state%Tr(i + 1)
                   dHO(i) = dHO(i) - Q_vert(i + 1)*state%heavy_oxygen(i + 1)
                   dLA(i) = dLA(i) - Q_vert(i + 1)*state%light_ar(i + 1)
+
+                  dHe(i) = dHe(i) - Q_vert(i + 1)*state%He(i + 1)
+                  dNe(i) = dNe(i) - Q_vert(i + 1)*state%Ne(i + 1)
+                  dAr(i) = dAr(i) - Q_vert(i + 1)*state%Ar(i + 1)
+                  dKr(i) = dKr(i) - Q_vert(i + 1)*state%Kr(i + 1)
                end if
             end do
 
@@ -216,10 +233,16 @@ contains
             dS(1:ubnd_vol) = dS(1:ubnd_vol) + state%Q_inp(4, 1:ubnd_vol) + state%Q_inp(2, 1:ubnd_vol)*state%S(1:ubnd_vol)
             ! dTr = dTr(vertical advection) + dTr(inflow) + dTr(outflow), units: TU*m^3/s
             dTr(1:ubnd_vol) = dTr(1:ubnd_vol) + state%Q_inp(5, 1:ubnd_vol) + state%Q_inp(2, 1:ubnd_vol)*state%Tr(1:ubnd_vol)
-            ! dHO = dHO(vertical advection) + dHO(inflow) + dHO(outflow), units: ‰*m^3/s
+            ! dHO = dHO(vertical advection) + dHO(inflow) + dHO(outflow), units: [-]*m^3/s
             dHO(1:ubnd_vol) = dHO(1:ubnd_vol) + state%Q_inp(6, 1:ubnd_vol) + state%Q_inp(2, 1:ubnd_vol)*state%heavy_oxygen(1:ubnd_vol)
-            ! dHO = dHO(vertical advection) + dHO(inflow) + dHO(outflow), units: ‰*m^3/s
+            ! dLA = dLA(vertical advection) + dLA(inflow) + dLA(outflow), units: [-]*m^3/s
             dLA(1:ubnd_vol) = dLA(1:ubnd_vol) + state%Q_inp(7, 1:ubnd_vol) + state%Q_inp(2, 1:ubnd_vol)*state%light_ar(1:ubnd_vol)
+
+            ! dNG = dNG(vertical advection) + dNG(inflow) + dNG(outflow), units: [ccSTP/g]*m^3/s
+            dHe(1:ubnd_vol) = dHe(1:ubnd_vol) + state%Q_inp(8, 1:ubnd_vol) + state%Q_inp(2, 1:ubnd_vol)*state%He(1:ubnd_vol)
+            dNe(1:ubnd_vol) = dNe(1:ubnd_vol) + state%Q_inp(9, 1:ubnd_vol) + state%Q_inp(2, 1:ubnd_vol)*state%Ne(1:ubnd_vol)
+            dAr(1:ubnd_vol) = dAr(1:ubnd_vol) + state%Q_inp(10, 1:ubnd_vol) + state%Q_inp(2, 1:ubnd_vol)*state%Ar(1:ubnd_vol)
+            dKr(1:ubnd_vol) = dKr(1:ubnd_vol) + state%Q_inp(11, 1:ubnd_vol) + state%Q_inp(2, 1:ubnd_vol)*state%Kr(1:ubnd_vol)
 
             ! Add change to the state variable
             state%U(1:ubnd_vol) = state%U(1:ubnd_vol) + AreaFactor_adv(1:ubnd_vol)*dU(1:ubnd_vol)
@@ -229,6 +252,11 @@ contains
             state%Tr(1:ubnd_vol) = state%Tr(1:ubnd_vol) + AreaFactor_adv(1:ubnd_vol)*dTr(1:ubnd_vol)
             state%heavy_oxygen(1:ubnd_vol) = state%heavy_oxygen(1:ubnd_vol) + AreaFactor_adv(1:ubnd_vol)*dHO(1:ubnd_vol)
             state%light_ar(1:ubnd_vol) = state%light_ar(1:ubnd_vol) + AreaFactor_adv(1:ubnd_vol)*dLA(1:ubnd_vol)
+
+            state%He(1:ubnd_vol) = state%He(1:ubnd_vol) + AreaFactor_adv(1:ubnd_vol)*dHe(1:ubnd_vol)
+            state%Ne(1:ubnd_vol) = state%Ne(1:ubnd_vol) + AreaFactor_adv(1:ubnd_vol)*dNe(1:ubnd_vol)
+            state%Ar(1:ubnd_vol) = state%Ar(1:ubnd_vol) + AreaFactor_adv(1:ubnd_vol)*dAr(1:ubnd_vol)
+            state%Kr(1:ubnd_vol) = state%Kr(1:ubnd_vol) + AreaFactor_adv(1:ubnd_vol)*dKr(1:ubnd_vol)
 
             ! Change due to rain/evaporation
             hum = 0.63_RK ! 3.3°C difference water-air => 0.82*0.77
@@ -257,6 +285,11 @@ contains
             state%Tr(ubnd_vol) = state%Tr(ubnd_vol)*h(ubnd_vol)/(h(ubnd_vol) + dh)
             state%heavy_oxygen(ubnd_vol) = state%heavy_oxygen(ubnd_vol)*h(ubnd_vol)/(h(ubnd_vol) + dh)
             state%light_ar(ubnd_vol) = 1 ! Always equal to atmosphere (actually a boundary condition)
+
+            state%He(ubnd_vol) = 3.83e-8!state%He(ubnd_vol)*h(ubnd_vol)/(h(ubnd_vol) + dh)
+            state%Ne(ubnd_vol) = 1.55e-7!state%Ne(ubnd_vol)*h(ubnd_vol)/(h(ubnd_vol) + dh)
+            state%Ar(ubnd_vol) = 8.33e-7!state%Ar(ubnd_vol)*h(ubnd_vol)/(h(ubnd_vol) + dh)
+            state%Kr(ubnd_vol) = 5.37e-8!state%Kr(ubnd_vol)*h(ubnd_vol)/(h(ubnd_vol) + dh)
       end associate
    end subroutine
 
@@ -360,6 +393,11 @@ contains
          state%heavy_oxygen(ubnd_vol) = (w_a*state%heavy_oxygen(ubnd_vol + 1) + w_b*state%heavy_oxygen(ubnd_vol))/(w_a + w_b)
          state%light_ar(ubnd_vol) = (w_a*state%light_ar(ubnd_vol + 1) + w_b*state%light_ar(ubnd_vol))/(w_a + w_b)
 
+         state%He(ubnd_vol) = (w_a*state%He(ubnd_vol + 1) + w_b*state%He(ubnd_vol))/(w_a + w_b)
+         state%Ne(ubnd_vol) = (w_a*state%Ne(ubnd_vol + 1) + w_b*state%Ne(ubnd_vol))/(w_a + w_b)
+         state%Ar(ubnd_vol) = (w_a*state%Ar(ubnd_vol + 1) + w_b*state%Ar(ubnd_vol))/(w_a + w_b)
+         state%Kr(ubnd_vol) = (w_a*state%Kr(ubnd_vol + 1) + w_b*state%Kr(ubnd_vol))/(w_a + w_b)
+
          state%k(ubnd_fce) = (w_a*state%k(ubnd_fce + 1) + w_b*state%k(ubnd_fce))/(w_a + w_b)
          state%eps(ubnd_fce) = (w_a*state%eps(ubnd_fce + 1) + w_b*state%eps(ubnd_fce))/(w_a + w_b)
          state%Q_vert(ubnd_fce) = (w_a*state%Q_vert(ubnd_fce + 1) + w_b*state%Q_vert(ubnd_fce))/(w_a + w_b)
@@ -395,6 +433,11 @@ contains
          state%heavy_oxygen(ubnd_vol) = state%heavy_oxygen(ubnd_vol - 1)
          state%light_ar(ubnd_vol) = state%light_ar(ubnd_vol - 1)
          state%Q_vert(ubnd_fce) = state%Q_vert(ubnd_fce - 1) ! Vertical discharge of new box
+
+         state%He(ubnd_vol) = state%He(ubnd_vol - 1)
+         state%Ne(ubnd_vol) = state%Ne(ubnd_vol - 1)
+         state%Ar(ubnd_vol) = state%Ar(ubnd_vol - 1)
+         state%Kr(ubnd_vol) = state%Kr(ubnd_vol - 1)
 
          state%k(ubnd_fce) = state%k(ubnd_fce - 1)
          state%eps(ubnd_fce) = state%eps(ubnd_fce - 1)

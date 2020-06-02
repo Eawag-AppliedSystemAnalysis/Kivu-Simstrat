@@ -159,7 +159,7 @@ contains
             else
                cee3 = ce3
             end if
-            if(grid%z_volume(i)<365) then 
+            if(grid%z_volume(i) < 365) then 
                Prod = ce1*state%eps(i)/state%ko(i)*state%P(i)
             else
                Prod = ce1*state%eps(i)/state%ko(i)*(state%P(i) + state%P_Seiche(i)) ! New code plus seiche
@@ -247,6 +247,11 @@ contains
                      state%nus(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nus_mol
                      state%nug(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nug_mol
                      state%nut(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nut_mol
+
+                     state%nu_he(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nu_he_mol
+                     state%nu_ne(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nu_ne_mol
+                     state%nu_ar(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nu_ar_mol
+                     state%nu_kr(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nu_kr_mol
                   else
                      ! Otherwise use the apparent diffusivity parameterization of double diffusive staircases
 
@@ -284,11 +289,16 @@ contains
 
                   end if
                else
-                     state%num(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + num_mol
-                     state%nuh(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nuh_mol
-                     state%nus(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nus_mol
-                     state%nug(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nug_mol
-                     state%nut(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nut_mol       
+                  state%num(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + num_mol
+                  state%nuh(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nuh_mol
+                  state%nus(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nus_mol
+                  state%nug(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nug_mol
+                  state%nut(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nut_mol
+
+                  state%nu_he(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nu_he_mol
+                  state%nu_ne(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nu_ne_mol
+                  state%nu_ar(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nu_ar_mol
+                  state%nu_kr(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nu_kr_mol      
                end if
 
             else
@@ -297,6 +307,11 @@ contains
                state%nus(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nus_mol
                state%nug(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nug_mol
                state%nut(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nut_mol
+
+               state%nu_he(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nu_he_mol
+               state%nu_ne(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nu_ne_mol
+               state%nu_ar(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nu_ar_mol
+               state%nu_kr(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nu_kr_mol
             end if
 
             ! Diffusion cannot be lower than molecular
