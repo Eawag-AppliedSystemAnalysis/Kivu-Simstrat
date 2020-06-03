@@ -200,7 +200,7 @@ subroutine define_column(self, state)
                case ( 'uva' )         ; column(av)%cell => self%uva
                case ( 'uvb' )         ; column(av)%cell => self%uvb
                case ( 'pressure' )    ; column(av)%cell => self%pres
-               case ( 'depth' )       ; column(av)%cell => self%grid%z_volume
+               case ( 'depth' )       ; column(av)%cell => self%grid%layer_depth
                case ( 'sed_zone' )    ; column(av)%cell_sheet => self%sed_zones(1)
                case ( 'wind_speed' )  ; column(av)%cell_sheet => state%uv10
                case ( 'rain')         ; column(av)%cell_sheet => state%rain
