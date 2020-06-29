@@ -282,8 +282,9 @@ contains
 
                         ! From Kapp-N2 loglog regression new new new (29.4.2020)
                         !state%nuh(i) = 0.4e-9*(log_NN + 1)**4
-                        state%nuh(i) = exp(-0.7184*log_NN - 19.90)
-                        state%nus(i) = exp(-0.8202*log_NN - 24.41)
+                        offset = 0.25
+                        state%nuh(i) = exp(-0.7184*log_NN - 19.90 - offset)
+                        state%nus(i) = exp(-0.8202*log_NN - 24.41 - offset)
 
                      !end if
 
