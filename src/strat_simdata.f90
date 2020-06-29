@@ -149,7 +149,7 @@ module strat_simdata
       real(RK), dimension(:), pointer :: dHe, dNe, dAr, dKr ! Source/sink for noble gas concentrations [ccSTP/g]
       real(RK), dimension(:, :), allocatable :: Q_inp ! Horizontal inflow [m^3/s]
       real(RK), dimension(:), pointer :: rho ! Water density [kg/m^3]
-      real(RK), dimension(:), allocatable :: heat_flux, salt_flux ! Heat flux [W m-2], salt_flux 
+      real(RK), dimension(:), allocatable :: diff_heat_flux, buoy_heat_flux, adv_heat_flux, salt_flux ! Heat flux [W m-2], salt_flux 
       real(RK), dimension(:,:), pointer :: AED2_state ! State matrix of AED2 variables
       real(RK), dimension(:,:), pointer :: AED2_diagstate ! State matrix of AED2 variables
       character(len=48), dimension(:), pointer :: AED2_names ! Names of AED2 state variables used in the simulation
@@ -183,7 +183,7 @@ module strat_simdata
 
       real(RK) :: T_atm ! Air temp at surface
       real(RK), dimension(:), allocatable :: rad, rad_vol ! Solar radiation (in water)
-      real(RK), dimension(:), allocatable :: Q_vert, lateral_input ! Vertical exchange between boxes (integrated and not-integrated over depth)
+      real(RK), dimension(:), allocatable :: Q_vert, lateral_input, w ! Vertical exchange between boxes (integrated and not-integrated over depth)
       real(RK), dimension(9,12) :: albedo_data  ! Experimental monthly albedo data for determination of current water albedo
       real(RK) :: albedo_water   ! Current water albedo
       integer :: lat_number ! Latitude band (used for determination of albedo)
@@ -269,7 +269,9 @@ contains
       allocate (self%dKr(state_size))
       allocate (self%rho(state_size))
       allocate (self%avh(state_size))
-      allocate (self%heat_flux(state_size))
+      allocate (self%diff_heat_flux(state_size))
+      allocate (self%buoy_heat_flux(state_size))
+      allocate (self%adv_heat_flux(state_size))
       allocate (self%salt_flux(state_size))
 
       ! Values on z_upp grid
@@ -298,6 +300,7 @@ contains
       allocate (self%rad_vol(state_size))
       allocate (self%Q_vert(state_size + 1))
       allocate (self%lateral_input(state_size + 1))
+      allocate (self%w(state_size + 1))
 
       allocate (self%snow_h)
       allocate (self%total_ice_h)
@@ -334,7 +337,8 @@ contains
       self%rho = 0.0_RK
       self%co2 = 0.0_RK
       self%ch4 = 0.0_RK
-      self%heat_flux = 0.0_RK
+      self%buoy_heat_flux = 0.0_RK
+      self%adv_heat_flux = 0.0_RK
       self%salt_flux = 0.0_RK
 
       self%k = 0.0_RK
@@ -363,6 +367,7 @@ contains
       self%rad_vol = 0.0_RK
       self%Q_vert = 0.0_RK
       self%lateral_input = 0.0_RK
+      self%w = 0.0_RK
 
       self%snow_h = 0.0_RK
       self%total_ice_h = 0.0_RK

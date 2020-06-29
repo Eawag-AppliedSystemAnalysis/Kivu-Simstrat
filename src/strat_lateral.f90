@@ -492,6 +492,7 @@ contains
          Q_vert(1) = 0
          do i = 2,ubnd_fce
             Q_vert(i) = Q_vert(i - 1) + Q_inp(1,i - 1) + Q_inp(2,i - 1)
+            state%w(i) = Q_vert(i)/grid%Az(i)
             state%lateral_input(i) = Q_inp(1,i - 1)
          end do
       end associate
