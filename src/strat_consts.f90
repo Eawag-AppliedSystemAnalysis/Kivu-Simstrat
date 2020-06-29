@@ -8,7 +8,7 @@
     ! *** General constants ***
      real(RK), parameter     :: pi = 4.0_RK*DATAN(1.0_RK) ! pi [-] (Proper way to calculate PI up to machine precision)
      real(RK), parameter     :: rho_air = 1.2_RK ! density of air [kg/m3]
-     real(RK), parameter     :: g = 9.81_RK ! Earth gravitational acceleration [m/s2]
+     real(RK), parameter     :: g = 9.78_RK ! Earth gravitational acceleration [m/s2]
      real(RK), parameter     :: kappa = 0.41_RK ! Von Karman constant [-]
      real(RK), parameter     :: K_s = 0.05_RK ! Bottom roughness [m]
      real(RK), parameter     :: z0 = 0.5_RK ! Surface roughness [m]
