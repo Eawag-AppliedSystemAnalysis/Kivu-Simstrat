@@ -143,7 +143,7 @@ contains
       class(AdvectionModule) :: self
       class(ModelState) :: state
       real(RK), dimension(:) :: AreaFactor_adv
-      real(RK) :: dh, Tr_evap, Tr_rain, ho_evap, ho_rain, delta_in, delta_lake, Tr_p, Tr_L, alpha, hum, E, alpha_18O
+      real(RK) :: dh, Tr_evap, Tr_rain, ho_evap, ho_rain, delta_in, delta_lake, Tr_p, Tr_L, alpha_Tr, hum, E, alpha_18O
 
       ! Local variables
       integer :: i, top
@@ -260,12 +260,12 @@ contains
 
             ! Change due to rain/evaporation
             hum = 0.63_RK ! 3.3°C difference water-air => 0.82*0.77
-            alpha = 0.89_RK ! 0.89 according to W. Aeschbach, without kinetic
+            alpha_Tr = 0.89_RK ! 0.89 according to W. Aeschbach, without kinetic
             Tr_p = state%Q_inp(5,ubnd_vol)/state%Q_inp(1,ubnd_vol)
             Tr_L = state%Tr(ubnd_vol)
             E = 115_RK
 
-            Tr_evap = E*alpha*(hum*Tr_p - Tr_L)/(1 - hum)
+            Tr_evap = E*alpha_Tr*(hum*Tr_p - Tr_L)/(1 - hum)
             Tr_rain = E*Tr_p
 
             state%Tr(ubnd_vol) = state%Tr(ubnd_vol) + AreaFactor_adv(ubnd_vol)*(Tr_evap + Tr_rain)
