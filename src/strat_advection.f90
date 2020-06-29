@@ -143,13 +143,15 @@ contains
       class(AdvectionModule) :: self
       class(ModelState) :: state
       real(RK), dimension(:) :: AreaFactor_adv
-      real(RK) :: dh, Tr_evap, Tr_rain, ho_evap, ho_rain, delta_in, delta_lake, Tr_p, Tr_L, alpha_Tr, hum, E, alpha_18O
+      real(RK) :: dh
 
       ! Local variables
       integer :: i, top
       real(RK) :: dU(self%grid%nz_grid), dV(self%grid%nz_grid), dTemp(self%grid%nz_grid)
       real(RK) :: dS(self%grid%nz_grid), dTr(self%grid%nz_grid), dHO(self%grid%nz_grid), dLA(self%grid%nz_grid)
       real(RK) :: dHe(self%grid%nz_grid), dNe(self%grid%nz_grid), dAr(self%grid%nz_grid), dKr(self%grid%nz_grid)
+      real(RK) :: Tr_evap, Tr_rain, Tr_p, Tr_lake, alpha_Tr, hum, E
+      real(RK) :: HO_evap, HO_rain, HO_p, HO_lake, alpha_18O
       integer :: outflow_above, outflow_below
 
       associate(ubnd_vol => self%grid%ubnd_vol, &
@@ -184,6 +186,7 @@ contains
                dV(i) = -(top*outflow_above*Q_vert(i + 1) - outflow_below*Q_vert(i))*state%V(i)
                dTemp(i) = -(top*outflow_above*Q_vert(i + 1) - outflow_below*Q_vert(i))*state%T(i)
                dS(i) = -(top*outflow_above*Q_vert(i + 1) - outflow_below*Q_vert(i))*state%S(i)
+
                dTr(i) = -(top*outflow_above*Q_vert(i + 1) - outflow_below*Q_vert(i))*state%Tr(i)
                dHO(i) = -(top*outflow_above*Q_vert(i + 1) - outflow_below*Q_vert(i))*state%heavy_oxygen(i)
                dLA(i) = -(top*outflow_above*Q_vert(i + 1) - outflow_below*Q_vert(i))*state%light_ar(i)
@@ -199,6 +202,7 @@ contains
                   dV(i) = dV(i) + Q_vert(i)*state%V(i - 1)
                   dTemp(i) = dTemp(i) + Q_vert(i)*state%T(i - 1)
                   dS(i) = dS(i) + Q_vert(i)*state%S(i - 1)
+
                   dTr(i) = dTr(i) + Q_vert(i)*state%Tr(i - 1)
                   dHO(i) = dHO(i) + Q_vert(i)*state%heavy_oxygen(i - 1)
                   dLA(i) = dLA(i) + Q_vert(i)*state%light_ar(i - 1)
@@ -215,6 +219,7 @@ contains
                   dV(i) = dV(i) - Q_vert(i + 1)*state%V(i + 1)
                   dTemp(i) = dTemp(i) - Q_vert(i + 1)*state%T(i + 1)
                   dS(i) = dS(i) - Q_vert(i + 1)*state%S(i + 1)
+
                   dTr(i) = dTr(i) - Q_vert(i + 1)*state%Tr(i + 1)
                   dHO(i) = dHO(i) - Q_vert(i + 1)*state%heavy_oxygen(i + 1)
                   dLA(i) = dLA(i) - Q_vert(i + 1)*state%light_ar(i + 1)
@@ -226,7 +231,7 @@ contains
                end if
             end do
 
-            ! Add change to state variables
+            ! Compute change
             ! dT = dT(vertical advection) + dT(inflow) + dT(outflow), units: °C*m^3/s
             dTemp(1:ubnd_vol) = dTemp(1:ubnd_vol) + state%Q_inp(3, 1:ubnd_vol) + state%Q_inp(2, 1:ubnd_vol)*state%T(1:ubnd_vol)
             ! dS = dS(vertical advection) + dS(inflow) + dS(outflow), units: ‰*m^3/s
@@ -244,11 +249,13 @@ contains
             dAr(1:ubnd_vol) = dAr(1:ubnd_vol) + state%Q_inp(10, 1:ubnd_vol) + state%Q_inp(2, 1:ubnd_vol)*state%Ar(1:ubnd_vol)
             dKr(1:ubnd_vol) = dKr(1:ubnd_vol) + state%Q_inp(11, 1:ubnd_vol) + state%Q_inp(2, 1:ubnd_vol)*state%Kr(1:ubnd_vol)
 
+
             ! Add change to the state variable
             state%U(1:ubnd_vol) = state%U(1:ubnd_vol) + AreaFactor_adv(1:ubnd_vol)*dU(1:ubnd_vol)
             state%V(1:ubnd_vol) = state%V(1:ubnd_vol) + AreaFactor_adv(1:ubnd_vol)*dV(1:ubnd_vol)
             state%T(1:ubnd_vol) = state%T(1:ubnd_vol) + AreaFactor_adv(1:ubnd_vol)*dTemp(1:ubnd_vol)
             state%S(1:ubnd_vol) = state%S(1:ubnd_vol) + AreaFactor_adv(1:ubnd_vol)*dS(1:ubnd_vol)
+
             state%Tr(1:ubnd_vol) = state%Tr(1:ubnd_vol) + AreaFactor_adv(1:ubnd_vol)*dTr(1:ubnd_vol)
             state%heavy_oxygen(1:ubnd_vol) = state%heavy_oxygen(1:ubnd_vol) + AreaFactor_adv(1:ubnd_vol)*dHO(1:ubnd_vol)
             state%light_ar(1:ubnd_vol) = state%light_ar(1:ubnd_vol) + AreaFactor_adv(1:ubnd_vol)*dLA(1:ubnd_vol)
@@ -258,24 +265,26 @@ contains
             state%Ar(1:ubnd_vol) = state%Ar(1:ubnd_vol) + AreaFactor_adv(1:ubnd_vol)*dAr(1:ubnd_vol)
             state%Kr(1:ubnd_vol) = state%Kr(1:ubnd_vol) + AreaFactor_adv(1:ubnd_vol)*dKr(1:ubnd_vol)
 
-            ! Change due to rain/evaporation
-            hum = 0.63_RK ! 3.3°C difference water-air => 0.82*0.77
-            alpha_Tr = 0.89_RK ! 0.89 according to W. Aeschbach, without kinetic
-            Tr_p = state%Q_inp(5,ubnd_vol)/state%Q_inp(1,ubnd_vol)
-            Tr_L = state%Tr(ubnd_vol)
-            E = 115_RK
 
-            Tr_evap = E*alpha_Tr*(hum*Tr_p - Tr_L)/(1 - hum)
-            Tr_rain = E*Tr_p
+            ! Change due to rain/evaporation for Tritium
+            hum = 0.63_RK ! 3.3°C difference water-air => 0.82*0.77
+            alpha_Tr = 0.89_RK ! according to W. Aeschbach, without kinetic
+            Tr_p = state%Q_inp(5,ubnd_vol)/state%Q_inp(1,ubnd_vol) ! Assuming surface inflow as same Tr as rain
+            Tr_lake = state%Tr(ubnd_vol)
+            E = 115_RK  ! Computed from water balance in Lake Kivu (Muvundja et al, 2014)
+
+            Tr_evap = E*alpha_Tr*(hum*Tr_p - Tr_lake)/(1.0_RK - hum)
+            Tr_rain = E*Tr_p ! E=R for Lake Kivu (Muvundja et al., 2014)
 
             state%Tr(ubnd_vol) = state%Tr(ubnd_vol) + AreaFactor_adv(ubnd_vol)*(Tr_evap + Tr_rain)
 
-            delta_in = state%Q_inp(6,ubnd_vol)/state%Q_inp(1,ubnd_vol)!/1000*9 - 1
-            delta_lake = state%heavy_oxygen(ubnd_vol)!/1000*9-1
-            alpha_18O = 1/exp(-0.00207 - 0.4156/(state%T(ubnd_vol) + 273) + 1137/(state%T(ubnd_vol) + 273)**2)
-            ho_evap = E*(hum*delta_in - alpha_18O*delta_lake)/(1.0_RK - hum)
-            ho_rain = E*delta_in
-            state%heavy_oxygen(ubnd_vol) = state%heavy_oxygen(ubnd_vol) + AreaFactor_adv(ubnd_vol)*(ho_evap + ho_rain)
+            ! Change due to rain/evaporation for 18O
+            HO_p = state%Q_inp(6,ubnd_vol)/state%Q_inp(1,ubnd_vol)
+            HO_lake = state%heavy_oxygen(ubnd_vol)
+            alpha_18O = 1/exp(-0.00207_RK - 0.4156_RK/(state%T(ubnd_vol) + 273.15_RK) + 1137.0_RK/(state%T(ubnd_vol) + 273.15_RK)**2)
+            HO_evap = E*(hum*HO_p - alpha_18O*HO_lake)/(1.0_RK - hum)
+            HO_rain = E*HO_p
+            state%heavy_oxygen(ubnd_vol) = state%heavy_oxygen(ubnd_vol) + AreaFactor_adv(ubnd_vol)*(HO_evap + HO_rain)
 
             ! Variation of variables due to change in volume
             state%U(ubnd_vol) = state%U(ubnd_vol)*h(ubnd_vol)/(h(ubnd_vol) + dh)
