@@ -209,7 +209,7 @@ contains
       class(ModelState), intent(inout) :: state
       integer :: i,j
       real(RK) ::epslim
-      real(RK) :: log_NN
+      real(RK) :: log_NN, offset
       associate (grid=>self%grid, &
                  ubnd_fce=>self%grid%ubnd_fce, &
                  ubnd_vol=>self%grid%ubnd_vol)
@@ -263,7 +263,7 @@ contains
 
 
                      ! Between 120 and 170 m
-                     if (grid%z_volume(i) > 3316) then
+                     if (grid%z_volume(i) > 316) then
                         ! From Kapp-N2 loglog regression new
                         !state%nuh(i) = exp(-0.5573*log_NN - 18.86)
                         !state%nus(i) = exp(-0.6511*log_NN - 23.24)
@@ -323,7 +323,14 @@ contains
             state%nut(i) = state%nug(i)
 
             ! Calculate heat flux
-            state%heat_flux(i) = -cp*rho_0*state%nuh(i)*(state%T(i) - state%T(i - 1))/(grid%h(i) + grid%h(i - 1))*2           
+            if(state%NN(i) > 0) then
+               state%diff_heat_flux(i) = -cp*rho_0*state%nuh(i)*(state%T(i) - state%T(i - 1))/(grid%h(i) + grid%h(i - 1))*2
+               state%buoy_heat_flux(i) = 0
+            else
+               state%diff_heat_flux(i) = 0
+               state%buoy_heat_flux(i) = -cp*rho_0*state%nuh(i)*(state%T(i) - state%T(i - 1))/(grid%h(i) + grid%h(i - 1))*2
+            end if
+            state%adv_heat_flux(i) = cp*rho_0*state%w(i)*(state%T(i) - 23)
             state%salt_flux(i) = -state%nus(i)*(state%S(i) - state%S(i - 1))/(grid%h(i) + grid%h(i - 1))*2
 
          end do
