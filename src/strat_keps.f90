@@ -263,19 +263,19 @@ contains
 
 
                      ! Between 120 and 170 m
-                     if (grid%z_volume(i) > 316) then
+                     !if (grid%z_volume(i) > 316) then
                         ! From Kapp-N2 loglog regression new
                         !state%nuh(i) = exp(-0.5573*log_NN - 18.86)
                         !state%nus(i) = exp(-0.6511*log_NN - 23.24)
 
                         ! From Kapp-N2 loglog regression new new (29.4.2020)
-                        state%nuh(i) = exp(-0.7184*log_NN - 21.22)
-                        state%nus(i) = exp(-0.8202*log_NN - 25.79)
+                        !state%nuh(i) = exp(-0.7184*log_NN - 21.22)
+                        !state%nus(i) = exp(-0.8202*log_NN - 25.79)
 
                         !if (state%nuh(i) < 1e-6+nuh_mol) state%nuh(i) = 1e-6+nuh_mol
                         !if (state%nus(i) < 1e-8+nus_mol) state%nus(i) = 1e-8+nus_mol
 
-                     else
+                     !else
                         ! From Kapp-N2 loglog regression new new (8.4.2020)
                         !state%nuh(i) = 0.4e-9*(log_NN + 1)**4
                         !state%nus(i) = exp(-0.6587*log_NN - 22.95)
@@ -285,7 +285,7 @@ contains
                         state%nuh(i) = exp(-0.7184*log_NN - 19.90)
                         state%nus(i) = exp(-0.8202*log_NN - 24.41)
 
-                     end if
+                     !end if
 
                   end if
                else
