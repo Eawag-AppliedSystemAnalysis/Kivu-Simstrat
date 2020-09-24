@@ -333,7 +333,7 @@ contains
           ! Interpolate state on volume grid
           call self%grid%interpolate_from_vol(self%output_config%output_vars_aed2%values(:,i), self%output_config%zout, values_on_zout, self%n_depths, self%output_config%output_depth_reference)
           ! Write state
-          call self%output_files(i + self%n_vars)%add(values_on_zout, real_fmt='(F14.8)')
+          call self%output_files(i + self%n_vars)%add(values_on_zout, real_fmt='(ES14.6)')
           ! Advance to next row
           call self%output_files(i + self%n_vars)%next_row()
         end do

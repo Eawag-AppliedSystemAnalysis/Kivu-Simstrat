@@ -140,8 +140,8 @@ contains
 
          ! Define variables that should be written
          if (output_cfg%output_all) then
-            output_cfg%number_output_vars = 41
-            output_cfg%output_var_names = [character(len=12) :: 'V','U','T','S','co2','ch4','num','nuh','nus','nug','NN','k','eps','P','B','Ps','HA','HW','HK','HV','Rad0','TotalIceH','BlackIceH','WhiteIceH','SnowH','WaterH','Qvert','rho','DiffHeatFlux','BuoyHeatFlux','AdvHeatFlux','SaltFlux','DensityRatio','LateralInput','Tr','HeavyOxygen','LightAr','He','Ne','Ar','Kr']
+            output_cfg%number_output_vars = 43
+            output_cfg%output_var_names = [character(len=12) :: 'V','U','T','S','co2','ch4','num','nuh','nus','nug','NN','k','eps','P','B','Ps','HA','HW','HK','HV','Rad0','TotalIceH','BlackIceH','WhiteIceH','SnowH','WaterH','Qvert','rho','DiffHeatFlux','BuoyHeatFlux','AdvHeatFlux','DiffSaltFlux','AdvSaltFlux','VertVel','DensityRatio','LateralInput','Tr','HeavyOxygen','LightAr','He','Ne','Ar','Kr']
          else
             output_cfg%number_output_vars = size(output_cfg%output_var_names)
          end if
@@ -360,16 +360,30 @@ contains
                   self%simdata%output_cfg%output_vars(i)%face_grid = .false.
 
                case('AdvHeatFlux')
-                  ! Vertical heat flux [W m-2]
+                  ! Vertical advective heat flux [W m-2]
                   self%simdata%output_cfg%output_vars(i)%name = "AdvHeatFlux"
                   self%simdata%output_cfg%output_vars(i)%values => self%simdata%model%adv_heat_flux
                   self%simdata%output_cfg%output_vars(i)%volume_grid = .true.
                   self%simdata%output_cfg%output_vars(i)%face_grid = .false.
 
-               case('SaltFlux')
-                  ! Vertical heat flux [W m-2]
-                  self%simdata%output_cfg%output_vars(i)%name = "SaltFlux"
-                  self%simdata%output_cfg%output_vars(i)%values => self%simdata%model%salt_flux
+               case('DiffSaltFlux')
+                  ! Vertical diffusive salt flux [‰ m-2]
+                  self%simdata%output_cfg%output_vars(i)%name = "DiffSaltFlux"
+                  self%simdata%output_cfg%output_vars(i)%values => self%simdata%model%diff_salt_flux
+                  self%simdata%output_cfg%output_vars(i)%volume_grid = .true.
+                  self%simdata%output_cfg%output_vars(i)%face_grid = .false.
+
+               case('AdvSaltFlux')
+                  ! Vertical advective salt flux [‰ m-2]
+                  self%simdata%output_cfg%output_vars(i)%name = "AdvSaltFlux"
+                  self%simdata%output_cfg%output_vars(i)%values => self%simdata%model%adv_salt_flux
+                  self%simdata%output_cfg%output_vars(i)%volume_grid = .true.
+                  self%simdata%output_cfg%output_vars(i)%face_grid = .false.
+
+               case('VertVel')
+                  ! Vertical velocity [m s-1]
+                  self%simdata%output_cfg%output_vars(i)%name = "VertVel"
+                  self%simdata%output_cfg%output_vars(i)%values => self%simdata%model%w
                   self%simdata%output_cfg%output_vars(i)%volume_grid = .true.
                   self%simdata%output_cfg%output_vars(i)%face_grid = .false.
 

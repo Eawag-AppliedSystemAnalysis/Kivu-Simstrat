@@ -149,7 +149,8 @@ module strat_simdata
       real(RK), dimension(:), pointer :: dHe, dNe, dAr, dKr ! Source/sink for noble gas concentrations [ccSTP/g]
       real(RK), dimension(:, :), allocatable :: Q_inp ! Horizontal inflow [m^3/s]
       real(RK), dimension(:), pointer :: rho ! Water density [kg/m^3]
-      real(RK), dimension(:), allocatable :: diff_heat_flux, buoy_heat_flux, adv_heat_flux, salt_flux ! Heat flux [W m-2], salt_flux 
+      real(RK), dimension(:), allocatable :: diff_heat_flux, buoy_heat_flux, adv_heat_flux ! Heat flux [W m-2]
+      real(RK), dimension(:), allocatable :: diff_salt_flux, adv_salt_flux ! Salt_flux [permil m-2]
       real(RK), dimension(:,:), pointer :: AED2_state ! State matrix of AED2 variables
       real(RK), dimension(:,:), pointer :: AED2_diagstate ! State matrix of AED2 variables
       character(len=48), dimension(:), pointer :: AED2_names ! Names of AED2 state variables used in the simulation
@@ -172,7 +173,7 @@ module strat_simdata
 
       real(RK), dimension(:), allocatable :: absorb ! Absorption coeff [m-1]
       real(RK), dimension(:), pointer :: absorb_vol ! Absorption coeff on vol grid [m-1]
-      real(RK) :: u10, v10, Wf ! Wind speeds, wind factor
+      real(RK) :: u10, v10, Wf, Vap_atm ! Wind speeds, wind factor
       real(RK), pointer :: uv10 ! pointer attribute needed for AED2
       real(RK), pointer :: rain ! pointer attribute needed for AED2, rain is not calculated in Simstrat for the moment, but required by AED2
       real(RK) :: drag, u_taus ! Drag
@@ -272,7 +273,8 @@ contains
       allocate (self%diff_heat_flux(state_size))
       allocate (self%buoy_heat_flux(state_size))
       allocate (self%adv_heat_flux(state_size))
-      allocate (self%salt_flux(state_size))
+      allocate (self%diff_salt_flux(state_size))
+      allocate (self%adv_salt_flux(state_size))
 
       ! Values on z_upp grid
       allocate (self%k(state_size + 1))
@@ -339,7 +341,8 @@ contains
       self%ch4 = 0.0_RK
       self%buoy_heat_flux = 0.0_RK
       self%adv_heat_flux = 0.0_RK
-      self%salt_flux = 0.0_RK
+      self%diff_salt_flux = 0.0_RK
+      self%adv_salt_flux = 0.0_RK
 
       self%k = 0.0_RK
       self%ko = 0.0_RK

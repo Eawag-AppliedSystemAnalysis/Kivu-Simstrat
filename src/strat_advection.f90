@@ -150,8 +150,9 @@ contains
       real(RK) :: dU(self%grid%nz_grid), dV(self%grid%nz_grid), dTemp(self%grid%nz_grid)
       real(RK) :: dS(self%grid%nz_grid), dTr(self%grid%nz_grid), dHO(self%grid%nz_grid), dLA(self%grid%nz_grid)
       real(RK) :: dHe(self%grid%nz_grid), dNe(self%grid%nz_grid), dAr(self%grid%nz_grid), dKr(self%grid%nz_grid)
-      real(RK) :: Tr_evap, Tr_rain, Tr_p, Tr_lake, alpha_Tr, hum, E
-      real(RK) :: HO_evap, HO_rain, HO_p, HO_lake, alpha_18O
+      real(RK) :: Tr_evap, Tr_rain, Tr_p, Tr_lake, alpha_Tr, f, T_abs, hum, E
+      real(RK) :: HO_evap, HO_rain, HO_p, HO_lake, alpha_18O, delta_eps
+      real(RK) :: Vap_atm, Vap_lake
       integer :: outflow_above, outflow_below
 
       associate(ubnd_vol => self%grid%ubnd_vol, &
@@ -265,13 +266,25 @@ contains
             state%Ar(1:ubnd_vol) = state%Ar(1:ubnd_vol) + AreaFactor_adv(1:ubnd_vol)*dAr(1:ubnd_vol)
             state%Kr(1:ubnd_vol) = state%Kr(1:ubnd_vol) + AreaFactor_adv(1:ubnd_vol)*dKr(1:ubnd_vol)
 
+            ! Preparation
+            T_abs = state%T(ubnd_vol) + 273.15
+            f = state%Vap_atm/1013/exp(24.4543 - 67.4509*100/T_abs - 4.8489*log(T_abs/100)) ! Weiss, 1980
+
+            Vap_atm = 10**((0.7859_RK + 0.03477_RK*state%T_atm)/(1 + 0.00412_RK*state%T_atm))
+            Vap_atm = Vap_atm*(1 + 1e-6_RK*self%param%p_air*(4.5_RK + 0.00006_RK*state%T_atm**2))
+
+            Vap_lake = 10**((0.7859_RK + 0.03477_RK*state%T(ubnd_vol))/(1 + 0.00412_RK*state%T(ubnd_vol)))
+            Vap_lake = Vap_lake*(1 + 1e-6_RK*self%param%p_air*(4.5_RK + 0.00006_RK*state%T(ubnd_vol)**2))
+
+            hum = f*Vap_atm/Vap_lake
+
+            E = 115_RK  ! Computed from water balance in Lake Kivu (Muvundja et al, 2014)
 
             ! Change due to rain/evaporation for Tritium
-            hum = 0.63_RK ! 3.3°C difference water-air => 0.82*0.77
-            alpha_Tr = 0.89_RK ! according to W. Aeschbach, without kinetic
+            alpha_Tr = 0.89_RK ! according to W. Aeschbach (kinetic contribution is negligible)
+
             Tr_p = state%Q_inp(5,ubnd_vol)/state%Q_inp(1,ubnd_vol) ! Assuming surface inflow as same Tr as rain
             Tr_lake = state%Tr(ubnd_vol)
-            E = 115_RK  ! Computed from water balance in Lake Kivu (Muvundja et al, 2014)
 
             Tr_evap = E*alpha_Tr*(hum*Tr_p - Tr_lake)/(1.0_RK - hum)
             Tr_rain = E*Tr_p ! E=R for Lake Kivu (Muvundja et al., 2014)
@@ -279,11 +292,16 @@ contains
             state%Tr(ubnd_vol) = state%Tr(ubnd_vol) + AreaFactor_adv(ubnd_vol)*(Tr_evap + Tr_rain)
 
             ! Change due to rain/evaporation for 18O
-            HO_p = state%Q_inp(6,ubnd_vol)/state%Q_inp(1,ubnd_vol)
+            HO_p = state%Q_inp(6,ubnd_vol)/state%Q_inp(1,ubnd_vol)   ! Precipitation is assumed to be the same as surface inflow
             HO_lake = state%heavy_oxygen(ubnd_vol)
-            alpha_18O = 1/exp(-0.00207_RK - 0.4156_RK/(state%T(ubnd_vol) + 273.15_RK) + 1137.0_RK/(state%T(ubnd_vol) + 273.15_RK)**2)
-            HO_evap = E*(hum*HO_p - alpha_18O*HO_lake)/(1.0_RK - hum)
+
+            ! Contributions of equilibrium and kinetic fractionation
+            alpha_18O = 1/exp(-0.00207_RK - 0.4156_RK/T_abs + 1137.0_RK/T_abs**2) ! Majoube 1971 in Gonfiantini 1976
+            delta_eps = 14.2*(1.0_RK - hum)/1000 ! Kinetic contribution according to Gonfiantini, 1976
+
+            HO_evap = E*alpha_18O*(hum*HO_p - HO_lake)/(1.0_RK - hum + delta_eps)
             HO_rain = E*HO_p
+
             state%heavy_oxygen(ubnd_vol) = state%heavy_oxygen(ubnd_vol) + AreaFactor_adv(ubnd_vol)*(HO_evap + HO_rain)
 
             ! Variation of variables due to change in volume

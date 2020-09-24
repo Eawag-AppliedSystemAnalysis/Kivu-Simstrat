@@ -131,7 +131,7 @@ contains
       real(RK) :: tau
       real(RK) :: A_s(8), A_e(8), A_cur(8) ! 8 is the maximum number of rows in the forcing file
       real(RK) :: fu, Vap_wat, heat0, emissivity
-      real(RK) :: T_surf, F_glob, Vap_atm, Cloud
+      real(RK) :: T_surf, F_glob, Cloud ! Vap_atm
       real(RK) :: H_A, H_K, H_V, H_W, H_tot
       real(RK) :: F_snow, F_snowice, F_ice
       real(RK) :: qa, q0, sh_c
@@ -193,7 +193,7 @@ contains
                F_glob = A_cur(4)*(1 - state%albedo_water) * param%p_sw
             end if
 
-            Vap_atm = A_cur(5)
+            state%Vap_atm = A_cur(5)
             Cloud = 0.5
             if (cfg%use_filtered_wind) state%Wf = A_cur(6) ! AG 2014
             if (cfg%snow_model == 1 .and. cfg%use_filtered_wind) then
@@ -219,7 +219,7 @@ contains
                F_glob = A_cur(4)*(1 - state%albedo_water) * param%p_sw
             end if
 
-            Vap_atm = A_cur(5)
+            state%Vap_atm = A_cur(5)
             Cloud = A_cur(6)
             if (Cloud < 0 .or. Cloud > 1) then
                write (*,'(A,F12.6)') 'Cloud : ' , Cloud
@@ -264,7 +264,7 @@ contains
                F_glob = A_cur(4)*(1 - state%albedo_water) * param%p_sw
             end if
 
-            Vap_atm = A_cur(5)
+            state%Vap_atm = A_cur(5)
             H_A = A_cur(6)
             if (cfg%use_filtered_wind) state%Wf = A_cur(7) ! AG 2014
             if (cfg%snow_model == 1 .and. cfg%use_filtered_wind) then
@@ -282,7 +282,7 @@ contains
 
                ! Factor 0.6072 to account for changing wind height from 10 to 2 m
                ! Further evaluation of evaporation algorithm may be required.
-               fu = sqrt((2.7_RK*max(0.0_RK,(T_surf-state%T_atm)/(1 - 0.378_RK*Vap_atm/param%p_air))**0.333_RK)**2 + (0.6072_RK*3.1_RK*state%uv10)**2)
+               fu = sqrt((2.7_RK*max(0.0_RK,(T_surf-state%T_atm)/(1 - 0.378_RK*state%Vap_atm/param%p_air))**0.333_RK)**2 + (0.6072_RK*3.1_RK*state%uv10)**2)
                fu = fu*param%p_windf ! Provided fitting factor p_windf (~1)
 
                ! Water vapor saturation pressure in air at water temperature (Gill 1992) [millibar]
@@ -294,7 +294,7 @@ contains
                ! see Flerchinger et al. (2009)
                if (cfg%forcing_mode /= 5) then
                   H_A = (1 - r_a)*((1 - 0.84_RK*Cloud)*(59.38_RK + 113.7_RK*((state%T_atm + 273.15_RK)/273.16_RK)**6 &
-                     + 96.96_RK*sqrt(465*Vap_atm/(state%T_atm + 273.15_RK)*0.04_RK))/5.67e-8_RK/ &
+                     + 96.96_RK*sqrt(465*state%Vap_atm/(state%T_atm + 273.15_RK)*0.04_RK))/5.67e-8_RK/ &
                      (state%T_atm + 273.15_RK)**4 + 0.84_RK*Cloud)*5.67e-8_RK*(state%T_atm + 273.15_RK)**4
                end if
 
@@ -306,7 +306,7 @@ contains
                H_K = -B0*fu*(T_surf - state%T_atm)
 
                ! Flux of latent heat (evaporation, condensation)
-               H_V = -fu*(Vap_wat - Vap_atm)
+               H_V = -fu*(Vap_wat - state%Vap_atm)
 
                ! Global heat flux (positive: air to water, negative: water to air)
                state%heat = H_A + H_W + H_K + H_V + F_glob * param%beta_sol !MS: added term with beta_sol
@@ -336,12 +336,12 @@ contains
                   end if
                   ! obs fitting factors param%p_lw and param%p_windf not applied to ice covered lake
                   if (cfg%forcing_mode /= 5) then
-                     H_A = (Ha_a + Ha_b * (Vap_atm**(1.0_RK/2.0_RK))) * (1 + Ha_c * Cloud**2) * sig * (state%T_atm + 273.15_RK)**4
+                     H_A = (Ha_a + Ha_b * (state%Vap_atm**(1.0_RK/2.0_RK))) * (1 + Ha_c * Cloud**2) * sig * (state%T_atm + 273.15_RK)**4
                   end if
                   H_W = -emissivity * sig * (T_surf + 273.15_RK)**4
                   H_K = rho_air * cp_air * Hk_CH * (state%T_atm - T_surf) * state%uv10
                   sh_c = 0.622/param%p_air! Converter from absolut vapour pressure to specific humidity (Lepparanta 2015)
-                  qa  = sh_c * Vap_atm! Specific humidity air
+                  qa  = sh_c * state%Vap_atm! Specific humidity air
                   q0  = sh_c * 6.11! Specific humidity for saturation levels (6.11 mbar) at surface (ice) at 0°C (Lepparanta 2015)
                   H_V = rho_air * (l_h + l_e) * Hv_CE * (qa - q0) * state%uv10 ! Through sublimation (solid to gas)
                else ! If no melting only considering penetraiting solar radiation since ice formation is parameterised towards temperature
