@@ -9,6 +9,7 @@ module strat_keps
    use strat_statevar
    use strat_grid
    use strat_solver
+   use utilities
    implicit none
    private
 
@@ -160,7 +161,7 @@ contains
                cee3 = ce3
             end if
             if(grid%z_volume(i) < 365) then 
-               Prod = ce1*state%eps(i)/state%ko(i)*state%P(i)
+               Prod = ce1*state%eps(i)/state%ko(i)*(state%P(i))! + state%P_Seiche(i))
             else
                Prod = ce1*state%eps(i)/state%ko(i)*(state%P(i) + state%P_Seiche(i)) ! New code plus seiche
             end if
@@ -238,10 +239,10 @@ contains
 
             if (self%cfg%apparent_diffusivity) then
                ! Below 120 m (where double diffusive staircases exist)
-               if (grid%z_volume(i) < 365) then
+               if ((grid%z_volume(i) < 365)) then
 
-                  ! If stratification is negative, then use k-eps-model to mix
-                  if ((state%NN(i) < 0.0_RK)) then
+                  ! If stratification is negative, then use k-eps-model to mix (not used at the moment, delete later)
+                  if (state%NN(i) < -40.0_RK) then
                      state%num(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + num_mol
                      state%nuh(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nuh_mol
                      state%nus(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nus_mol
@@ -258,35 +259,54 @@ contains
                      ! Use molecular diffusion of momentum (no real reason for this...)
                      state%num(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + num_mol
 
-                     if (state%NN(i) <= 0) state%NN(i) = 1e-15_RK
+                     if (state%NN(i) <= 1e-10_RK) state%NN(i) = 1e-10_RK
                      log_NN = log(state%NN(i))
 
+                     ! From Kapp-N2 loglog regression new new (8.4.2020)
+                     !state%nuh(i) = 0.4e-9*(log_NN + 1)**4
+                     !state%nus(i) = exp(-0.6587*log_NN - 22.95)
 
-                     ! Between 120 and 170 m
-                     !if (grid%z_volume(i) > 316) then
-                        ! From Kapp-N2 loglog regression new
-                        !state%nuh(i) = exp(-0.5573*log_NN - 18.86)
-                        !state%nus(i) = exp(-0.6511*log_NN - 23.24)
+                     ! From Kapp-N2 loglog regression new new new (29.4.2020)
+                     !state%nuh(i) = 0.4e-9*(log_NN + 1)**4
+                     offset = 0.3
+                     !state%nuh(i) = exp(-0.7184*log_NN - 19.90 - offset)
+                     !state%nus(i) = exp(-0.8202*log_NN - 24.41 - offset)
 
-                        ! From Kapp-N2 loglog regression new new (29.4.2020)
-                        !state%nuh(i) = exp(-0.7184*log_NN - 21.22)
-                        !state%nus(i) = exp(-0.8202*log_NN - 25.79)
+                     ! with new N2 comp with averaging (5 window)
+                     !state%nuh(i) = exp(- - offset)
+                     !state%nus(i) = exp(- - offset)  
 
-                        !if (state%nuh(i) < 1e-6+nuh_mol) state%nuh(i) = 1e-6+nuh_mol
-                        !if (state%nus(i) < 1e-8+nus_mol) state%nus(i) = 1e-8+nus_mol
+                     ! with new N2 comp 131 with averaging (5 window)
+                     !state%nuh(i) = exp(-0.564913*log_NN - 18.4842 - offset)
+                     !state%nus(i) = exp(-0.754070*log_NN - 23.7781 - offset)
 
-                     !else
-                        ! From Kapp-N2 loglog regression new new (8.4.2020)
-                        !state%nuh(i) = 0.4e-9*(log_NN + 1)**4
-                        !state%nus(i) = exp(-0.6587*log_NN - 22.95)
+                     ! new without N2 averaging
+                     !state%nuh(i) = exp(-0.5489*log_NN - 18.27 - offset)
+                     !state%nus(i) = exp(-0.7311*log_NN - 24.33 - offset)
 
-                        ! From Kapp-N2 loglog regression new new new (29.4.2020)
-                        !state%nuh(i) = 0.4e-9*(log_NN + 1)**4
-                        offset = 0.25
-                        state%nuh(i) = exp(-0.7184*log_NN - 19.90 - offset)
-                        state%nus(i) = exp(-0.8202*log_NN - 24.41 - offset)
+                     ! new without N2 averaging 131
+                     !state%nuh(i) = exp(-0.4591*log_NN - 17.51 - offset)
+                     !state%nus(i) = exp(-0.6246*log_NN - 22.59 - offset)
 
-                     !end if
+                     !semilogx(exp(logy),exp(-0.2954*logy - 15.93)./exp(-0.3887*logy - 20.32)) 
+                     !semilogx(exp(logy),exp(-0.4745*logy - 17.67)./exp(-0.6294*logy - 22.66))
+                     state%nuh(i) = exp(-0.4745*log_NN - 17.67 - offset)
+                     state%nus(i) = exp(-0.6294*log_NN - 22.66 - offset)                                                                
+
+                     ! Diffusion cannot be lower than molecular
+                     if (state%nuh(i) < nuh_mol) state%nuh(i) = nuh_mol
+                     if (state%nus(i) < nus_mol) state%nus(i) = nus_mol
+
+                     !if (state%nuh(i) > 3e-4) state%nuh(i) = 3e-4
+                     !if (state%nus(i) > 3e-4) state%nus(i) = 3e-4
+
+                     ! We assume that diffusivity of gases is equal to diffusivity of salts
+                     state%nug(i) = state%nus(i)/nus_mol*nug_mol
+                     state%nut(i) = state%nus(i)
+                     state%nu_he(i) = state%nug(i)
+                     state%nu_ne(i) = state%nug(i)
+                     state%nu_ar(i) = state%nug(i)
+                     state%nu_kr(i) = state%nug(i)
 
                   end if
                else
@@ -315,14 +335,6 @@ contains
                state%nu_kr(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nu_kr_mol
             end if
 
-            ! Diffusion cannot be lower than molecular
-            if (state%nuh(i) < nuh_mol) state%nuh(i) = nuh_mol
-            if (state%nus(i) < nus_mol) state%nus(i) = nus_mol
-
-            ! We assume that diffusivity of gases is equal to diffusivity of salts
-            state%nug(i) = state%nus(i)!/nus_mol*nug_mol
-            state%nut(i) = state%nug(i)
-
             ! Calculate heat flux
             if(state%NN(i) > 0) then
                state%diff_heat_flux(i) = -cp*rho_0*state%nuh(i)*(state%T(i) - state%T(i - 1))/(grid%h(i) + grid%h(i - 1))*2
@@ -332,7 +344,8 @@ contains
                state%buoy_heat_flux(i) = -cp*rho_0*state%nuh(i)*(state%T(i) - state%T(i - 1))/(grid%h(i) + grid%h(i - 1))*2
             end if
             state%adv_heat_flux(i) = cp*rho_0*state%w(i)*(state%T(i) - 23)
-            state%salt_flux(i) = -state%nus(i)*(state%S(i) - state%S(i - 1))/(grid%h(i) + grid%h(i - 1))*2
+            state%diff_salt_flux(i) = -state%nus(i)*(state%S(i) - state%S(i - 1))/(grid%h(i) + grid%h(i - 1))*2
+            state%adv_salt_flux(i) = state%w(i)*state%S(i)
 
          end do
 
