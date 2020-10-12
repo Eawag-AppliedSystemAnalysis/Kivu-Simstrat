@@ -81,11 +81,12 @@ contains
       self%simstrat_path(4) = input_config%SinpName
       self%simstrat_path(5) = input_config%TrinpName
       self%simstrat_path(6) = input_config%HOinpName
-      self%simstrat_path(7) = input_config%LAinpName
-      self%simstrat_path(8) = input_config%HeinpName
-      self%simstrat_path(9) = input_config%NeinpName
-      self%simstrat_path(10) = input_config%ArinpName
-      self%simstrat_path(11) = input_config%KrinpName
+      self%simstrat_path(7) = input_config%DinpName
+      self%simstrat_path(8) = input_config%LAinpName
+      self%simstrat_path(9) = input_config%HeinpName
+      self%simstrat_path(10) = input_config%NeinpName
+      self%simstrat_path(11) = input_config%ArinpName
+      self%simstrat_path(12) = input_config%KrinpName
 
       self%couple_aed2 = model_config%couple_aed2
       if (self%couple_aed2) then
@@ -156,7 +157,7 @@ contains
       real(RK) :: Inp(1:self%n_vars,1:self%max_n_inflows)
       real(RK) :: dummy
       real(RK) :: Q_in(1:self%grid%ubnd_vol), h_in(1:self%grid%ubnd_vol)
-      real(RK) :: T_in, S_in, Tr_in, HO_in, LA_in, co2_in, ch4_in, rho_in, CD_in, g_red, slope, Ri, E, Q_inp_inc
+      real(RK) :: T_in, S_in, Tr_in, HO_in, D_in, LA_in, co2_in, ch4_in, rho_in, CD_in, g_red, slope, Ri, E, Q_inp_inc
       real(RK) :: He_in, Ne_in, Ar_in, Kr_in
       real(RK) :: AED2_in(state%n_AED2)
 
@@ -382,12 +383,13 @@ contains
                S_in = Inp(4,j) !Inflow salinity [‰]
                Tr_in = Inp(5,j) ! Inflow tritium [TU]
                HO_in = Inp(6,j) ! Inflow heavy oxygen [‰]
-               LA_in = Inp(7,j) ! Inflow 39Ar [‰]
+               D_in = Inp(7,j) ! Inflow deuterium [‰]
+               LA_in = Inp(8,j) ! Inflow 39Ar [‰]
 
-               He_in = Inp(8,j) ! Inflow He [ccSTP]
-               Ne_in = Inp(9,j) ! Inflow Ne [ccSTP]
-               Ar_in = Inp(10,j) ! Inflow Ar [ccSTP]
-               Kr_in = Inp(11,j) ! Inflow Kr [ccSTP]
+               He_in = Inp(9,j) ! Inflow He [ccSTP]
+               Ne_in = Inp(10,j) ! Inflow Ne [ccSTP]
+               Ar_in = Inp(11,j) ! Inflow Ar [ccSTP]
+               Kr_in = Inp(12,j) ! Inflow Kr [ccSTP]
 
                ! Only if biochemistry enabled
                if (self%couple_aed2) then
@@ -425,6 +427,7 @@ contains
                      S_in = (S_in*Q_in(k) + state%S(k)*(Q_in(k - 1) - Q_in(k)))/Q_in(k - 1)
                      Tr_in = (Tr_in*Q_in(k) + state%Tr(k)*(Q_in(k - 1) - Q_in(k)))/Q_in(k - 1)
                      HO_in = (HO_in*Q_in(k) + state%heavy_oxygen(k)*(Q_in(k - 1) - Q_in(k)))/Q_in(k - 1)
+                     D_in = (D_in*Q_in(k) + state%deuterium(k)*(Q_in(k - 1) - Q_in(k)))/Q_in(k - 1)
                      LA_in = (LA_in*Q_in(k) + state%light_ar(k)*(Q_in(k - 1) - Q_in(k)))/Q_in(k - 1)
 
                      He_in = (He_in*Q_in(k) + state%He(k)*(Q_in(k - 1) - Q_in(k)))/Q_in(k - 1)
@@ -451,6 +454,7 @@ contains
                      S_in = (S_in*Q_in(k) + state%S(k)*(Q_in(k + 1) - Q_in(k)))/Q_in(k + 1)
                      Tr_in = (Tr_in*Q_in(k) + state%Tr(k)*(Q_in(k + 1) - Q_in(k)))/Q_in(k + 1)
                      HO_in = (HO_in*Q_in(k) + state%heavy_oxygen(k)*(Q_in(k + 1) - Q_in(k)))/Q_in(k + 1)
+                     D_in = (D_in*Q_in(k) + state%deuterium(k)*(Q_in(k + 1) - Q_in(k)))/Q_in(k + 1)
                      LA_in = (LA_in*Q_in(k) + state%light_ar(k)*(Q_in(k + 1) - Q_in(k)))/Q_in(k + 1)
 
                      He_in = (He_in*Q_in(k) + state%He(k)*(Q_in(k + 1) - Q_in(k)))/Q_in(k + 1)
@@ -478,11 +482,12 @@ contains
                   Q_inp(4,i) = Q_inp(4,i) + S_in*Q_inp_inc
                   Q_inp(5,i) = Q_inp(5,i) + Tr_in*Q_inp_inc
                   Q_inp(6,i) = Q_inp(6,i) + HO_in*Q_inp_inc
-                  Q_inp(7,i) = Q_inp(7,i) + LA_in*Q_inp_inc
-                  Q_inp(8,i) = Q_inp(8,i) + He_in*Q_inp_inc
-                  Q_inp(9,i) = Q_inp(9,i) + Ne_in*Q_inp_inc
-                  Q_inp(10,i) = Q_inp(10,i) + Ar_in*Q_inp_inc
-                  Q_inp(11,i) = Q_inp(11,i) + Kr_in*Q_inp_inc
+                  Q_inp(7,i) = Q_inp(7,i) + D_in*Q_inp_inc
+                  Q_inp(8,i) = Q_inp(8,i) + LA_in*Q_inp_inc
+                  Q_inp(9,i) = Q_inp(9,i) + He_in*Q_inp_inc
+                  Q_inp(10,i) = Q_inp(10,i) + Ne_in*Q_inp_inc
+                  Q_inp(11,i) = Q_inp(11,i) + Ar_in*Q_inp_inc
+                  Q_inp(12,i) = Q_inp(12,i) + Kr_in*Q_inp_inc
                   if (self%couple_aed2) Q_inp(n_simstrat + 1 : self%n_vars,i) = Q_inp(n_simstrat + 1 : self%n_vars,i) + AED2_in*Q_inp_inc
                end do
             end if

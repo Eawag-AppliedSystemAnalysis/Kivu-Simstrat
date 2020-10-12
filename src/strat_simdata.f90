@@ -22,6 +22,7 @@ module strat_simdata
       character(len=:), allocatable          :: SinpName
       character(len=:), allocatable          :: TrinpName
       character(len=:), allocatable          :: HOinpName
+      character(len=:), allocatable          :: DinpName
       character(len=:), allocatable          :: LAinpName
       character(len=:), allocatable          :: HeinpName
       character(len=:), allocatable          :: NeinpName
@@ -143,9 +144,9 @@ module strat_simdata
       ! Variables located on z_cent grid
       ! Note that for these variables the value at 0 z.b. U(0) is not used
       real(RK), dimension(:), allocatable :: U, V, co2, ch4 ! Water velocities [m/s]
-      real(RK), dimension(:), pointer :: T, S, Tr, heavy_oxygen, light_AR, R_rho ! Temperature [°C], Salinity [‰], 18O [-], 39Ar [-], Density ratio [-]
+      real(RK), dimension(:), pointer :: T, S, Tr, heavy_oxygen, deuterium, light_AR, R_rho ! Temperature [°C], Salinity [‰], 18O [-], D [-], 39Ar [-], Density ratio [-]
       real(RK), dimension(:), pointer :: He, Ne, Ar, Kr ! Noble gas concentrations [ccSTP/g]
-      real(RK), dimension(:), allocatable :: dS, dTr, dHO, dLA ! Source/sink for salinity, tritium, heavy oxygen, 39Ar
+      real(RK), dimension(:), allocatable :: dS, dTr, dHO, dD, dLA ! Source/sink for salinity, tritium, heavy oxygen, deuterium, 39Ar
       real(RK), dimension(:), pointer :: dHe, dNe, dAr, dKr ! Source/sink for noble gas concentrations [ccSTP/g]
       real(RK), dimension(:, :), allocatable :: Q_inp ! Horizontal inflow [m^3/s]
       real(RK), dimension(:), pointer :: rho ! Water density [kg/m^3]
@@ -254,6 +255,7 @@ contains
       allocate (self%S(state_size))
       allocate (self%Tr(state_size))
       allocate (self%heavy_oxygen(state_size))
+      allocate (self%deuterium(state_size))
       allocate (self%light_ar(state_size))
       allocate (self%He(state_size))
       allocate (self%Ne(state_size))
@@ -263,6 +265,7 @@ contains
       allocate (self%dS(state_size))
       allocate (self%dTr(state_size))
       allocate (self%dHO(state_size))
+      allocate (self%dD(state_size))
       allocate (self%dLA(state_size))
       allocate (self%dHe(state_size))
       allocate (self%dNe(state_size))
@@ -322,6 +325,7 @@ contains
       self%S = 0.0_RK
       self%Tr = 0.0_RK
       self%heavy_oxygen = 0.0_RK
+      self%deuterium = 0.0_RK
       self%light_ar = 0.0_RK
       self%He = 0.0_RK
       self%Ne = 0.0_RK
@@ -331,6 +335,7 @@ contains
       self%dS = 0.0_RK
       self%dTr = 0.0_RK
       self%dHO = 0.0_RK
+      self%dD = 0.0_RK
       self%dLA = 0.0_RK
       self%dHe = 0.0_RK
       self%dNe = 0.0_RK

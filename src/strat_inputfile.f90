@@ -140,8 +140,8 @@ contains
 
          ! Define variables that should be written
          if (output_cfg%output_all) then
-            output_cfg%number_output_vars = 43
-            output_cfg%output_var_names = [character(len=12) :: 'V','U','T','S','co2','ch4','num','nuh','nus','nug','NN','k','eps','P','B','Ps','HA','HW','HK','HV','Rad0','TotalIceH','BlackIceH','WhiteIceH','SnowH','WaterH','Qvert','rho','DiffHeatFlux','BuoyHeatFlux','AdvHeatFlux','DiffSaltFlux','AdvSaltFlux','VertVel','DensityRatio','LateralInput','Tr','HeavyOxygen','LightAr','He','Ne','Ar','Kr']
+            output_cfg%number_output_vars = 44
+            output_cfg%output_var_names = [character(len=12) :: 'V','U','T','S','co2','ch4','num','nuh','nus','nug','NN','k','eps','P','B','Ps','HA','HW','HK','HV','Rad0','TotalIceH','BlackIceH','WhiteIceH','SnowH','WaterH','Qvert','rho','DiffHeatFlux','BuoyHeatFlux','AdvHeatFlux','DiffSaltFlux','AdvSaltFlux','VertVel','DensityRatio','LateralInput','Tr','HeavyOxygen','Deuterium','LightAr','He','Ne','Ar','Kr']
          else
             output_cfg%number_output_vars = size(output_cfg%output_var_names)
          end if
@@ -415,6 +415,13 @@ contains
                   self%simdata%output_cfg%output_vars(i)%volume_grid = .true.
                   self%simdata%output_cfg%output_vars(i)%face_grid = .false.
 
+               case('Deuterium')
+                  ! 2H isotope concentration ratio [2_H/1_H]
+                  self%simdata%output_cfg%output_vars(i)%name = "Deuterium"
+                  self%simdata%output_cfg%output_vars(i)%values => self%simdata%model%deuterium
+                  self%simdata%output_cfg%output_vars(i)%volume_grid = .true.
+                  self%simdata%output_cfg%output_vars(i)%face_grid = .false.
+
                case('LightAr')
                   ! 39Ar concentration as percent modern
                   self%simdata%output_cfg%output_vars(i)%name = "LightArgon"
@@ -621,7 +628,7 @@ contains
       ! as a workaround we have to store the values in a local scope allocatable character
       character(kind=CK, len=:), allocatable          :: MorphName, InitName, ForcingName, AbsorpName
       character(kind=CK, len=:), allocatable          :: GridName, zoutName, toutName, PathOut
-      character(kind=CK, len=:), allocatable          :: QinpName, QoutName, TinpName, SinpName, TrinpName, HOinpName, LAinpName
+      character(kind=CK, len=:), allocatable          :: QinpName, QoutName, TinpName, SinpName, TrinpName, HOinpName, DinpName, LAinpName
       character(kind=CK, len=:), allocatable          :: HeinpName, NeinpName, ArinpName, KrinpName
       character(len=20), dimension(:), allocatable :: output_var_names
 
@@ -667,7 +674,8 @@ contains
          call par_file%get('Input.Inflow temperature', TinpName, found); input_cfg%TinpName = TinpName; call check_field(found, 'Input.Inflow temperature', ParName)
          call par_file%get('Input.Inflow salinity', SinpName, found); input_cfg%SinpName = SinpName; call check_field(found, 'Input.Inflow salinity', ParName)
          call par_file%get('Input.Inflow tritium', TrinpName, found); input_cfg%TrinpName = TrinpName; call check_field(found, 'Input.Inflow tritium', ParName)
-         call par_file%get('Input.Inflow heavy oxygen', HOinpName, found); input_cfg%HOinpName = HOinpName; call check_field(found, 'Input.Inflow heavy water', ParName)
+         call par_file%get('Input.Inflow heavy oxygen', HOinpName, found); input_cfg%HOinpName = HOinpName; call check_field(found, 'Input.Inflow heavy oxygen', ParName)
+         call par_file%get('Input.Inflow deuterium', DinpName, found); input_cfg%DinpName = DinpName; call check_field(found, 'Input.Inflow deuterium', ParName)
          call par_file%get('Input.Inflow light ar', LAinpName, found); input_cfg%LAinpName = LAinpName; call check_field(found, 'Input.Inflow light ar', ParName)
          
          call par_file%get('Input.Inflow helium', HeinpName, found); input_cfg%HeinpName = HeinpName; call check_field(found, 'Input.Inflow helium', ParName)
@@ -844,7 +852,7 @@ contains
       ! Local variables
       real(RK) :: z_read(self%simdata%model_cfg%max_length_input_data), U_read(self%simdata%model_cfg%max_length_input_data), V_read(self%simdata%model_cfg%max_length_input_data)
       real(RK) :: T_read(self%simdata%model_cfg%max_length_input_data), S_read(self%simdata%model_cfg%max_length_input_data), Tr_read(self%simdata%model_cfg%max_length_input_data)
-      real(RK) :: HO_read(self%simdata%model_cfg%max_length_input_data), LA_read(self%simdata%model_cfg%max_length_input_data), k_read(self%simdata%model_cfg%max_length_input_data), eps_read(self%simdata%model_cfg%max_length_input_data)
+      real(RK) :: HO_read(self%simdata%model_cfg%max_length_input_data), D_read(self%simdata%model_cfg%max_length_input_data), LA_read(self%simdata%model_cfg%max_length_input_data), k_read(self%simdata%model_cfg%max_length_input_data), eps_read(self%simdata%model_cfg%max_length_input_data)
       real(RK) :: He_read(self%simdata%model_cfg%max_length_input_data), Ne_read(self%simdata%model_cfg%max_length_input_data), Ar_read(self%simdata%model_cfg%max_length_input_data), Kr_read(self%simdata%model_cfg%max_length_input_data)
       real(RK) :: z_ini_depth
       integer :: i, num_read
@@ -858,7 +866,7 @@ contains
          open (13, status='old', file=self%simdata%input_cfg%InitName) ! Opens initial conditions file
          read (13, *) ! Skip header
          do i = 1, max_length_input_data ! Read initial u,v,T, etc
-            read (13, *, end=99) z_read(i), U_read(i), V_read(i), T_read(i), S_read(i), Tr_read(i), HO_read(i), LA_read(i), He_read(i), Ne_read(i), Ar_read(i), Kr_read(i), k_read(i), eps_read(i)
+            read (13, *, end=99) z_read(i), U_read(i), V_read(i), T_read(i), S_read(i), Tr_read(i), HO_read(i), D_read(i), LA_read(i), He_read(i), Ne_read(i), Ar_read(i), Kr_read(i), k_read(i), eps_read(i)
             if (z_read(i)>0) then
                call error('One or several input depths of initial conditions are positive.')
             end if
@@ -894,6 +902,7 @@ contains
          call reverse_in_place(S_read(1:num_read))
          call reverse_in_place(Tr_read(1:num_read))
          call reverse_in_place(HO_read(1:num_read))
+         call reverse_in_place(D_read(1:num_read))
          call reverse_in_place(LA_read(1:num_read))
          call reverse_in_place(k_read(1:num_read))
          call reverse_in_place(eps_read(1:num_read))
@@ -911,6 +920,7 @@ contains
             model%S = S_read(1)
             model%Tr = Tr_read(1)
             model%heavy_oxygen = HO_read(1)
+            model%deuterium = D_read(1)
             model%light_ar = LA_read(1)
 
             model%He = He_read(1)
@@ -928,6 +938,7 @@ contains
             call grid%interpolate_to_vol(z_read, S_read, num_read, model%S)
             call grid%interpolate_to_vol(z_read, Tr_read, num_read, model%Tr)
             call grid%interpolate_to_vol(z_read, HO_read, num_read, model%heavy_oxygen)
+            call grid%interpolate_to_vol(z_read, D_read, num_read, model%deuterium)
             call grid%interpolate_to_vol(z_read, LA_read, num_read, model%light_ar)
 
             call grid%interpolate_to_vol(z_read, He_read, num_read, model%He)

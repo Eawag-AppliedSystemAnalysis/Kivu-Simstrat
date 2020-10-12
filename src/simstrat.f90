@@ -42,7 +42,7 @@ program simstrat_main
    type(UVModelVar) :: mod_u, mod_v
    type(KModelVar) :: mod_k
    type(EpsModelVar) :: mod_eps
-   type(TransportReactionModVar) :: mod_s, mod_tr, mod_heavy_oxygen, mod_light_ar
+   type(TransportReactionModVar) :: mod_s, mod_tr, mod_heavy_oxygen, mod_deuterium, mod_light_ar
    type(TransportReactionModVar) :: mod_He, mod_Ne, mod_Ar, mod_Kr
    type(TurbulenceModule) :: mod_turbulence
    type(IceModule) :: mod_ice
@@ -150,6 +150,11 @@ program simstrat_main
    call mod_heavy_oxygen%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nut, simdata%model%heavy_oxygen, simdata%grid%ubnd_vol)
    call mod_heavy_oxygen%assign_external_source(simdata%model%dHO)
    call mod_heavy_oxygen%assign_decay_constant(no_decay)
+
+   ! Set mod_deuterium (2H) (transport module-reaction) to have nut as nu
+   call mod_deuterium%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nut, simdata%model%deuterium, simdata%grid%ubnd_vol)
+   call mod_deuterium%assign_external_source(simdata%model%dD)
+   call mod_deuterium%assign_decay_constant(no_decay)
 
    ! Set mod_light_argon (39Ar) (transport module-reaction) to have nut as nu
    call mod_light_ar%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nut, simdata%model%light_ar, simdata%grid%ubnd_vol)
@@ -318,6 +323,9 @@ contains
 
          ! Update and solve transportation terms (here: Heavy oxygen only)
          call mod_heavy_oxygen%update(simdata%model, simdata%model_param)
+
+         ! Update and solve transportation terms (here: Deuterium)
+         call mod_deuterium%update(simdata%model, simdata%model_param)
 
          ! Update and solve transportation terms (here: 39Ar only)
          call mod_light_ar%update(simdata%model, simdata%model_param)
