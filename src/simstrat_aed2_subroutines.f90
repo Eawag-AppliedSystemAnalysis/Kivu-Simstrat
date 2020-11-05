@@ -24,9 +24,6 @@ subroutine allocate_memory(self)
    allocate(self%cc(self%grid%nz_grid, (self%n_vars + self%n_vars_ben)),stat=status)
    if (status /= 0) stop 'allocate_memory(): Error allocating (CC)'
    self%cc = 0.         !# initialise to zeroFastatus
-   allocate(self%cc(self%grid%nz_grid, (self%n_vars + self%n_vars_ben)),stat=status)
-   if (status /= 0) stop 'allocate_memory(): Error allocating (CC)'
-   self%cc = 0.         !# initialise to zeroFastatus
 
    ! Allocate memory for fluxes
    allocate(self%flux_atm(self%n_vars + self%n_vars_ben),stat=status)
