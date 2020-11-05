@@ -306,8 +306,8 @@ contains
             D_lake = state%deuterium(ubnd_vol)
 
             ! Contributions of equilibrium and kinetic fractionation
-            alpha_18O = 1/exp(-0.00207_RK - 0.4156_RK/T_abs + 1137.0_RK/T_abs**2) ! Majoube 1971 in Gonfiantini 1976
-            alpha_D = 1/exp(0.05261_RK - 76.248_RK/T_abs + 24844.0_RK/T_abs**2) ! Majoube 1971 in Gonfiantini 1976
+            alpha_18O = 1/exp(-0.00207_RK - 0.4156_RK/T_abs + 1137.0_RK/T_abs**2) ! Majoube 1971 in Gonfiantini 1986
+            alpha_D = 1/exp(0.05261_RK - 76.248_RK/T_abs + 24844.0_RK/T_abs**2) ! Majoube 1971 in Gonfiantini 1986
             delta_eps_18O = 14.2*(1.0_RK - hum)/1000 ! Kinetic contribution according to Gonfiantini, 1986
             delta_eps_D = 12.5*(1.0_RK - hum)/1000 ! Kinetic contribution according to Gonfiantini, 1986
 

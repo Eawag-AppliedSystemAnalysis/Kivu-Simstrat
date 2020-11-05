@@ -262,11 +262,11 @@ contains
 
                   ! We assume that diffusivity of gases is equal to diffusivity of salts
                   state%nug(i) = state%nus(i)/nus_mol*nug_mol
-                  state%nut(i) = state%nus(i)
-                  state%nu_he(i) = state%nug(i)
-                  state%nu_ne(i) = state%nug(i)
-                  state%nu_ar(i) = state%nug(i)
-                  state%nu_kr(i) = state%nug(i)
+                  state%nut(i) = state%nus(i)/nus_mol*nut_mol
+                  state%nu_he(i) = state%nug(i)/nus_mol*nu_he_mol
+                  state%nu_ne(i) = state%nug(i)/nus_mol*nu_ne_mol
+                  state%nu_ar(i) = state%nug(i)/nus_mol*nu_ar_mol
+                  state%nu_kr(i) = state%nug(i)/nus_mol*nu_kr_mol
                else ! above 120 m
                   state%num(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + num_mol
                   state%nuh(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nuh_mol

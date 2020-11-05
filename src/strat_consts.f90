@@ -36,7 +36,7 @@
     real(RK), parameter      :: nu_he_mol = 7.4e-9_RK ! Wise et al., 1968, at 25°C
     real(RK), parameter      :: nu_ne_mol = 3.4e-9_RK ! Wise et al., 1968, at 25°C
     real(RK), parameter      :: nu_ar_mol = 2.5e-9_RK ! Wise et al., 1966, at 25°C
-    real(RK), parameter      :: nu_kr_mol = 1.93e-9_RK ! Wise et al., 1968, at 25°C
+    real(RK), parameter      :: nu_kr_mol = 1.9e-9_RK ! Wise et al., 1968, at 25°C
 
     ! *** Decay ***
     real(RK), parameter      :: decay_tr = 1.7828e-9_RK
