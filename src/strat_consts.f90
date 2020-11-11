@@ -27,16 +27,16 @@
 
     ! *** Molecular diffusivities ***
     real(RK), parameter      :: num_mol = 1.5e-6_RK
-    real(RK), parameter      :: nuh_mol = 1.4e-7_RK
-    real(RK), parameter      :: nus_mol = 1.2e-9_RK
-    real(RK), parameter      :: nug_mol = 1.9e-9_RK
-    real(RK), parameter      :: nut_mol = 2.3e-9_RK
+    real(RK), parameter      :: nuh_mol = 1.4e-7_RK   ! Reference in Sommer et al., 2013
+    real(RK), parameter      :: nus_mol = 1.2e-9_RK   ! Reference in Sommer et al., 2013
+    real(RK), parameter      :: nug_mol = 1.9e-9_RK   ! Reference in Sommer et al., 2013
+    real(RK), parameter      :: nut_mol = 2.3e-9_RK   ! Mills, 1973
 
     ! *** Molecular diffusivities noble gases ***
-    real(RK), parameter      :: nu_he_mol = 7.4e-9_RK ! Wise et al., 1968, at 25°C
-    real(RK), parameter      :: nu_ne_mol = 3.4e-9_RK ! Wise et al., 1968, at 25°C
-    real(RK), parameter      :: nu_ar_mol = 2.5e-9_RK ! Wise et al., 1966, at 25°C
-    real(RK), parameter      :: nu_kr_mol = 1.9e-9_RK ! Wise et al., 1968, at 25°C
+    real(RK), parameter      :: nu_he_mol = 7.4e-9_RK ! Wise and Houghton, 1968, at 25°C
+    real(RK), parameter      :: nu_ne_mol = 3.4e-9_RK ! Wise and Houghton, 1968, at 25°C
+    real(RK), parameter      :: nu_ar_mol = 2.5e-9_RK ! Wise and Houghton, 1968, at 25°C
+    real(RK), parameter      :: nu_kr_mol = 1.9e-9_RK ! Wise and Houghton, 1968, at 25°C
 
     ! *** Decay ***
     real(RK), parameter      :: decay_tr = 1.7828e-9_RK
