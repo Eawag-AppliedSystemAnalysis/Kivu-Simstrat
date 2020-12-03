@@ -1,6 +1,6 @@
-# Simstrat: a one-dimensional physical lake model
+# Kivu-Simstrat: a one-dimensional physical lake model to simulate Lake Kivu, East Africa
 
-Simstrat is a one-dimensional physical lake model for the simulation of stratification and mixing in deep stratified lakes. The model was originally developed by Goudsmit et al. (2002) and has been successfully applied to lakes with different physical properties. A k-ε model is used to model turbulent mixing including energy transfer of internal seiches. River or groundwater inflow can be added at specific depths or as density-dependent intrusions. The newest version of Simstrat (see below) can also simulate ice/snow covers.
+Kivu-Simstrat consists of the coupled Simstrat-AED2 model, with a few modifications to take into account double diffusive convection and the influence of gases on density in Lake Kivu. Simstrat is a one-dimensional physical lake model (based on Goudsmit et al., 2002) and AED2 is a biogeochemical library.
 
 ## Run Simstrat
 Pre-built binaries are available [here](https://github.com/Eawag-AppliedSystemAnalysis/Simstrat/releases).
