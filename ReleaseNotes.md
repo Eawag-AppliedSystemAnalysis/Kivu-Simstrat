@@ -1,15 +1,6 @@
-## Version 2.0 (2018)
-**Architecture**
-- Object-oriented, modern Fortran 2003 architecture
-- JSON formatted configuration files
-- Consistent array indexing in fortran standard (arrays start with index 1)
-- Docker container to build the model
+## Version Kivu 1.0 (2020)
 
 **Model update**
-- Addition of an ice/snow model based on MyLake
-- Two different kinds of inflows:
-	- Fixed inflows
-	- Inflows which vary with changing water level
-
-**Documentation**
-- Updated documentation including numerical scheme
+- Parameterization of double diffusive convection below 120 m
+- Inclusion of effect of gases CH4 and CO2 on density
+- Determination of groundwater properties (inflow depth, discharge, T, S, CO2) based on the assumption of long-term steady-state conditions
