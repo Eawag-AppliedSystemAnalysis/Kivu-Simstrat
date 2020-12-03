@@ -1,0 +1,84 @@
+{
+    "Input": {
+        "Initial conditions": "LakeKivu\\Initcond\\InitialConditions.dat",
+        "Grid": 243,
+        "Morphology": "LakeKivu\\Bathymetry.dat",
+        "Forcing": "LakeKivu\\Forcing\\Forcing_MiroC5_piC_2000y.dat",
+        "Absorption": "LakeKivu\\Absorption.dat",
+        "Inflow": "LakeKivu\\Inflow_final\\Qin.dat",
+        "Outflow": "LakeKivu\\Inflow_final\\Qout.dat",
+        "Inflow temperature": "LakeKivu\\Inflow_final\\Tin.dat",
+        "Inflow salinity": "LakeKivu\\Inflow_final\\Sin.dat",
+        "Inflow tritium": "LakeKivu\\Inflow_final\\Trin_20_40.dat",
+        "Inflow heavy oxygen": "LakeKivu\\Inflow_final\\HOin.dat",
+        "Inflow deuterium": "LakeKivu\\Inflow_final\\Din.dat",
+        "Inflow light ar": "LakeKivu\\Inflow_final\\LAin.dat",
+        "Inflow helium": "LakeKivu\\Inflow_final\\Hein.dat",
+        "Inflow neon": "LakeKivu\\Inflow_final\\Nein.dat",
+        "Inflow argon": "LakeKivu\\Inflow_final\\Arin.dat",
+        "Inflow krypton": "LakeKivu\\Inflow_final\\Krin.dat"
+    },
+    "Output": {
+        "Path": "LakeKivu\\Results\\",
+        "Depths": 2,
+        "OutputDepthReference": "surface",
+        "Times": 2880,
+        "All"   : false,                                    ! True: All variables are written out, false: only variables in list "variables" are written
+        "Variables" : ["nuh", "nus", "nug", "T", "S","U","NN", "B", "eps", "k", "LateralInput", "rho", "co2", "ch4", "DiffHeatFlux","AdvHeatFlux","DiffSaltFlux","AdvSaltFlux","VertVel","DensityRatio","Tr","HeavyOxygen","Ps","P","Deuterium","He","Ne","Ar","Kr"]        ! Variables written to file (if "all" = false), example: ["T", "S", "WaterH"]
+    },
+    "Simulation": {
+        "Timestep s": 300,
+        "Start year": 1660,
+        "Start d": 126374,
+        "End d": 300000,
+        "DisplaySimulation": 1
+    },
+    "ModelConfig": {
+        "MaxLengthInputData": 1000,
+        "CoupleAED2": true,
+        "TurbulenceModel": 1,
+        "ApparentDiffusivity" : true,
+        "SplitSeicheParameter"    : false,                   ! True: Use a_seiche if N2 exceeds strat_sumr and a_seiche_w otherwise, False: Always use a_seiche
+        "StabilityFunction": 2,
+        "FluxCondition": 1,
+        "Forcing": 5,
+        "UseFilteredWind": false,
+        "SeicheNormalization": 2,
+        "WindDragModel": 3,
+        "InflowMode": 2,
+        "PressureGradients": 2,
+        "IceModel": 0,
+        "SnowModel": 0,
+        "UserDefinedWaterAlbedo"  : false
+    },
+      "AED2Config" : {
+    "AED2ConfigFile"          : "LakeKivu\\aed2.nml",             ! AED2 config file
+    "PathAED2initial"         : "LakeKivu\\AED2_initcond\\",       ! Folder with initial conditions of biochemical variables
+    "PathAED2inflow"          : "LakeKivu\\AED2_inflow_final\\",         ! Folder with inflow files of biochemical variables
+    "PathAED2output"          : "LakeKivu\\AED2_output\\",         ! AED2 output folder
+    "ParticleMobility"        : 1,                      ! 0: particle mobility is off, 1: particle mobility is on
+    "BioshadeFeedback"        : 0,                      ! 0: light absorption coefficients are read from Simstrat input file, 1: light absorption is calculated from biochemical variables
+    "BackgroundExtinction"    : 0.2,                    ! Background extinction added to biochemical absorption (only used if bioshadeFeedback is 1)
+    "BenthicMode"             : 1,                      ! 0: Only bottom most layer interacts with sediment, 1: flancs also interact with sediment (but sediment concentrations are not simulated), 2 and 3: not implemented
+    "NZones"                  : 1,
+    "ZoneHeights"             : [1,2,3]
+  },
+    "ModelParameters": {
+        "lat": -2,
+        "p_air": 855.0,
+        "a_seiche": 2.7e-3,
+        "q_nn": 1.6,
+        "f_wind": 2.4,
+        "c10": 1.0,
+        "cd": 0.002,
+        "hgeo": 0.13,
+        "p_sw": 0.95,
+        "p_lw": 0.95,
+        "p_windf": 1,
+        "beta_sol": 0.35,
+        "wat_albedo": 0.09,
+        "p_albedo": 1.0,
+        "freez_temp": 0.01,
+        "snow_temp": 2.0
+    }
+}
