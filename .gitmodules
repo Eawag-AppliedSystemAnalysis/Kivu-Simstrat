@@ -1,3 +1,5 @@
 [submodule "lib/libaed2"]
 	path = lib/libaed2
 	url = https://github.com/Eawag-AppliedSystemAnalysis/libaed2.git
+[submodule]
+	branch = master
