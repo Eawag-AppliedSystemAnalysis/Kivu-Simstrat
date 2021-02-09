@@ -4,7 +4,7 @@ Simstrat is a one-dimensional physical lake model for the simulation of stratifi
 
 AED2 is a biogeochemical library developed by the University of Western Australia (https://github.com/AquaticEcoDynamics/libaed2)
 
-Kivu-Simstrat consists of the coupled version of Simstrat-AED2, with some modifications for Lake Kivu.
+Kivu-Simstrat consists of the coupled Simstrat (v2.2) and AED2 (v1.3.5) model, with some specific modifications for Lake Kivu.
 
 The Simstrat documentation is in the `doc` folder. The AED2 documentation is pending, but the configuration file (aed2_config.nml) is well documented.
  
