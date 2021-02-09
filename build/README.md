@@ -1,4 +1,4 @@
-# How to build Simstrat with FoBiS.py
+# How to build Kivu-Simstrat with FoBiS.py
 From this folder (`build`), run:
 
 ~~~bash
@@ -6,6 +6,7 @@ FoBiS.py -h
 ~~~
 
 to get help information about its usage.
+
 To compile Simstrat with default configuration, run:
 
 ~~~bash
