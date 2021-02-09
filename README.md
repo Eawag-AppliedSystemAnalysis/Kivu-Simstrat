@@ -1,20 +1,77 @@
-# Kivu-Simstrat: a one-dimensional physical lake model to simulate Lake Kivu, East Africa
+# Kivu-Simstrat: a one-dimensional physical lake model including a biochemical library, optimized for the use on Lake Kivu
 
-Kivu-Simstrat consists of the coupled Simstrat-AED2 model, with a few modifications to take into account double diffusive convection and the influence of gases on density in Lake Kivu. Simstrat is a one-dimensional physical lake model (originally developed by Goudsmit et al., 2002) and AED2 is a biogeochemical library developed by the University of Western-Australia. Kivu-Simstrat is a coupling of Simstrat v2.2 and AED2 v1.3.5.
+Simstrat is a one-dimensional physical lake model for the simulation of stratification and mixing in deep stratified lakes. The model was originally developed by Goudsmit et al. (2002) and has been successfully applied to lakes with different physical properties. A k-ε model is used to model turbulent mixing including energy transfer of internal seiches. River or groundwater inflow can be added at specific depths or as density-dependent intrusions. The newest version of Simstrat (see below) can also simulate ice/snow covers.
 
-## Run Simstrat
-Pre-built binaries are available [here](https://github.com/Eawag-AppliedSystemAnalysis/Simstrat/releases).
+AED2 is a biogeochemical library developed by the University of Western Australia (https://github.com/AquaticEcoDynamics/libaed2)
 
-## Build Simstrat
+Kivu-Simstrat consists of the coupled version of Simstrat-AED2, with some modifications for Lake Kivu.
 
-### Linux or MacOS environment
-We suggest to setup the building environment using Docker; a complete step-by-step guide to use a docker container is available
-[here](misc/docker_build_env).
+The Simstrat documentation is in the `doc` folder. The AED2 documentation is pending, but the configuration file (aed2_config.nml) is well documented.
+ 
+## Run Simstrat (only windows)
+Pre-built windows binaries are available in the `build` folder.
 
-Once the building environment is setup, you can build simstrat with the provided build script. More details [here](build).
+To run the scenarios included in the Lake Kivu modelling publication, go to the root (Kivu_Simstrat_v1.0) and run
 
-### Windows environment
-Please install the required packages listed below (System requirements) and then from terminal navigate into `build` folder and run 
+~~~bash
+.\run_kivu_steady.bat
+~~~
+
+for a 500 year steady-state simulation, starting with T and S from Ross et al., 2015 (PlosOne) and CH4 and CO2 from Bärenbold et al., 2020 (PlosOne).
+The results of this run are stored in scenarios/Results_steady. The units of results are the same as in inflow/initial conditions.
+
+
+Run
+
+~~~bash
+.\run_kivu_steady_ch4inflow.bat
+~~~
+
+for a 500 year steady-state simulation, starting with T and S from Ross et al., 2015 (PlosOne) and CH4 and CO2 from Bärenbold et al., 2020 (PlosOne), with 50% of CH4 from groundwater inflow.
+The results of this run are stored in scenarios/Results_steady. The units of results are the same as in inflow/initial conditions.
+
+
+Run
+
+~~~bash
+.\run_kivu_longterm.bat
+~~~
+
+for a 2000 year longterm simulation, starting with a homogeneous lake.
+The results of this run are stored in scenarios/Results_longterm. The units of results are the same as in inflow/initial conditions.
+
+
+Run
+
+~~~bash
+.\run_kivu_longterm_ch4_inflow.bat
+~~~
+
+for a 2000 year longterm simulation, starting with a homogeneous lake and with 50 % of CH4 coming from inflow.
+The results of this run are stored in scenarios/Results_longterm. The units of results are the same as in inflow/initial conditions.
+
+
+Run
+
+~~~bash
+.\run_kivu_tritium.bat
+~~~
+
+for a 65 year Tritium (3H) simulation, starting with 3H=0 and forced by RCP6 timeseries. The 3H data is published in a separate data package.
+The results of this run are stored in scenarios/Results_tritium. The units of results are the same as in inflow/initial conditions.
+
+
+
+
+## Build AED2 and Simstrat yourself (only windows)
+
+Please install the required packages listed below (System requirements) and then from terminal first navigate into `lib\libaed2` folder and run
+
+~~~bash
+mingw32-make
+~~~
+
+Then, move to the `build` folder and run 
 
 ~~~bash
 FoBiS.py build
@@ -27,20 +84,3 @@ FoBiS.py build
 - 2 compiler options:
 	- [Intel Fortran (Intel Parallel Studio XE 2016)](https://software.intel.com/en-us/parallel-studio-xe/choose-download) (commercial)
 	- Gfortran 6.3 or later (free)
-
-In principle, the manual installation is platform independent. Be aware that other programs on your computer might already use some version of Python and thus interfere with any new installation of Python.
-
-## Documentation
-
-The user manual can be found [here](doc).
-
-The developer documentation can be generated with the FORD python module (`pip install ford`).
-To generate the documentation, run
-
-~~~bash
-FoBiS.py rule -ex makedoc
-~~~
-
-The generated code documentation is saved in `doc/developer/ford/ford_doc/index.htlm`
-
-Additionally, a documentation about the numerical scheme of Simstrat can be found [here](doc/developer/dev_manual).
