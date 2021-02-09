@@ -1,6 +1,6 @@
 # Kivu-Simstrat: a one-dimensional physical lake model to simulate Lake Kivu, East Africa
 
-Kivu-Simstrat consists of the coupled Simstrat-AED2 model, with a few modifications to take into account double diffusive convection and the influence of gases on density in Lake Kivu. Simstrat is a one-dimensional physical lake model (based on Goudsmit et al., 2002) and AED2 is a biogeochemical library.
+Kivu-Simstrat consists of the coupled Simstrat-AED2 model, with a few modifications to take into account double diffusive convection and the influence of gases on density in Lake Kivu. Simstrat is a one-dimensional physical lake model (originally developed by Goudsmit et al., 2002) and AED2 is a biogeochemical library developed by the University of Western-Australia. Kivu-Simstrat is a coupling of Simstrat v2.2 and AED2 v1.3.5.
 
 ## Run Simstrat
 Pre-built binaries are available [here](https://github.com/Eawag-AppliedSystemAnalysis/Simstrat/releases).
