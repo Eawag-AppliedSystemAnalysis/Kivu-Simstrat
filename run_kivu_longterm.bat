@@ -1,0 +1,1 @@
+build\simstrat_kivu_v1.exe config_files\simstrat_config_longterm.par

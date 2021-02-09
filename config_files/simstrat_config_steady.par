@@ -1,0 +1,84 @@
+{
+    "Input": {
+        "Initial conditions": "scenarios\\Initcond\\InitialConditions.dat", ! Path to inititial condition file
+        "Grid": 243,                                                            ! Number of grid cells
+        "Morphology": "scenarios\\Bathymetry.dat",                              ! Path to morphology file
+        "Forcing": "scenarios\\Forcing\\Forcing_MiroC5_piC_2000y.dat",          ! Path to forcing file
+        "Absorption": "scenarios\\Absorption.dat",                              ! Path to absorption file
+        "Inflow": "scenarios\\Inflow\\Qin.dat",                                 ! Path to inflow file of discharge
+        "Outflow": "scenarios\\Inflow\\Qout.dat",                               ! Path to outflow file of discharge
+        "Inflow temperature": "scenarios\\Inflow\\Tin.dat",                     ! Path to inflow file of temperature
+        "Inflow salinity": "scenarios\\Inflow\\Sin.dat",                        ! Path to inflow file of salinity
+        "Inflow tritium": "scenarios\\Inflow\\Trin_20_40.dat",                  ! Path to inflow file of 3H
+        "Inflow heavy oxygen": "scenarios\\Inflow\\HOin.dat",                   ! Path to inflow file of 18O
+        "Inflow deuterium": "scenarios\\Inflow\\Din.dat",                       ! Path to inflow file of 2H
+        "Inflow light ar": "scenarios\\Inflow\\LAin.dat",                       ! Path to inflow file of 39Ar
+        "Inflow helium": "scenarios\\Inflow\\Hein.dat",                         ! Path to inflow file of He
+        "Inflow neon": "scenarios\\Inflow\\Nein.dat",                           ! Path to inflow file of Ne
+        "Inflow argon": "scenarios\\Inflow\\Arin.dat",                          ! Path to inflow file of 36Ar
+        "Inflow krypton": "scenarios\\Inflow\\Krin.dat"                         ! Path to inflow file of Kr
+    },
+    "Output": {
+        "Path": "scenarios\\Results_steady\\",                          ! Path to results folder
+        "Depths": 2,                                                    ! Output depths can be an integer (interpreted as interval in m), a list with depths or a path to a file (containing an integer or a list)
+        "OutputDepthReference": "surface",                              ! "surface": depth of output variables is referenced to lake level, "bottom": depth of output variables is referenced to lake bottom
+        "Times": 2880,                                                  ! Output times can be a number (interpreted as frequency 1/days), a list with times or a path to a file (containing a number or a list)
+        "All"   : false,                                                ! True: All variables are written out, false: only variables in list "variables" are written
+        "Variables" : ["nuh", "nus", "T", "S","NN","LateralInput", "rho","DiffHeatFlux","AdvHeatFlux","DiffSaltFlux","AdvSaltFlux","Tr","HeavyOxygen","Deuterium","He","Ne","Ar","Kr"]     ! Variables written to file (if "all" = false), example: ["T", "S", "WaterH"]
+    },
+    "Simulation": {
+        "Timestep s": 300,                      ! Simulation timestep in seconds 
+        "Start year": 1660,                     ! Starting year
+        "Start d": 126374,                      ! Simulation start in days since 01.01. of starting year
+        "End d": 300000,                        ! Simulation end
+        "DisplaySimulation": 1                  ! If true simulation continues from last snapshot (if present in output folder). Default: false
+    },
+    "ModelConfig": {
+        "MaxLengthInputData": 1000,             ! Maximum length of input data (initial conditions, bathymetry, grid etc.)
+        "CoupleAED2": true,                     ! Switch to turn on/off the biochemical model AED2
+        "TurbulenceModel": 1,                   ! 1: k-epsilon, 2: Mellor-Yamada
+        "ApparentDiffusivity" : true,           ! True: Use double diffusive parameterization below 120 m False: Always use k-epsilon
+        "SplitSeicheParameter"    : false,      ! True: Use a_seiche if N2 exceeds strat_sumr and a_seiche_w otherwise, False: Always use a_seiche
+        "StabilityFunction": 2,                 ! 1: constant, 2: quasi-equilibrium
+        "FluxCondition": 1,                     ! 0: Dirichlet condition, 1: no-flux
+        "Forcing": 5,                           ! 1: Wind + Temp + SolRad, 2: 1 + VapP, 3: 2 + Cloud, 4: Wind + HeatFlux + SolRad, 5: 2 + Incoming Long Wave
+        "UseFilteredWind": false,               ! Switch to activate filtered wind (needs one more column in forcing file)
+        "SeicheNormalization": 2,               ! 1: max N2, 2: integral
+        "WindDragModel": 3,                     ! 1: constant, 2: ocean (increasing), 3: lake (Wüest and Lorke, 2003)
+        "InflowMode": 2,                        ! 0: inflow depths are chosen manually, 1: inflow is density-driven
+        "PressureGradients": 2,                 ! 0: off, 1: Svensson 1978
+        "IceModel": 0,                          ! Switch to turn on/off the ice model
+        "SnowModel": 0,                         ! Switch to turn on/off the snow model (needs ice model and an additional column in forcing)
+        "UserDefinedWaterAlbedo"  : false       ! True: Computed monthly water albedo values from Grishchenko are used, False: Water albedo is user defined (below) and constant
+    },
+      "AED2Config" : {
+    "AED2ConfigFile"          : "config_files\\aed2_config.nml",        ! AED2 config file
+    "PathAED2initial"         : "scenarios\\AED2_initcond\\",       ! Folder with initial conditions of biochemical variables
+    "PathAED2inflow"          : "scenarios\\AED2_inflow\\",             ! Folder with inflow files of biochemical variables
+    "PathAED2output"          : "scenarios\\Results_steady\\",        ! AED2 output folder
+    "ParticleMobility"        : 1,                                      ! 0: particle mobility is off, 1: particle mobility is on
+    "BioshadeFeedback"        : 0,                                      ! 0: light absorption coefficients are read from Simstrat input file, 1: light absorption is calculated from biochemical variables
+    "BackgroundExtinction"    : 0.2,                                    ! Background extinction added to biochemical absorption (only used if bioshadeFeedback is 1)
+    "BenthicMode"             : 1,                                      ! 0: Only bottom most layer interacts with sediment, 1: flancs also interact with sediment (but sediment concentrations are not simulated), 2 and 3: not implemented
+    "NZones"                  : 1,                                      ! Not used
+    "ZoneHeights"             : [1,2,3]                                 ! Not used
+  },
+    "ModelParameters": {
+        "lat": -2,                  ! Latitude in [°]
+        "p_air": 855.0,             ! Air pressure in [mbar]
+        "a_seiche": 2.7e-3,         ! Fraction of wind energy which goes into seiche energy [-]
+        "q_nn": 1.6,                ! Fit parameter for distribution of seiche energy [-]
+        "f_wind": 2.4,              ! Ratio of forcing wind to wind speed at 10 m above lake level [-]
+        "c10": 1.0,                 ! Wind drag coefficient, a physical constant around 0.001 if WindDragModel = 1 and a calibration parameter around 1 if WindDragModel = 2 or 3
+        "cd": 0.002,                ! Bottom drag coefficient [-]
+        "hgeo": 0.13,               ! Geothermal heat flux [W/m2]
+        "p_sw": 0.95,               ! Fit parameter for absorption of short wave radiation from sky [-]
+        "p_lw": 0.95,               ! Fit parameter for absorption of IR radiation from sky [-]
+        "p_windf": 1,               ! Fit parameter for convective and latent heat fluxes [-]
+        "beta_sol": 0.35,           ! Fraction of short-wave radiation directly absorbed as heat by water [-]
+        "wat_albedo": 0.09,         ! User defined water albedo [-] (only used if UserDefinedWaterAlbedo = true)
+        "p_albedo": 1.0,            ! Fit parameter for albedo of ice, snow-ice and snow [-] (only used if IceModel = 1)
+        "freez_temp": 0.01,         ! Freezing temperature of water [°C] (only used if IceModel = 1)
+        "snow_temp": 2.0            ! Temperature of snow [°C] (only used if IceModel = 1 and SnowModel = 1)
+    }
+}
