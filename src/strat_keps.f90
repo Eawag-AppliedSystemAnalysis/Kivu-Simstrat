@@ -112,6 +112,7 @@ contains
          ! check lower limit of k
          do i = 1, ubnd_fce
             if (self%var(i) < k_min) self%var(i) = k_min ! Lower limit of TKE
+            write(6,*) 'postsolve is used'
          end do
 
       end associate
