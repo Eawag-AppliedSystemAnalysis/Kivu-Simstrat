@@ -118,8 +118,9 @@ contains
             !Linearly interpolate value at correct datum (for all depths)
             state%absorb(1:nz + 1) = absorb_start(1:nz + 1) + (state%datum - tb_start)*(absorb_end(1:nz + 1) &
                                  - absorb_start(1:nz + 1))/(tb_end - tb_start)
-            !write(6,*) size(self%grid%z_face), size(state%absorb(1:nz + 1)), nz+1, size(state%absorb_vol(1:nz))
+
             call self%grid%interpolate_to_vol(self%grid%z_face,state%absorb(1:nz + 1),nz + 1,state%absorb_vol(1:nz + 1))
+            state%absorb_vol(nz) = state%absorb_vol(nz - 1)
          end if
          return
 
