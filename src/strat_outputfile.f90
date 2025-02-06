@@ -46,8 +46,7 @@ module strat_outputfile
       class(StaggeredGrid), public, pointer ::grid
       type(csv_file), dimension(:), allocatable :: output_files
       integer, public :: n_depths
-      integer, public :: n_vars
-      integer, public :: n_vars_AED2
+      integer, public :: n_vars, n_vars_Simstrat, n_vars_AED2_state, n_vars_AED2_diagnostic
 
    contains
       procedure(generic_log_init), deferred, pass(self), public :: initialize
@@ -129,12 +128,24 @@ contains
       self%n_vars = size(output_config%output_vars)
 
       if (self%model_config%couple_aed2) then
-        ! allocate AED2 output structure
-        allocate (output_config%output_vars_aed2) ! We don't know yet how many variables
-        output_config%output_vars_aed2%names => state%AED2_names
-        output_config%output_vars_aed2%values => state%AED2_state
-        self%n_vars_AED2 = state%n_AED2
+         ! allocate AED2 output structure for state variables
+         allocate (output_config%output_vars_aed2_state) ! We don't know yet how many variables
+         output_config%output_vars_aed2_state%names => state%AED2_state_names
+         output_config%output_vars_aed2_state%values => state%AED2_state
+         self%n_vars_AED2_state = state%n_AED2_state
+         ! Allocate AED2 output structure for diagnostic variables if necessary
+         if (aed2_config%output_diagnostic_variables) then
+            allocate (output_config%output_vars_aed2_diagnostic) ! We don't know yet how many variables
+            output_config%output_vars_aed2_diagnostic%names => state%AED2_diagnostic_names
+            output_config%output_vars_aed2_diagnostic%values => state%AED2_diagnostic
+            self%n_vars_AED2_diagnostic = state%n_AED2_diagnostic
+         else
+            self%n_vars_AED2_diagnostic = 0
+         end if
+      else
+         self%n_vars_AED2_state = 0
       end if
+      self%n_vars = self%n_vars_Simstrat + self%n_vars_AED2_state + self%n_vars_AED2_diagnostic
 
       ! If output times are given in file
       if (output_config%thinning_interval == 0) then

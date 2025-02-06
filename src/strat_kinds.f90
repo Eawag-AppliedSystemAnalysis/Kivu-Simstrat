@@ -31,7 +31,7 @@ module strat_kinds
 
    ! Common constants
    integer, parameter, public :: RK = kind(0.d0) !Real kind
-   character(len=3), parameter, public :: version = 'Kivu'
+   character(len=3), parameter, public :: version = 'Kivu 1.1'
    integer, parameter, public :: n_simstrat = 12
 
    ! Common Types
