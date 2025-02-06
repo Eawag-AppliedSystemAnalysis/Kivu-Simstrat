@@ -1,6 +1,31 @@
-!------------!
-! Ice module
-! Following:
+! ---------------------------------------------------------------------------------
+!     Kivu-Simstrat a physical 1D model for simulating Lake Kivu (Rwanda/Dep. Rep. Congo)
+!
+!     Developed by:  Group of Applied System Analysis
+!                    Dept. of Surface Waters - Research and Management
+!                    Eawag - Swiss Federal institute of Aquatic Science and Technology
+!
+!     Copyright (C) 2025, Eawag
+!
+!
+!     This program is free software: you can redistribute it and/or modify
+!     it under the terms of the GNU General Public License as published by
+!     the Free Software Foundation, either version 3 of the License, or
+!     (at your option) any later version.
+!
+!     This program is distributed in the hope that it will be useful,
+!     but WITHOUT ANY WARRANTY; without even the implied warranty of
+!     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!     GNU General Public License for more details.
+!
+!     You should have received a copy of the GNU General Public License
+!     along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+! ---------------------------------------------------------------------------------
+!<    +---------------------------------------------------------------+
+!     |  Simstrat - Ice module
+!<    +---------------------------------------------------------------+
+
+! References:
 ! ------ !
 ! Saloranta, T. M., & Andersen, T. (2007).
 ! MyLake—A multi-year lake simulation model code suitable for uncertainty and sensitivity analysis simulations.
