@@ -77,7 +77,7 @@
         "p_windf": 1,               ! Fit parameter for convective and latent heat fluxes [-]
         "beta_sol": 0.35,           ! Fraction of short-wave radiation directly absorbed as heat by water [-]
         "wat_albedo": 0.09,         ! User defined water albedo [-] (only used if UserDefinedWaterAlbedo = true)
-        "p_albedo": 1.0,            ! Fit parameter for albedo of ice, snow-ice and snow [-] (only used if IceModel = 1)
+        "p_snow_ice": 1.0,            ! Fit parameter for albedo of ice, snow-ice and snow [-] (only used if IceModel = 1)
         "freez_temp": 0.01,         ! Freezing temperature of water [°C] (only used if IceModel = 1)
         "snow_temp": 2.0            ! Temperature of snow [°C] (only used if IceModel = 1 and SnowModel = 1)
     }

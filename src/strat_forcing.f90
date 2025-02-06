@@ -185,11 +185,11 @@ contains
             A_cur(4) = max(A_cur(4),0.0_RK) * param%p_sw  ! To avoid negative values because of numerical problems
 
             if (state%black_ice_h > 0 .and. state%white_ice_h == 0 .and. state%snow_h == 0) then ! Ice
-               F_glob = (A_cur(4)*(1 - ice_albedo)) * param%p_albedo
+               F_glob = (A_cur(4)*(1 - ice_albedo)) * param%p_snow_ice
             else if (state%white_ice_h > 0 .and. state%snow_h == 0) then ! Snowice
-               F_glob = (A_cur(4)*(1 - snowice_albedo)) * param%p_albedo
+               F_glob = (A_cur(4)*(1 - snowice_albedo)) * param%p_snow_ice
             else if (state%snow_h > 0) then ! Snow
-               F_glob = (A_cur(4)*(1 - snow_albedo)) * param%p_albedo
+               F_glob = (A_cur(4)*(1 - snow_albedo)) * param%p_snow_ice
             else ! Water
                F_glob = A_cur(4)*(1 - state%albedo_water)
             end if
@@ -212,11 +212,11 @@ contains
             A_cur(4) = max(A_cur(4),0.0_RK)*param%p_sw  ! To avoid negative values because of numerical problems
 
             if (state%black_ice_h > 0 .and. state%white_ice_h == 0 .and. state%snow_h == 0) then ! Ice
-               F_glob = (A_cur(4)*(1 - ice_albedo)) * param%p_albedo
+               F_glob = (A_cur(4)*(1 - ice_albedo)) * param%p_snow_ice
             else if (state%white_ice_h > 0 .and. state%snow_h == 0) then ! Snowice
-               F_glob = (A_cur(4)*(1 - snowice_albedo)) * param%p_albedo
+               F_glob = (A_cur(4)*(1 - snowice_albedo)) * param%p_snow_ice
             else if (state%snow_h > 0) then ! Snow
-               F_glob = (A_cur(4)*(1 - snow_albedo)) * param%p_albedo
+               F_glob = (A_cur(4)*(1 - snow_albedo)) * param%p_snow_ice
             else ! Water
                F_glob = A_cur(4)*(1 - state%albedo_water)
             end if
@@ -258,11 +258,11 @@ contains
             A_cur(4) = max(A_cur(4),0.0_RK)*param%p_sw  ! To avoid negative values because of numerical problems
 
             if (state%black_ice_h > 0 .and. state%white_ice_h == 0 .and. state%snow_h == 0) then ! Ice
-               F_glob = (A_cur(4)*(1 - ice_albedo)) * param%p_albedo
+               F_glob = (A_cur(4)*(1 - ice_albedo)) * param%p_snow_ice
             else if (state%white_ice_h > 0 .and. state%snow_h == 0) then ! Snowice
-               F_glob = (A_cur(4)*(1 - snowice_albedo)) * param%p_albedo
+               F_glob = (A_cur(4)*(1 - snowice_albedo)) * param%p_snow_ice
             else if (state%snow_h > 0) then ! Snow
-               F_glob = (A_cur(4)*(1 - snow_albedo)) * param%p_albedo
+               F_glob = (A_cur(4)*(1 - snow_albedo)) * param%p_snow_ice
             else ! Water
                F_glob = A_cur(4)*(1 - state%albedo_water)
             end if
