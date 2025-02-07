@@ -287,6 +287,11 @@ contains
       allocate (self%dS(state_size))
       allocate (self%rho(state_size))
       allocate (self%avh(state_size))
+      allocate (self%diff_heat_flux(state_size))
+      allocate (self%buoy_heat_flux(state_size))
+      allocate (self%adv_heat_flux(state_size))
+      allocate (self%diff_salt_flux(state_size))
+      allocate (self%adv_salt_flux(state_size))
 
       ! Values on z_upp grid
       allocate (self%k(state_size + 1))
