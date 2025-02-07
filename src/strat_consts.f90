@@ -21,9 +21,9 @@
 !     You should have received a copy of the GNU General Public License
 !     along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 ! ---------------------------------------------------------------------------------
-!     +---------------------------------------------------------------+
-!     |  Constants....
-!     +---------------------------------------------------------------+
+!<    +---------------------------------------------------------------+
+!     |  Model constants
+!<    +---------------------------------------------------------------+
   module strat_consts
      use strat_kinds
      implicit none
@@ -43,8 +43,8 @@
      real(RK), parameter     :: cp_air = 1005_RK ! Mean air heat capacity [J/kg/K]
 
     ! *** Further parameters controlling water dynamic ***
-     real(RK), parameter     :: Prndtl = 0.8_RK ! Prandtl number for air??
-     real(RK), parameter     :: k_min = 1.0e-12_RK ! Min value allowed for turbulent kinetic energy (read from file!?->useless here)
+     real(RK), parameter     :: Prndtl = 0.8_RK ! Turbulent Prandtl number
+     real(RK), parameter     :: k_min = 1.0e-12_RK ! Min value allowed for turbulent kinetic energy
      real(RK), parameter     :: eps_min = 1.0e-15_RK ! Min value allowed for TKE dissipation
      real(RK), parameter     :: avh_min = 1.0e-8_RK ! Min value allowed for turbulent viscosity at boundaries
 
@@ -53,18 +53,6 @@
     real(RK), parameter      :: nuh_mol = 1.4e-7_RK   ! Reference in Sommer et al., 2013
     real(RK), parameter      :: nus_mol = 1.2e-9_RK   ! Reference in Sommer et al., 2013
     real(RK), parameter      :: nug_mol = 1.9e-9_RK   ! Reference in Sommer et al., 2013
-    real(RK), parameter      :: nut_mol = 2.3e-9_RK   ! Mills, 1973
-
-    ! *** Molecular diffusivities noble gases ***
-    real(RK), parameter      :: nu_he_mol = 7.4e-9_RK ! Wise and Houghton, 1968, at 25°C
-    real(RK), parameter      :: nu_ne_mol = 3.4e-9_RK ! Wise and Houghton, 1968, at 25°C
-    real(RK), parameter      :: nu_ar_mol = 2.5e-9_RK ! Wise and Houghton, 1968, at 25°C
-    real(RK), parameter      :: nu_kr_mol = 1.9e-9_RK ! Wise and Houghton, 1968, at 25°C
-
-    ! *** Decay ***
-    real(RK), parameter      :: decay_tr = 1.7828e-9_RK
-    real(rk), parameter      :: decay_la = 8.17e-11_RK
-    real(RK), parameter      :: no_decay = 0.0_RK
 
     ! *** Ice Parameters
      real(RK), parameter     :: k_ice = 2.22_RK ! Thermal conductivity ice at 0°C WaterTemp (W K-1 m-1)

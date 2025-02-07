@@ -48,7 +48,6 @@ subroutine absorption_updateAED2(self, state)
 
 end subroutine
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! The mobility algorithm is taken from the GLM code (http://aed.see.uwa.edu.au/research/models/GLM/)
 !
 ! Assumptions:

@@ -6,7 +6,6 @@
 !                    Eawag - Swiss Federal institute of Aquatic Science and Technology
 !
 !     Copyright (C) 2025, Eawag
-!     Copyright (C) 2018, The University of Western Australia
 !
 !
 !     This program is free software: you can redistribute it and/or modify
@@ -43,11 +42,13 @@ program simstrat_main
    use strat_keps
    use strat_turbulence
    use strat_ice
-   use strat_transport_reaction
+   use strat_transport
    use strat_absorption
    use strat_advection
    use simstrat_aed2
    use strat_lateral
+   use forbear
+   use csv_module
    use, intrinsic :: ieee_arithmetic
 
    implicit none
@@ -66,8 +67,7 @@ program simstrat_main
    type(UVModelVar) :: mod_u, mod_v
    type(KModelVar) :: mod_k
    type(EpsModelVar) :: mod_eps
-   type(TransportReactionModVar) :: mod_s, mod_tr, mod_heavy_oxygen, mod_deuterium, mod_light_ar
-   type(TransportReactionModVar) :: mod_He, mod_Ne, mod_Ar, mod_Kr
+   type(TransportModVar) :: mod_s
    type(TurbulenceModule) :: mod_turbulence
    type(IceModule) :: mod_ice
    type(AbsorptionModule) :: mod_absorption
@@ -76,14 +76,23 @@ program simstrat_main
    type(LateralModule), target :: mod_lateral_normal
    type(LateralRhoModule), target :: mod_lateral_rho
    class(GenericLateralModule), pointer :: mod_lateral
+   ! Instantiate progress bar object
+   type(bar_object):: bar
+   type(csv_file), dimension(:), allocatable :: csv_files
 
    character(len=100) :: arg
    character(len=:), allocatable :: ParName
-   integer :: i
+   character(len=:), allocatable :: snapshot_file_path
+   character(len=:), allocatable :: file_text_restart
+   character(len=:), allocatable :: file_text_restart2
+   logical :: continue_from_snapshot = .false.
+   integer(8),dimension(2) :: simulation_end_time
+   real(RK) :: new_start_datum
 
    ! Print some information
    write (6, *) 'Simstrat version '//version
-   write (6, *) 'This software has been developed at eawag - Swiss Federal Institute of Aquatic Science and Technology'
+   write (6, *) 'Coupled with the biogeochemical library AED2'
+   write (6, *) 'This software has been developed at Eawag - Swiss Federal Institute of Aquatic Science and Technology'
    write (6, *) ''
 
    ! Get first cli argument
@@ -141,13 +150,44 @@ program simstrat_main
       call warn('Lake in-/outflow is turned off')
    end if
 
+   ! Binary simulation snapshot file
+   snapshot_file_path = simdata%output_cfg%PathOut//'/simulation-snapshot.dat'
+
+   ! Text output files for simulation restart
+   file_text_restart = simdata%output_cfg%PathOut//'/initial_conditions_for_restart.dat'
+   file_text_restart2 = simdata%output_cfg%PathOut//'/seiche_ice_for_restart.dat'
+
+   if (simdata%sim_cfg%continue_from_snapshot) then
+      inquire (file=snapshot_file_path, exist=continue_from_snapshot)
+      print *,"Snapshot is available and used",continue_from_snapshot
+   end if
+
    ! Setup logger
-   call logger%initialize(simdata%model, simdata%sim_cfg, simdata%model_cfg, simdata%aed2_cfg, simdata%output_cfg, simdata%grid)
+   call logger%initialize(simdata%model, simdata%sim_cfg, simdata%model_cfg, simdata%aed2_cfg, simdata%output_cfg, simdata%grid, continue_from_snapshot)
+
+   ! Calculate simulation_end_time, which is a tuple of integers (days, seconds)
+
+   ! If output times are at regular intervals
+   if (simdata%output_cfg%thinning_interval > 0) then
+      ! Compute number of simulation days
+      simulation_end_time(1) = int(floor(simdata%sim_cfg%end_datum - simdata%sim_cfg%start_datum))
+      ! Compute number of simulation seconds (in addition to the days calculated above)
+      simulation_end_time(2) = (simdata%sim_cfg%end_datum - simdata%sim_cfg%start_datum - real(simulation_end_time(1), RK)) * SECONDS_PER_DAY + 0.5
+   
+   ! If output times are user defined
+   else
+      simulation_end_time = simdata%output_cfg%simulation_times_for_output(:, &
+            size(simdata%output_cfg%simulation_times_for_output,2))
+      
+      if (simdata%sim_cfg%end_datum < simdata%sim_cfg%start_datum + real(simulation_end_time(1)) + real(simulation_end_time(2))/SECONDS_PER_DAY) then
+         call error('Some of the output times are larger than the simulation duration')
+      end if
+   end if
 
    ! Initialize simulation modules
    call mod_stability%init(simdata%grid, simdata%model_cfg, simdata%model_param)
-   call mod_turbulence%init(simdata%grid, simdata%model_cfg, simdata%model_param)
-   call mod_ice%init(simdata%model_cfg, simdata%model_param, simdata%grid)
+   call mod_turbulence%init(simdata%model, simdata%grid, simdata%model_cfg, simdata%model_param)
+   call mod_ice%init(simdata%model, simdata%model_cfg, simdata%model_param, simdata%grid)
 
    ! Set temperature state var to have nu_h as nu and T as model variable
    call mod_temperature%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nuh, simdata%model%T, simdata%grid%ubnd_vol)
@@ -160,50 +200,9 @@ program simstrat_main
    call mod_v%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%num, simdata%model%V, simdata%grid%ubnd_vol)
    call mod_v%assign_shear_stress(simdata%model%ty)
 
-   ! Set mod_s (transport-reaction module) to have nuh as nu and to manipulate S based on dS
-   call mod_s%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nus, simdata%model%S, simdata%grid%ubnd_vol)
+   ! Set mod_s (transport module) to have nuh as nu and to manipulate S based on dS
+   call mod_s%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nuh, simdata%model%S, simdata%grid%ubnd_vol)
    call mod_s%assign_external_source(simdata%model%dS)
-   call mod_s%assign_decay_constant(no_decay)
-
-   ! Set mod_tritium (transport-reaction module) to have nut as nu
-   call mod_tr%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nut, simdata%model%Tr, simdata%grid%ubnd_vol)
-   call mod_tr%assign_external_source(simdata%model%dTr)
-   call mod_tr%assign_decay_constant(decay_tr)
-
-   ! Set mod_heavy_oxygen (18O) (transport module-reaction) to have nut as nu
-   call mod_heavy_oxygen%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nut, simdata%model%heavy_oxygen, simdata%grid%ubnd_vol)
-   call mod_heavy_oxygen%assign_external_source(simdata%model%dHO)
-   call mod_heavy_oxygen%assign_decay_constant(no_decay)
-
-   ! Set mod_deuterium (2H) (transport module-reaction) to have nut as nu
-   call mod_deuterium%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nut, simdata%model%deuterium, simdata%grid%ubnd_vol)
-   call mod_deuterium%assign_external_source(simdata%model%dD)
-   call mod_deuterium%assign_decay_constant(no_decay)
-
-   ! Set mod_light_argon (39Ar) (transport module-reaction) to have nut as nu
-   call mod_light_ar%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nut, simdata%model%light_ar, simdata%grid%ubnd_vol)
-   call mod_light_ar%assign_external_source(simdata%model%dLA)
-   call mod_light_ar%assign_decay_constant(decay_la)
-
-   ! Set mod_He (transport module-reaction) to have nug as nu
-   call mod_He%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nu_he, simdata%model%He, simdata%grid%ubnd_vol)
-   call mod_He%assign_external_source(simdata%model%dHe)
-   call mod_He%assign_decay_constant(no_decay)
-
-   ! Set mod_Ne (39Ar) (transport module-reaction) to have nug as nu
-   call mod_Ne%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nu_ne, simdata%model%Ne, simdata%grid%ubnd_vol)
-   call mod_Ne%assign_external_source(simdata%model%dNe)
-   call mod_Ne%assign_decay_constant(no_decay)
-
-   ! Set mod_Ar (39Ar) (transport module-reaction) to have nug as nu
-   call mod_Ar%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nu_ar, simdata%model%Ar, simdata%grid%ubnd_vol)
-   call mod_Ar%assign_external_source(simdata%model%dAr)
-   call mod_Ar%assign_decay_constant(no_decay)
-
-   ! Set mod_Kr (transport module-reaction) to have nug as nu
-   call mod_Kr%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc, simdata%model%nu_kr, simdata%model%Kr, simdata%grid%ubnd_vol)
-   call mod_Kr%assign_external_source(simdata%model%dKr)
-   call mod_Kr%assign_decay_constant(no_decay)
 
    ! Set up K and eps state vars with keps discretization and avh as nu
    call mod_k%init(simdata%model_cfg, simdata%grid, solver, euler_i_disc_keps, simdata%model%avh, simdata%model%K, simdata%grid%ubnd_fce)
@@ -217,70 +216,51 @@ program simstrat_main
 contains
 
    subroutine run_simulation()
+
+      !! run the marching time loop
+      call ok("Start day: "//real_to_str(simdata%sim_cfg%start_datum, '(F7.1)'))
+      new_start_datum = simdata%sim_cfg%start_datum
+      if (continue_from_snapshot) then
+         call load_snapshot(snapshot_file_path, simdata%model_cfg%couple_aed2)
+         call ok("Simulation snapshot successfully read. Snapshot day: "//real_to_str(simdata%model%datum, '(F7.1)'))
+         call logger%calculate_simulation_time_for_next_output(simdata%model%simulation_time)
+         new_start_datum = simdata%model%datum
+      else
+         call logger%log(simdata)
+      end if
+      call ok("End day: "//real_to_str(simdata%sim_cfg%end_datum, '(F7.1)'))
+      call logger%start()
+
+      ! initialize a bar with the progress percentage counter
+      if (simdata%sim_cfg%show_bar) then
+         call bar%initialize(filled_char_string='#', &
+            prefix_string=' Simulation progress |',  &
+            suffix_string='| ', add_progress_percent=.true., &
+            add_date_time=.true., &
+            max_value=(simdata%sim_cfg%end_datum-new_start_datum))
+
+            ! start the progress bar
+         call bar%start
+      end if
+
       ! Run the simulation loop
-
-      ! Write initial conditions
-      call logger%log(simdata%model%datum)
-
       ! Run simulation until end datum or until no more results are required by the output time file
-      do while (simdata%model%datum<simdata%sim_cfg%end_datum .and. simdata%model%output_counter<=size(simdata%output_cfg%tout))
-
-         ! ****************************************
-         ! ***** Update counters and timestep *****
-         ! ****************************************
-
-         ! Increase iteration counter
-         simdata%model%model_step_counter = simdata%model%model_step_counter + 1
-
-         ! If output times are specified in file
-         if(simdata%output_cfg%thinning_interval==0) then
-            ! At the first iteration or always after the model output was logged
-            if (simdata%model%model_step_counter==1) then
-               ! Adjust timestep so that the next output time is on the "time grid"
-               simdata%model%dt = simdata%output_cfg%adjusted_timestep(simdata%model%output_counter)
-               ! Don't log anymore until the next output time is reached
-               simdata%output_cfg%write_to_file = .false.
-               ! Log initial state if first output time corresponds to simulation start
-               if (simdata%model%dt < 1e-6) then
-                  ! Log initial conditions and display
-                  call logger%log(simdata%model%datum)
-                  if (simdata%sim_cfg%disp_simulation > 0) then
-                     write(6,'(F12.4,F20.4,F15.4,F15.4)') simdata%model%datum, simdata%grid%lake_level, &
-                     simdata%model%T(simdata%grid%ubnd_vol), simdata%model%T(1)
-                  end if
-                  ! Update counters and timestep
-                  simdata%model%model_step_counter = simdata%model%model_step_counter + 1
-                  simdata%model%output_counter = simdata%model%output_counter + 1
-                  simdata%model%dt = simdata%output_cfg%adjusted_timestep(simdata%model%output_counter)
-               end if
-
-            else if (simdata%output_cfg%write_to_file) then
-               ! Adjust timestep so that the next output time is on the "time grid"
-               simdata%model%dt = simdata%output_cfg%adjusted_timestep(simdata%model%output_counter)
-               ! Don't log anymore until the next output time is reached
-               simdata%output_cfg%write_to_file = .false.
-            end if
-
-            ! If the next output time is reached
-            if(simdata%model%model_step_counter==sum(int(simdata%output_cfg%n_timesteps_between_tout(1:simdata%model%output_counter)))) then
-               ! Increase output counter
-               simdata%model%output_counter = simdata%model%output_counter + 1
-               ! Log next model state
-               simdata%output_cfg%write_to_file = .true.
-            end if
-         else ! If output frequency is given in file
-            ! If the next output time is reached
-            if(mod(simdata%model%model_step_counter,simdata%output_cfg%thinning_interval)==0) then
-               ! Log next model state
-               simdata%output_cfg%write_to_file = .true.
-            else
-               ! Don't log
-               simdata%output_cfg%write_to_file = .false.
-            end if
-         end if
+      ! Simulation time is a tuple of 2 integers (days, seconds)
+      do while (simdata%model%simulation_time(1) < simulation_end_time(1) .or. &
+         simdata%model%simulation_time(1) == simulation_end_time(1) .and. simdata%model%simulation_time(2) < simulation_end_time(2))
 
          ! Advance to the next timestep
-         simdata%model%datum = simdata%model%datum + simdata%model%dt/86400
+         simdata%model%simulation_time_old = simdata%model%simulation_time
+
+         simdata%model%simulation_time(2) = simdata%model%simulation_time(2) + simdata%sim_cfg%timestep
+
+         ! If second counter is larger than 86400, change day
+         if (simdata%model%simulation_time(2) >= SECONDS_PER_DAY) then
+            simdata%model%simulation_time(1) = simdata%model%simulation_time(1) + 1
+            simdata%model%simulation_time(2) = simdata%model%simulation_time(2) - SECONDS_PER_DAY
+         end if
+
+         simdata%model%datum = datum(simdata%sim_cfg%start_datum, simdata%model%simulation_time)
 
          ! ************************************
          ! ***** Compute next model state *****
@@ -319,16 +299,6 @@ contains
             simdata%grid%lake_level = simdata%grid%z_face(simdata%grid%ubnd_fce)
          end if
 
-         ! Display to screen
-         if (simdata%model%model_step_counter==1 .and. simdata%sim_cfg%disp_simulation/=0) then
-            write(6,*)
-            write(6,*) ' -------------------------- '
-            write(6,*) '   SIMULATION IN PROGRESS   '
-            write(6,*) ' -------------------------- '
-            write(6,*)
-            if(simdata%sim_cfg%disp_simulation/=0) write(6,'(A12, A20, A20, A20)') 'Time [d]','Surface level [m]','T_surf [degC]','T_bottom [degC]'
-         end if
-
          ! Update Coriolis
          call mod_forcing%update_coriolis(simdata%model)
 
@@ -341,30 +311,6 @@ contains
 
          ! Update and solve transportation terms (here: Salinity S only)
          call mod_S%update(simdata%model, simdata%model_param)
-
-         ! Update and solve transportation terms (here: Tritium only)
-         call mod_Tr%update(simdata%model, simdata%model_param)
-
-         ! Update and solve transportation terms (here: Heavy oxygen only)
-         call mod_heavy_oxygen%update(simdata%model, simdata%model_param)
-
-         ! Update and solve transportation terms (here: Deuterium)
-         call mod_deuterium%update(simdata%model, simdata%model_param)
-
-         ! Update and solve transportation terms (here: 39Ar only)
-         call mod_light_ar%update(simdata%model, simdata%model_param)
-
-         ! Update and solve transportation terms (here: He)
-         call mod_He%update(simdata%model, simdata%model_param)
-
-         ! Update and solve transportation terms (here: Ne)
-         call mod_Ne%update(simdata%model, simdata%model_param)
-
-         ! Update and solve transportation terms (here: Ar)
-         call mod_Ar%update(simdata%model, simdata%model_param)
-
-         ! Update and solve transportation terms (here: Kr)
-         call mod_Kr%update(simdata%model, simdata%model_param)
 
          ! update turbulence states
          call mod_turbulence%update(simdata%model, simdata%model_param)
@@ -384,36 +330,115 @@ contains
          end if
 
          ! Call logger to write files
-         if (simdata%output_cfg%write_to_file) then
-            call logger%log(simdata%model%datum)
-         end if
-
-         ! ***********************************
-         ! ***** Log to file and display *****
-         ! ***********************************
-
-         ! Standard display: display when logged: datum, lake surface, T(1), T(surf)
-         if (simdata%sim_cfg%disp_simulation==1 .and. simdata%output_cfg%write_to_file) then
-            write(6,'(F12.4,F16.4,F20.4,F20.4)') simdata%model%datum, simdata%grid%lake_level, &
-            simdata%model%T(simdata%grid%nz_occupied), simdata%model%T(1)
-
-         ! Extra display: display every iteration: datum, lake surface, T(1), T(surf)
-         else if (simdata%sim_cfg%disp_simulation==2) then
-            write(6,'(F12.4,F20.4,F15.4,F15.4)') simdata%model%datum, simdata%grid%lake_level, &
-            simdata%model%T(simdata%grid%ubnd_vol), simdata%model%T(1)
-         end if
+         call logger%log(simdata)
 
          ! This logical is used to do some allocation in the forcing, absorption and lateral subroutines during the first timestep
          simdata%model%first_timestep = .false.
+
+         !update the progress bar
+         if (simdata%sim_cfg%show_bar) then
+            call bar%update(current=(simdata%model%datum-new_start_datum))
+         end if
+
+      end do
+      if (simdata%sim_cfg%continue_from_snapshot) call save_snapshot(snapshot_file_path, simdata%model_cfg%couple_aed2)
+      if (simdata%sim_cfg%save_text_restart) then
+         if (simdata%model_cfg%couple_aed2) call warn('Text restart is not working for AED2 variables.')
+         call save_restart(file_text_restart, file_text_restart2)
+      end if
+   end subroutine
+
+   ! Function to save the necessary variables for a restart from a text file (similar to initial conditions)
+   ! The depth grid includes both grid components (volume and surface) of the staggered grid
+   subroutine save_restart(file_path_1, file_path_2)
+      character(len=*), intent(in) :: file_path_1
+      character(len=*), intent(in) :: file_path_2
+
+      logical :: status_ok
+      type(csv_file), dimension(2):: save_files
+      real(RK) :: total_grid(size(simdata%grid%z_face) + size(simdata%grid%z_volume))
+      real(RK),dimension(size(simdata%grid%z_face(1:simdata%grid%ubnd_fce)) + size(simdata%grid%z_volume(1:simdata%grid%ubnd_vol))) :: depth, U, V, T, S, k, eps, num, nuh
+      integer :: i
+      real(RK),dimension(9) :: row1
+      real(RK),dimension(4) :: row2
+
+      call save_files(1)%open(file_path_1, n_cols=9,status_ok=status_ok)
+      call save_files(1)%add(["depth (m) ","u (m/s)   ","v (m/s)   ","T (°C)   ","S (g/kg)  ","k (J/kg)  ","eps (W/kg)","num (m2/s)","nuh (m2/s)"])
+      call save_files(1)%next_row()
+      depth(1) = simdata%grid%z_face(1)
+
+      do i=2,2*size(simdata%grid%z_volume(1:simdata%grid%ubnd_vol)),2
+         depth(i+1) = simdata%grid%z_face(i/2+1)
+         depth(i) = simdata%grid%z_volume(i/2)
       end do
 
-      if (simdata%sim_cfg%disp_simulation/=0) then
-         write(6,*)
-         write(6,*) ' -------------------------- '
-         write(6,*) '    SIMULATION COMPLETED    '
-         write(6,*) ' -------------------------- '
-         write(6,*)
+      call Interp(simdata%grid%z_volume(1:simdata%grid%ubnd_vol), simdata%model%U(1:simdata%grid%ubnd_vol), size(simdata%model%U), depth, U, size(U))
+      call Interp(simdata%grid%z_volume(1:simdata%grid%ubnd_vol), simdata%model%V(1:simdata%grid%ubnd_vol), size(simdata%model%V), depth, V, size(V))
+      call Interp(simdata%grid%z_volume(1:simdata%grid%ubnd_vol), simdata%model%T(1:simdata%grid%ubnd_vol), size(simdata%model%T), depth, T, size(T))
+      call Interp(simdata%grid%z_volume(1:simdata%grid%ubnd_vol), simdata%model%S(1:simdata%grid%ubnd_vol), size(simdata%model%S), depth, S, size(S))
+      call Interp(simdata%grid%z_face(1:simdata%grid%ubnd_fce), simdata%model%k(1:simdata%grid%ubnd_vol), size(simdata%model%k), depth, k, size(k))
+      call Interp(simdata%grid%z_face(1:simdata%grid%ubnd_fce), simdata%model%eps(1:simdata%grid%ubnd_vol), size(simdata%model%eps), depth, eps, size(eps))
+      call Interp(simdata%grid%z_face(1:simdata%grid%ubnd_fce), simdata%model%num(1:simdata%grid%ubnd_vol), size(simdata%model%num), depth, num, size(num))
+      call Interp(simdata%grid%z_face(1:simdata%grid%ubnd_fce), simdata%model%nuh(1:simdata%grid%ubnd_vol), size(simdata%model%nuh), depth, nuh, size(nuh))
+
+      call reverse_in_place(depth)
+      depth = depth - depth(1)
+      call reverse_in_place(U)
+      call reverse_in_place(V)
+      call reverse_in_place(T)
+      call reverse_in_place(S)
+      call reverse_in_place(k)
+      call reverse_in_place(eps)
+      call reverse_in_place(num)
+      call reverse_in_place(nuh)
+
+      do i=1,size(simdata%grid%z_face(1:simdata%grid%ubnd_fce)) + size(simdata%grid%z_volume(1:simdata%grid%ubnd_vol))
+         row1 = [depth(i),U(i),V(i),T(i),S(i),k(i),eps(i),num(i),nuh(i)]
+         call save_files(1)%add(row1, real_fmt="(ES24.15)")
+         call save_files(1)%next_row()
+      end do
+      call save_files(1)%close(status_ok)
+
+      call save_files(2)%open(file_path_2,n_cols=4,status_ok=status_ok)
+      call save_files(2)%add(['E_seiche (J) ', 'BlackIceH (m)', 'WhiteIceH (m)', 'SnowH (m)    '])
+
+      call save_Files(2)%next_row()
+      row2 = [simdata%model%E_seiche,simdata%model%black_ice_h,simdata%model%white_ice_h,simdata%model%snow_h]
+      call save_files(2)%add(row2,real_fmt="(ES24.12)")
+
+      call save_files(2)%close(status_ok)
+   end subroutine
+
+   subroutine save_snapshot(file_path, couple_aed2)
+      implicit none
+      character(len=*), intent(in) :: file_path
+      logical, intent(in) :: couple_aed2
+
+      open(80, file=file_path, Form='unformatted', Action='Write')
+      call simdata%model%save(couple_aed2, simdata%model_cfg%inflow_mode)
+      call simdata%grid%save()
+      call mod_absorption%save()
+      if (simdata%model_cfg%inflow_mode > 0) then
+         call mod_lateral%save()
       end if
+      call logger%save()
+      close(80)
+   end subroutine
+
+   subroutine load_snapshot(file_path, couple_aed2)
+      implicit none
+      character(len=*), intent(in) :: file_path
+      logical, intent(in) :: couple_aed2
+
+      open(81, file=file_path, Form='unformatted', Action='Read')
+      call simdata%model%load(couple_aed2, simdata%model_cfg%inflow_mode)
+      call simdata%grid%load()
+      call mod_absorption%load()
+      if (simdata%model_cfg%inflow_mode > 0) then
+         call mod_lateral%load()
+      end if
+      call logger%load()
+      close(81)
    end subroutine
 
 end program simstrat_main

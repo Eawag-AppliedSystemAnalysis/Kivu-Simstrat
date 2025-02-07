@@ -43,10 +43,6 @@ module strat_forcing
       class(StaggeredGrid), pointer :: grid
       class(ModelParam), pointer :: param
       character(len=:), allocatable  :: file  ! Forcing file name
-      integer :: current_year ! Current year of simulation, used for zenith angle dependent water albedo
-      logical :: leap_year
-      integer :: current_month ! Current month of simulation, used for zenith angle dependent water albedo
-      real(RK) :: current_day ! Current day of simulation, used for zenith angle dependent water albedo
    contains
       procedure, pass :: init => forcing_init
       procedure, pass :: read => forcing_read
@@ -106,7 +102,7 @@ contains
          read (20, *, end=9)
          read (20, *, end=9) tb_start, (A_s(i), i=1, nval)
          if (datum < tb_start) then
-            write(6,*) '[WARNING] ','First forcing date after simulation start time. datum=', datum,  'start=', tb_start
+            write(*,*) '[WARNING] ','First forcing date after simulation start time. datum=', datum,  'start=', tb_start
          end if
          read (20, *, end=7) tb_end, (A_e(i), i=1, nval)
 
@@ -123,13 +119,12 @@ contains
             read (20, *, end=7) tb_end, (A_e(i), i=1, nval)
          end do
          ! Linearly interpolate values at correct datum
-         A_cur(1:nval) = A_s(1:nval) + (datum - tb_start)*(A_e(1:nval) - A_s(1:nval))/(tb_end - tb_start)
+         A_cur(1:nval) = A_s(1:nval) + (datum - tb_start)/(tb_end - tb_start)*(A_e(1:nval) - A_s(1:nval))
       end if
       return
 
   7   eof = 1
       if(datum>tb_start) call warn('Last forcing date before simulation end time.')
-      write(6,*) datum, tb_start
 
 
   8   A_cur(1:nval) = A_s(1:nval)       ! Take first value of current interval
@@ -154,8 +149,8 @@ contains
       real(RK) :: tau
       real(RK) :: A_s(8), A_e(8), A_cur(8) ! 8 is the maximum number of rows in the forcing file
       real(RK) :: fu, Vap_wat, heat0, emissivity
-      real(RK) :: T_surf, F_glob, Cloud ! Vap_atm
-      real(RK) :: H_A, H_K, H_V, H_W, H_tot
+      real(RK) :: T_surf, F_glob, Vap_atm, Cloud
+      real(RK) :: H_A, H_K, H_V, H_W, H_tot, emiss_A
       real(RK) :: F_snow, F_snowice, F_ice
       real(RK) :: qa, q0, sh_c
       save A_s, A_e
@@ -168,15 +163,13 @@ contains
       end if
 
       ! Number of values to read, depending on filtered wind and precipitation
-      if (cfg%use_filtered_wind .and. cfg%ice_model == 0) then
-         nval_offset = 1
-      else if (cfg%ice_model == 1 .and. cfg%use_filtered_wind) then
-         nval_offset = 2
-      else if (cfg%ice_model == 1) then
-         nval_offset = 1
-      else
-         nval_offset = 0
+      nval_offset = 0
+      if (cfg%use_filtered_wind) then ! Add additional column for filtered wind
+        nval_offset = nval_offset + 1
       end if
+      if (cfg%snow_model == 1) then ! Add additional column for precipitation used in the snow model
+        nval_offset = nval_offset + 1
+      endif
 
       ! Forcing mode 1 (date, U10, V10, T_lake, H_sol)
       if (cfg%forcing_mode == 1) then
@@ -184,7 +177,6 @@ contains
             call error('Ice module not compatible with forcing mode 1, use 2, 3 or 5.')
          end if
 
-         call self%read (state%datum, A_s, A_e, A_cur, 4 + nval_offset, state%first_timestep)
          call self%read (state%datum, A_s, A_e, A_cur, 4 + nval_offset, state%first_timestep)
          state%u10 = A_cur(1)*param%f_wind ! MS 2014: added f_wind
          state%v10 = A_cur(2)*param%f_wind ! MS 2014: added f_wind
@@ -205,25 +197,25 @@ contains
             state%u10 = A_cur(1)*param%f_wind ! MS 2014: added f_wind
             state%v10 = A_cur(2)*param%f_wind ! MS 2014: added f_wind
             state%T_atm = A_cur(3)
-            A_cur(4) = max(A_cur(4),0.0_RK) * param%p_sw_water  ! To avoid negative values because of numerical problems
+            A_cur(4) = max(A_cur(4),0.0_RK)  ! To avoid negative values because of numerical problems
 
             if (state%black_ice_h > 0 .and. state%white_ice_h == 0 .and. state%snow_h == 0) then ! Ice
-               F_glob = (A_cur(4)*(1 - ice_albedo)) * param%p_sw_ice
+               F_glob = A_cur(4)*(1 - ice_albedo) * param%p_sw_ice
             else if (state%white_ice_h > 0 .and. state%snow_h == 0) then ! Snowice
-               F_glob = (A_cur(4)*(1 - snowice_albedo)) * param%p_sw_ice
+               F_glob = A_cur(4)*(1 - snowice_albedo) * param%p_sw_ice
             else if (state%snow_h > 0) then ! Snow
-               F_glob = (A_cur(4)*(1 - snow_albedo)) * param%p_sw_ice
+               F_glob = A_cur(4)*(1 - snow_albedo) * param%p_sw_ice
             else ! Water
-               F_glob = A_cur(4)*(1 - state%albedo_water)
+               F_glob = A_cur(4)*(1 - state%albedo_water) * param%p_sw_water
             end if
 
-            state%Vap_atm = A_cur(5)
+            Vap_atm = A_cur(5)
             Cloud = 0.5
             if (cfg%use_filtered_wind) state%Wf = A_cur(6) ! AG 2014
             if (cfg%snow_model == 1 .and. cfg%use_filtered_wind) then
-               state%precip = A_cur(7)
+               state%precip = max(A_cur(7),0.0_RK)
             else if (cfg%snow_model == 1) then
-               state%precip = A_cur(6)
+               state%precip = max(A_cur(6),0.0_RK)
             end if
 
          ! Forcing mode 3 (date, U10, V10, T_atm, H_sol, Vap, Clouds)
@@ -232,30 +224,30 @@ contains
             state%u10 = A_cur(1)*param%f_wind ! MS 2014: added f_wind
             state%v10 = A_cur(2)*param%f_wind ! MS 2014: added f_wind
             state%T_atm = A_cur(3)
-            A_cur(4) = max(A_cur(4),0.0_RK)*param%p_sw_water  ! To avoid negative values because of numerical problems
+            A_cur(4) = max(A_cur(4),0.0_RK)  ! To avoid negative values because of numerical problems
 
             if (state%black_ice_h > 0 .and. state%white_ice_h == 0 .and. state%snow_h == 0) then ! Ice
-               F_glob = (A_cur(4)*(1 - ice_albedo)) * param%p_sw_ice
+               F_glob = A_cur(4)*(1 - ice_albedo) * param%p_sw_ice
             else if (state%white_ice_h > 0 .and. state%snow_h == 0) then ! Snowice
-               F_glob = (A_cur(4)*(1 - snowice_albedo)) * param%p_sw_ice
+               F_glob = A_cur(4)*(1 - snowice_albedo) * param%p_sw_ice
             else if (state%snow_h > 0) then ! Snow
-               F_glob = (A_cur(4)*(1 - snow_albedo)) * param%p_sw_ice
+               F_glob = A_cur(4)*(1 - snow_albedo) * param%p_sw_ice
             else ! Water
-               F_glob = A_cur(4)*(1 - state%albedo_water)
+               F_glob = A_cur(4)*(1 - state%albedo_water) * param%p_sw_water
             end if
 
-            state%Vap_atm = A_cur(5)
+            Vap_atm = A_cur(5)
             Cloud = A_cur(6)
-            if (Cloud < 0 .or. Cloud > 1) then
+            if (Cloud < -1e-6 .or. Cloud > 1.000001) then
                write (*,'(A,F12.6)') 'Cloud : ' , Cloud
                write (*,'(A,F12.6)') 'Date  : ' , state%datum
                call error('Cloudiness should always be between 0 and 1.')
             end if
             if (cfg%use_filtered_wind) state%Wf = A_cur(7) !AG 2014
             if (cfg%snow_model == 1 .and. cfg%use_filtered_wind) then
-               state%precip = A_cur(8)
+               state%precip = max(A_cur(8),0.0_RK)
             else if (cfg%snow_model == 1) then
-               state%precip = A_cur(7)
+               state%precip = max(A_cur(7),0.0_RK)
             end if
 
          ! Forcing mode 4 (date, U10, V10, H_net, H_sol)
@@ -278,25 +270,25 @@ contains
             state%u10 = A_cur(1)*param%f_wind !MS 2014: added f_wind
             state%v10 = A_cur(2)*param%f_wind !MS 2014: added f_wind
             state%T_atm = A_cur(3)
-            A_cur(4) = max(A_cur(4),0.0_RK)*param%p_sw_water  ! To avoid negative values because of numerical problems
+            A_cur(4) = max(A_cur(4),0.0_RK)  ! To avoid negative values because of numerical problems
 
             if (state%black_ice_h > 0 .and. state%white_ice_h == 0 .and. state%snow_h == 0) then ! Ice
-               F_glob = (A_cur(4)*(1 - ice_albedo)) * param%p_sw_ice
+               F_glob = A_cur(4)*(1 - ice_albedo) * param%p_sw_ice
             else if (state%white_ice_h > 0 .and. state%snow_h == 0) then ! Snowice
-               F_glob = (A_cur(4)*(1 - snowice_albedo)) * param%p_sw_ice
+               F_glob = A_cur(4)*(1 - snowice_albedo) * param%p_sw_ice
             else if (state%snow_h > 0) then ! Snow
-               F_glob = (A_cur(4)*(1 - snow_albedo)) * param%p_sw_ice
+               F_glob = A_cur(4)*(1 - snow_albedo) * param%p_sw_ice
             else ! Water
-               F_glob = A_cur(4)*(1 - state%albedo_water)
+               F_glob = A_cur(4)*(1 - state%albedo_water) * param%p_sw_water
             end if
 
-            state%Vap_atm = A_cur(5)
-            H_A = A_cur(6)
+            Vap_atm = A_cur(5)
+            H_A = (1 - r_a)*A_cur(6) ! FB 2023: add reflection of longwave radiation
             if (cfg%use_filtered_wind) state%Wf = A_cur(7) ! AG 2014
             if (cfg%snow_model == 1 .and. cfg%use_filtered_wind) then
-               state%precip = A_cur(8)
+               state%precip = max(A_cur(8),0.0_RK)
             else if (cfg%snow_model == 1) then
-               state%precip = A_cur(7)
+               state%precip = max(A_cur(7),0.0_RK)
             end if
          else
             call error('Wrong forcing type (must be 1, 2, 3, 4 or 5).')
@@ -308,7 +300,7 @@ contains
 
                ! Factor 0.6072 to account for changing wind height from 10 to 2 m
                ! Further evaluation of evaporation algorithm may be required.
-               fu = sqrt((2.7_RK*max(0.0_RK,(T_surf-state%T_atm)/(1 - 0.378_RK*state%Vap_atm/param%p_air))**0.333_RK)**2 + (0.6072_RK*3.1_RK*state%uv10)**2)
+               fu = sqrt((2.7_RK*max(0.0_RK,(T_surf-state%T_atm)/(1 - 0.378_RK*Vap_atm/param%p_air))**0.333_RK)**2 + (0.6072_RK*3.1_RK*state%uv10)**2)
                fu = fu*param%p_windf ! Provided fitting factor p_windf (~1)
 
                ! Water vapor saturation pressure in air at water temperature (Gill 1992) [millibar]
@@ -316,12 +308,13 @@ contains
                Vap_wat = Vap_wat*(1 + 1e-6_RK*param%p_air*(4.5_RK + 0.00006_RK*T_surf**2))
 
 
-               ! Long-wave radiation according to Dilley and O'Brien
-               ! see Flerchinger et al. (2009)
+               ! Long-wave radiation according to Dilley and O'Brien (1998) with cloud correction of Crawford and Duchon (1999)
+               ! See Flerchinger et al. (2009) for an evaluation of different long-wave radiation algorithms
+               ! 465 instead of 4650 because Vap_atm is in [hPa]
                if (cfg%forcing_mode /= 5) then
-                  H_A = (1 - r_a)*((1 - 0.84_RK*Cloud)*(59.38_RK + 113.7_RK*((state%T_atm + 273.15_RK)/273.16_RK)**6 &
-                     + 96.96_RK*sqrt(465*state%Vap_atm/(state%T_atm + 273.15_RK)*0.04_RK))/5.67e-8_RK/ &
-                     (state%T_atm + 273.15_RK)**4 + 0.84_RK*Cloud)*5.67e-8_RK*(state%T_atm + 273.15_RK)**4
+                  H_A = 59.38_RK + 113.7_RK*((state%T_atm + 273.15_RK)/273.16_RK)**6 + 96.96_RK*sqrt(465*Vap_atm/(state%T_atm + 273.15_RK)*0.04_RK)
+                  emiss_A = (1 - Cloud)*H_A/sig/(state%T_atm + 273.15_RK)**4 + Cloud
+                  H_A = (1 - r_a)*emiss_A*sig*(state%T_atm + 273.15_RK)**4
                end if
 
                H_A = H_A*param%p_lw ! Provided fitting factor p_radin (~1)
@@ -332,7 +325,7 @@ contains
                H_K = -B0*fu*(T_surf - state%T_atm)
 
                ! Flux of latent heat (evaporation, condensation)
-               H_V = -fu*(Vap_wat - state%Vap_atm)
+               H_V = -fu*(Vap_wat - Vap_atm)
 
                ! Global heat flux (positive: air to water, negative: water to air)
                state%heat = H_A + H_W + H_K + H_V + F_glob * param%beta_sol !MS: added term with beta_sol
@@ -362,12 +355,12 @@ contains
                   end if
                   ! obs fitting factors param%p_lw and param%p_windf not applied to ice covered lake
                   if (cfg%forcing_mode /= 5) then
-                     H_A = (Ha_a + Ha_b * (state%Vap_atm**(1.0_RK/2.0_RK))) * (1 + Ha_c * Cloud**2) * sig * (state%T_atm + 273.15_RK)**4
+                     H_A = (Ha_a + Ha_b * (Vap_atm**(1.0_RK/2.0_RK))) * (1 + Ha_c * Cloud**2) * sig * (state%T_atm + 273.15_RK)**4
                   end if
                   H_W = -emissivity * sig * (T_surf + 273.15_RK)**4
                   H_K = rho_air * cp_air * Hk_CH * (state%T_atm - T_surf) * state%uv10
                   sh_c = 0.622/param%p_air! Converter from absolut vapour pressure to specific humidity (Lepparanta 2015)
-                  qa  = sh_c * state%Vap_atm! Specific humidity air
+                  qa  = sh_c * Vap_atm! Specific humidity air
                   q0  = sh_c * 6.11! Specific humidity for saturation levels (6.11 mbar) at surface (ice) at 0°C (Lepparanta 2015)
                   H_V = rho_air * (l_h + l_e) * Hv_CE * (qa - q0) * state%uv10 ! Through sublimation (solid to gas)
                else ! If no melting only considering penetraiting solar radiation since ice formation is parameterised towards temperature
@@ -482,9 +475,9 @@ contains
       real(RK) :: cori
       real(RK), dimension(size(state%U)) :: u_temp
       associate (grid=>self%grid, dt=>state%dt, param=>self%param)
-         
+
          ! Calculate u_taub before changing U resp V
-         state%u_taub = sqrt(state%drag*(state%U(1)**2 + state%V(1)**2))
+         state%u_taub = sqrt(param%CD*(state%U(1)**2 + state%V(1)**2))
 
          ! Calculate coriolis parameter based on latitude
          cori = 2.0_RK*7.292e-5_RK*sin(param%Lat*pi/180.0_RK)
@@ -505,7 +498,7 @@ contains
       class(ModelState) :: state
       class(SimConfig) :: sim_cfg
 
-      call init_calendar(sim_cfg%start_year, state%datum, self%current_year, self%leap_year, self%current_month, self%current_day)
+      call init_calendar(sim_cfg%reference_year, state%datum, state%current_year, state%current_month, state%current_day)
 
       ! Monthly albedo data according to Grishchenko, in Cogley 1979
       if (self%param%Lat > 0)  then ! Northern hemisphere (1.000 if no sun)
@@ -587,40 +580,40 @@ contains
       integer :: previous_month, next_month
 
       ! Determine current calendar day and month
-      call update_calendar(self%current_year, self%leap_year, self%current_month, self%current_day, state%dt)
+      call update_calendar(state%current_year, state%current_month, state%current_day, state%dt)
 
       ! Determine albedo as a function of latitude and month according to Grishchenko (in Cogley 1979)
       ! Linear interpolation, assuming that the monthly data is representative of the 15. of each month (also for months with 28, 29 and 31 days)
       ! There is still a small jump in the albedo value when the month changes. Solving this problem would require a more sophisticated interpolation
       ! or even a continuous function. But the jump is very small and occurs during the night, when anyways no sun light is reaching the lake.
-      
+
       ! If date before 16th of current month
-      if (self%current_day < 16) then
-         if(self%current_month == 1) then
+      if (state%current_day < 16) then
+         if(state%current_month == 1) then
             previous_month = 12
          else
-            previous_month = self%current_month - 1
+            previous_month = state%current_month - 1
          end if
 
          ! Get albedo values for previous and current month
          albedo_start = state%albedo_data(state%lat_number, previous_month)
-         albedo_end = state%albedo_data(state%lat_number, self%current_month)
+         albedo_end = state%albedo_data(state%lat_number, state%current_month)
 
          ! Linear interpolation
-         state%albedo_water = albedo_start + (self%current_day + 15) * (albedo_end - albedo_start)/30
+         state%albedo_water = albedo_start + (state%current_day + 15) * (albedo_end - albedo_start)/30
       else
-         if(self%current_month == 12) then
+         if(state%current_month == 12) then
             next_month = 1
          else
-            next_month = self%current_month + 1
+            next_month = state%current_month + 1
          end if
 
          ! Get albedo values for current and next month
-         albedo_start = state%albedo_data(state%lat_number, self%current_month)
+         albedo_start = state%albedo_data(state%lat_number, state%current_month)
          albedo_end = state%albedo_data(state%lat_number, next_month)
 
          ! Linear interpolation
-         state%albedo_water = albedo_start + (self%current_day - 15) * (albedo_end - albedo_start)/30
+         state%albedo_water = albedo_start + (state%current_day - 15) * (albedo_end - albedo_start)/30
       end if
 
    end subroutine

@@ -41,10 +41,10 @@ module simstrat_aed2
       class(AED2Config), pointer :: aed2_cfg
       class(StaggeredGrid), pointer :: grid
 
-      !# Arrays for state and diagnostic variables
-      real(RK),pointer,dimension(:,:) :: cc !# water quality array: nlayers, nvars
+      ! Arrays for state and diagnostic variables
+      real(RK),pointer,dimension(:,:) :: cc ! water quality array: nlayers, nvars
       real(RK),pointer,dimension(:,:) :: cc_diag
-      real(RK),pointer,dimension(:) :: cc_diag_hz
+      real(RK),pointer,dimension(:) :: cc_diag_sheet
       real(RK),pointer,dimension(:) :: tss
       real(RK),pointer,dimension(:) :: sed_zones
 
@@ -54,24 +54,25 @@ module simstrat_aed2
       real(RK),pointer,dimension(:,:) :: flux_pel
       real(RK),pointer,dimension(:,:) :: flux_zone
 
-      !# Arrays for work, vertical movement, and cross-boundary fluxes
+      ! Arrays for work, vertical movement, and cross-boundary fluxes
       real(RK),allocatable,dimension(:,:) :: ws
       real(RK),allocatable,dimension(:)   :: total
       real(RK),allocatable,dimension(:)   :: local
 
-      !# Arrays for environmental variables not supplied externally.
+      ! Arrays for environmental variables not supplied externally.
       real(RK),pointer,dimension(:) :: par, pres
       real(RK),pointer,dimension(:) :: uva, uvb, nir
 
       ! Column pointers
       type (aed2_column_t),pointer,dimension(:) :: column, column_sed
 
-      !# External variables
+      ! External variables
       integer  :: w_adv_ctr    ! Scheme for vertical advection (0 if not used)
 
       character(len=48),pointer :: names(:)
       character(len=48),pointer :: bennames(:)
       character(len=48),pointer :: diagnames(:)
+      character(len=48),pointer :: diagnames_sheet(:)
 
       integer,allocatable,dimension(:) :: externalid
 
@@ -79,12 +80,6 @@ module simstrat_aed2
 
       integer :: n_AED2_state_vars, n_vars, n_vars_ben, n_vars_diag, n_vars_diag_sheet
       integer :: zone_var = 0
-
-      ! Variables for in-/outflow
-      real(RK), dimension(:, :), allocatable   :: z_Inp_AED2, Q_start_AED2, Qs_start_AED2, Q_end_AED2, Qs_end_AED2, Q_read_start_AED2, Q_read_end_AED2
-      real(RK), dimension(:, :), allocatable   :: Inp_read_start_AED2, Inp_read_end_AED2, Qs_read_start_AED2, Qs_read_end_AED2, Q_inp_AED2
-      real(RK), dimension(:), allocatable :: tb_start, tb_end ! Input depths, start time, end time
-      integer, dimension(:), allocatable :: eof, nval, nval_deep, nval_surface
 
    contains
       procedure, pass(self), public :: init
@@ -172,8 +167,10 @@ contains
          ! Allocate memory for AED2 state and inflow matrix used by Simstrat
          state%AED2_state => self%cc
          state%AED2_diagnostic => self%cc_diag
+         state%AED2_diagnostic_sheet => self%cc_diag_sheet
          state%n_AED2_state = n_vars  + n_vars_ben
          state%n_AED2_diagnostic = n_vars_diag
+         state%n_AED2_diagnostic_sheet = n_vars_diag_sheet
 
          ! Define column pointer (which is the object that is handed over to AED2 at every timestep)
          ! It containes external (Simstrat) variables like T and S, but also the variables of this (SimstratAED2) module
@@ -188,11 +185,14 @@ contains
          allocate(state%AED2_diagnostic_names(n_vars_diag))
          state%AED2_diagnostic_names => self%diagnames
 
+         allocate(state%AED2_diagnostic_names_sheet(n_vars_diag_sheet))
+         state%AED2_diagnostic_names_sheet => self%diagnames_sheet
+
          ! Now set initial values of AED2 variables
          v = 0 ; sv = 0;
          do av=1,self%n_AED2_state_vars
             if ( .not.  aed2_get_var(av, tvar) ) stop "Error getting variable info"
-            if ( .not. ( tvar%extern .or. tvar%diag) ) then  !# neither global nor diagnostic variable
+            if ( .not. ( tvar%extern .or. tvar%diag) ) then  ! neither global nor diagnostic variable
                if ( tvar%sheet ) then
                   sv = sv + 1
                   call AED2_InitCondition(self, self%cc(:, n_vars + sv), tvar%name, tvar%initial)
@@ -228,18 +228,18 @@ contains
       self%pres(1:self%grid%ubnd_vol) = -self%grid%z_volume(1:self%grid%ubnd_vol)
 
       self%cc_diag = 0.
-      self%cc_diag_hz = 0.
+      self%cc_diag_sheet = 0.
 
       if (self%aed2_cfg%particle_mobility) then
-      !# (3) Calculate source/sink terms due to settling rising of state
-      !# variables in the water column (note that settling into benthos
-      !# is done in aed2_do_benthos)
+      ! (3) Calculate source/sink terms due to settling rising of state
+      ! variables in the water column (note that settling into benthos
+      ! is done in aed2_do_benthos)
          v = 0
          do i = 1,self%n_AED2_state_vars
             if ( aed2_get_var(i, tvar) ) then
                if ( .not. (tvar%sheet .or. tvar%diag .or. tvar%extern) ) then
                v = v + 1
-               !# only for state_vars that are not sheet
+               ! only for state_vars that are not sheet
                   if ( .not. ieee_is_nan(tvar%mobility) ) then
                      self%ws(:, v) = tvar%mobility
                      min_C = tvar%minimum
@@ -257,8 +257,10 @@ contains
          call absorption_updateAED2(self, state)
       end if
 
+
       self%par(:) = state%rad_vol(:)*rho_0*cp
 
+      ! Calculate irradiance spectrum from par (factors from GLM)
       self%nir(:) = (self%par(:)/0.45) * 0.51
       self%uva(:) = (self%par(:)/0.45) * 0.035
       self%uvb(:) = (self%par(:)/0.45) * 0.005
@@ -272,8 +274,9 @@ contains
          end do
       end do
 
-!       ! Now update benthic variables, depending on whether zones are simulated
-!       IF ( benthic_mode .GT. 1 ) THEN
+      ! Now update benthic variables, depending on whether zones are simulated
+      if ( self%aed2_cfg%benthic_mode .gt. 1 ) then
+         call error("The use of sediment zones is currently not implemented in Simstrat-AED2")
 !          ! Loop through benthic state variables to update their mass
 !          DO v = n_vars+1, n_vars+n_vars_ben
 !             ! Loop through each sediment zone
@@ -282,15 +285,15 @@ contains
 !                z_cc(lev, v) = z_cc(lev, v)+ dt_eff*flux_zone(lev, v)
 !             ENDDO
 !          ENDDO
-!       ELSE
-!          DO v = n_vars+1, n_vars+n_vars_ben
-!             cc(1, v) = cc(1, v) + dt_eff*flux_ben(v)
-!          ENDDO
-!       end if
+      else
+         do v = self% n_vars + 1, self%n_vars + self%n_vars_ben
+            self%cc(1, v) = self%cc(1, v) + state%dt*self%flux_ben(v)
+         end do
+      end if
 
 !       ! If simulating sediment zones, distribute cc-sed benthic properties back
 !       !  into main cc array, mainly for plotting
-!       IF ( benthic_mode .GT. 1 ) CALL copy_from_zone(cc, cc_diag, cc_diag_hz, wlev)
+!       IF ( benthic_mode .GT. 1 ) CALL copy_from_zone(cc, cc_diag, cc_diag_sheet, wlev)
 
 
       ! Diffusive transport of AED2 variables (advective transport of AED2 variables is done in the usual Simstrat routines (lateral/lateral_rho))
@@ -310,8 +313,8 @@ contains
       ! Local variables
       integer :: lev,zon,v_start,v_end,av,sv,sd
       real(RK) :: scale
-      real(RK), dimension(self%grid%nz_occupied, self%n_vars)    :: flux_pel_pre
-      real(RK), dimension(self%aed2_cfg%n_zones, self%n_vars) :: flux_pel_z
+      !real(RK), dimension(self%grid%nz_occupied, self%n_vars)    :: flux_pel_pre
+      !real(RK), dimension(self%aed2_cfg%n_zones, self%n_vars) :: flux_pel_z
       logical :: splitZone
       type(aed2_variable_t),pointer :: tvar
       !-------------------------------------------------------------------------------
@@ -320,23 +323,24 @@ contains
       self%flux_atm = zero_
       self%flux_ben = zero_
 
-      !# Start with calculating all flux terms for rhs in mass/m3/s
-      !# Includes (1) benthic flux, (2) surface exchange and (3) water column kinetics
-      !# as calculated by glm
+      ! Start with calculating all flux terms for rhs in mass/m3/s
+      ! Includes (1) benthic flux, (2) surface exchange and (3) water column kinetics
+      ! as calculated by glm
 
 
-      !# (1) BENTHIC FLUXES
+      ! (1) BENTHIC FLUXES
       if ( self%aed2_cfg%benthic_mode .gt. 1 ) then
-   !          !# Multiple static sediment zones are simulated, and therfore overlying
-   !          !# water conditions need to be aggregated from multiple cells/layers, and output flux
-   !          !# needs disaggregating from each zone back to the overlying cells/layers
+         call error("The use of sediment zones is currently not implemented in Simstrat-AED2")
+   !          ! Multiple static sediment zones are simulated, and therfore overlying
+   !          ! water conditions need to be aggregated from multiple cells/layers, and output flux
+   !          ! needs disaggregating from each zone back to the overlying cells/layers
 
    !          do zon=1,self%aed2_cfg%n_zones
-   !             !# Reinitialise flux_ben to be repopulated for this zone
+   !             ! Reinitialise flux_ben to be repopulated for this zone
    !             flux_ben = zero_
    !             flux_pel_pre = zero_
 
-   !             !# If multiple benthic zones, we must update the benthic variable pointer for the new zone
+   !             ! If multiple benthic zones, we must update the benthic variable pointer for the new zone
    !             if ( self%zone_var .ge. 1 ) then
    !                column_sed(zone_var)%cell_sheet => z_sed_zones(zon)
    !        !       !MH WE NEED A COLUMN TO CC VAR MAP FOR BENTHIC GUYS
@@ -357,26 +361,26 @@ contains
    !                !print*,"Calling ben for zone ",zone_var,zon,z_sed_zones(zon)
    !             end if
    !             if ( self%aed2_cfg%benthic_mode .eq. 3 ) then
-   !                !# Zone is able to operated on by riparian and dry methods
+   !                ! Zone is able to operated on by riparian and dry methods
    !                call aed2_calculate_riparian(column_sed, zon, z_pc_wet(zon))
    !                if (z_pc_wet(zon) .eq. 0. ) call aed2_calculate_dry(column_sed, zon)
    !             end if
-   !             !# Calculate temporal derivatives due to benthic processes.
-   !             !# They are stored in flux_ben (benthic vars) and flux_pel (water vars)
+   !             ! Calculate temporal derivatives due to benthic processes.
+   !             ! They are stored in flux_ben (benthic vars) and flux_pel (water vars)
    !             flux_pel_pre = flux_pel
 
    !    !        print*,"Calling ben for zone ",zone_var,zon,z_sed_zones(zon)
    !             call aed2_calculate_benthic(column_sed, zon)
 
-   !             !# Record benthic fluxes in the zone array
+   !             ! Record benthic fluxes in the zone array
    !             flux_zon(zon, :) = flux_ben(:)
 
-   !             !# Now we have to find out the water column flux that occured and
-   !             !# disaggregate it to relevant layers
+   !             ! Now we have to find out the water column flux that occured and
+   !             ! disaggregate it to relevant layers
    !             flux_pel_z(zon,:) = flux_pel(zon,:)-flux_pel_pre(zon,:)
    !          end do
 
-   !          !# Disaggregation of zone induced fluxes to overlying layers
+   !          ! Disaggregation of zone induced fluxes to overlying layers
    !          v_start = 1 ; v_end = self%n_vars
    !          zon = self%aed2_cfg%n_zones
    !          do lev=self%grid%nz_occupied,1,-1
@@ -398,62 +402,61 @@ contains
    !              flux_pel(lev,v_start:v_end) = flux_pel_z(zon,v_start:v_end)
    !            end if
    !          end do
-   !          !# Limit flux out of bottom waters to concentration of that layer
-   !          !# i.e. don't flux out more than is there & distribute
-   !          !# bottom flux into pelagic over bottom box (i.e., divide by layer height).
-   !          !# scaled to proportion of area that is "bottom"
+   !          ! Limit flux out of bottom waters to concentration of that layer
+   !          ! i.e. don't flux out more than is there & distribute
+   !          ! bottom flux into pelagic over bottom box (i.e., divide by layer height).
+   !          ! scaled to proportion of area that is "bottom"
    !          do lev=1,self%grid%nz_occupied
    !             if(lev>1)flux_pel(lev, :) = flux_pel(lev, :) * (self%grid%Az_vol(lev) - self%grid%Az_vol(lev - 1))/self%grid%Az_vol(lev)
    !             flux_pel(lev, :) = max(-1.0 * self%cc(lev, :), flux_pel(lev, :)/self%grid%h(lev))
    !          end do
       else
-         !# Sediment zones are not simulated and therefore just operate on the bottom-most
-         !# GLM layer as the "benthos". If benthic_mode=1 then benthic fluxes will also be
-         !# applied on flanks of the remaining layers, but note this is not suitable for
-         !# model configurations where mass balance of benthic variables is required.
+         ! Sediment zones are not simulated and therefore just operate on the bottom-most
+         ! GLM layer as the "benthos". If benthic_mode=1 then benthic fluxes will also be
+         ! applied on flanks of the remaining layers, but note this is not suitable for
+         ! model configurations where mass balance of benthic variables is required.
 
-         !# Calculate temporal derivatives due to exchanges at the sediment/water interface
+         ! Calculate temporal derivatives due to exchanges at the sediment/water interface
          !if ( self%zone_var .GE. 1 ) column(self%zone_var)%cell_sheet => z_sed_zones(1)
          call aed2_calculate_benthic(self%column, 1)
 
-         !# Limit flux out of bottom layers to concentration of that layer
-         !# i.e. don't flux out more than is there
-         !# & distribute bottom flux into pelagic over bottom box (i.e., divide by layer height).
+         ! Limit flux out of bottom layers to concentration of that layer
+         ! i.e. don't flux out more than is there
+         ! & distribute bottom flux into pelagic over bottom box (i.e., divide by layer height).
          self%flux_pel(1, :) = max(-1.0 * self%cc(1, :), self%flux_pel(1, :)/self%grid%h(1))
 
          if ( self%aed2_cfg%benthic_mode .EQ. 1 ) then
             do lev=2,self%grid%nz_occupied
-               !# Calculate temporal derivatives due to benthic fluxes.
+               ! Calculate temporal derivatives due to benthic fluxes.
                call aed2_calculate_benthic(self%column, lev)
 
-               !# Limit flux out of bottom layers to concentration of that layer
-               !# i.e. don't flux out more than is there
-               !# & distribute bottom flux into pelagic over bottom box (i.e., divide by layer height).
-               !# scaled to proportion of area that is "bottom"
+               ! Limit flux out of bottom layers to concentration of that layer
+               ! i.e. don't flux out more than is there
+               ! & distribute bottom flux into pelagic over bottom box (i.e., divide by layer height).
+               ! scaled to proportion of area that is "bottom"
                self%flux_pel(lev, :) = max(-1.0 * self%cc(lev, :), self%flux_pel(lev, :)/self%grid%h(lev))
                self%flux_pel(lev, :) = self%flux_pel(lev, :) * (self%grid%Az(lev) - self%grid%Az(lev - 1))/self%grid%Az(lev)
             end do
          end if
       end if
 
-      !# (2) SURFACE FLUXES
-      !# Calculate temporal derivatives due to air-water exchange.
-      if (.not. (state%total_ice_h > 0)) then !# no surface exchange under ice cover
+      ! (2) SURFACE FLUXES
+      ! Calculate temporal derivatives due to air-water exchange.
+      if (.not. (state%total_ice_h > 0)) then ! no surface exchange under ice cover
          call aed2_calculate_surface(self%column, self%grid%nz_occupied)
 
-         !# Distribute the fluxes into pelagic surface layer
+         ! Distribute the fluxes into pelagic surface layer
          self%flux_pel(self%grid%nz_occupied, :) = self%flux_pel(self%grid%nz_occupied, :) + self%flux_atm(:)/self%grid%h(self%grid%nz_occupied)
       end if
 
-      !# (3) WATER COLUMN KINETICS
-      !# Add pelagic sink and soustatuse terms for all depth levels.
+      ! (3) WATER COLUMN KINETICS
+      ! Add pelagic sink and soustatuse terms for all depth levels.
       do lev=1,self%grid%nz_occupied
          call aed2_calculate(self%column, lev)
       end do
    end subroutine calculate_fluxes
 
 
-   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    ! Copy of diffusion algorithm used for Simstrat state variables
 
    subroutine diffusion_AED2_state(self, state, var_index)
@@ -471,14 +474,13 @@ contains
       sources = 0.
 
       if (var_index == state%n_pH) state%AED2_state(:,state%n_pH) = 10.**(-state%AED2_state(:,state%n_pH))
-      call euleri_create_LES_MFQ_AED2(self, state%AED2_state(:,var_index), state%nug, sources, boundaries, lower_diag, main_diag, upper_diag, rhs, state%dt)
+      call euleri_create_LES_MFQ_AED2(self, state%AED2_state(:,var_index), state%nuh, sources, boundaries, lower_diag, main_diag, upper_diag, rhs, state%dt)
       call solve_tridiag_thomas(lower_diag, main_diag, upper_diag, rhs, state%AED2_state(:,var_index), self%grid%ubnd_vol)
       if (var_index == state%n_pH) state%AED2_state(:,state%n_pH) = -log10(state%AED2_state(:,state%n_pH))
 
    end subroutine
 
 
-   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    ! Copy of disretization of Simstrat mean quantities
 
    subroutine euleri_create_LES_MFQ_AED2(self, var, nu, sources, boundaries, lower_diag, main_diag, upper_diag, rhs, dt)

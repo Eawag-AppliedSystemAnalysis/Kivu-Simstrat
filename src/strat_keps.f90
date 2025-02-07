@@ -244,7 +244,6 @@ contains
             self%var(ubnd_fce)=   self%var(ubnd_fce-1)+(state%cde*((state%ko(ubnd_fce-1))**1.5_RK)/(kappa*(z0 +grid%h(ubnd_vol)))**2)*grid%h(ubnd_vol)
          end if
 
-         state%keps_counter = state%keps_counter + 1
          ! check lower limit of eps / update num
          do i = 1, ubnd_fce
             if (state%NN(i) > 0) then
@@ -285,22 +284,11 @@ contains
 
                   ! We assume that diffusivity of gases is equal to diffusivity of salts
                   state%nug(i) = state%nus(i)/nus_mol*nug_mol
-                  state%nut(i) = state%nus(i)/nus_mol*nut_mol
-                  state%nu_he(i) = state%nug(i)/nus_mol*nu_he_mol
-                  state%nu_ne(i) = state%nug(i)/nus_mol*nu_ne_mol
-                  state%nu_ar(i) = state%nug(i)/nus_mol*nu_ar_mol
-                  state%nu_kr(i) = state%nug(i)/nus_mol*nu_kr_mol
                else ! above 120 m
                   state%num(i) = state%cmue1(i)*state%k(i)*state%k(i)/state%eps(i) + num_mol
                   state%nuh(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nuh_mol
                   state%nus(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nus_mol
-                  state%nug(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nug_mol
-                  state%nut(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nut_mol
-
-                  state%nu_he(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nu_he_mol
-                  state%nu_ne(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nu_ne_mol
-                  state%nu_ar(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nu_ar_mol
-                  state%nu_kr(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nu_kr_mol      
+                  state%nug(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nug_mol 
                end if
 
             else  ! If parameterization is not used
@@ -308,12 +296,6 @@ contains
                state%nuh(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nuh_mol
                state%nus(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nus_mol
                state%nug(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nug_mol
-               state%nut(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nut_mol
-
-               state%nu_he(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nu_he_mol
-               state%nu_ne(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nu_ne_mol
-               state%nu_ar(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nu_ar_mol
-               state%nu_kr(i) = state%cmue2(i)*state%k(i)*state%k(i)/state%eps(i) + nu_kr_mol
             end if
 
             ! Calculate heat/salt fluxes for output

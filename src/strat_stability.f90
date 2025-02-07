@@ -98,24 +98,26 @@ contains
       class(StabilityModule) :: self
       class(ModelState) :: state
 
+      real(RK), dimension(self%grid%nz_occupied) :: co2, ch4
+
       ! Local variables
       real(RK) :: buoy(self%grid%length_vol)
       integer :: i
 
-      associate (grd=>self%grid, T=>state%T, S=>state%S, co2=>state%co2, ch4=> state%ch4, NN=>state%NN, rho=>state%rho)
+      associate (grd=>self%grid, T=>state%T, S=>state%S, NN=>state%NN, rho=>state%rho)
 
          ! Get gas concentrations from AED2
          if (self%couple_aed2) then
-            do i = 1, state%n_AED2
-               select case(trim(state%AED2_names(i)))
+            do i = 1, state%n_AED2_state
+               select case(trim(state%AED2_state_names(i)))
                case('CAR_ch4')
                   ch4 = state%AED2_state(:,i)/1e6 ! mol/L
                end select
             end do
-            do i = 1, state%n_AED2_diag
-               select case(trim(state%AED2_diagnames(i)))
+            do i = 1, state%n_AED2_diagnostic
+               select case(trim(state%AED2_diagnostic_names(i)))
                case('CAR_CO2')
-                  co2 = state%AED2_diagstate(:,i)/1e6 ! mol/L
+                  co2 = state%AED2_diagnostic(:,i)/1e6 ! mol/L
                end select
             end do
          end if
@@ -129,7 +131,7 @@ contains
             buoy(i) = -g*(rho(i) - rho_0)/rho_0
          end do
 
-         NN(2:grd%ubnd_fce - 1) = grd%meanint(1:grd%ubnd_vol - 1)*(buoy(2:grd%ubnd_vol) - buoy(1:grd%ubnd_vol - 1))
+         NN(2:grd%ubnd_fce - 1) = grd%meanint(1:grd%ubnd_vol - 1)*(buoy(2:grd%ubnd_fce - 1) - buoy(1:grd%ubnd_fce - 2))
          NN(1) = NN(2)
          NN(grd%ubnd_fce) = NN(grd%ubnd_fce - 1)
 

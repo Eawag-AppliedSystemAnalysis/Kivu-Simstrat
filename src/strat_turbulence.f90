@@ -53,9 +53,10 @@ module strat_turbulence
    end type
 contains
 
-   subroutine turbulence_module_init(self, grid, model_cfg, model_param)
+   subroutine turbulence_module_init(self, state, grid, model_cfg, model_param)
       implicit none
       class(TurbulenceModule) :: self
+      class(ModelState), target :: state
       class(StaggeredGrid), target :: grid
       class(ModelConfig), target :: model_cfg
       class(ModelParam), target :: model_param
@@ -63,6 +64,8 @@ contains
       self%grid => grid
       self%model_cfg => model_cfg
       self%model_param => model_param
+
+      state%E_Seiche = model_param%seiche_ini
    end subroutine
 
    subroutine turbulence_module_update(self, state, param)
@@ -95,6 +98,8 @@ contains
          state%P(2:ubnd_fce - 1) = state%P(2:ubnd_fce - 1)*state%num(2:ubnd_fce - 1)*grid%meanint(1:ubnd_vol - 1)**2
          ! Equation 5 (right) of Goudsmit, 2002
          state%B = 0
+
+         ! nus instead of nuh in Kivu-Simstrat probably because salinity determines NN
          state%B(2:ubnd_fce - 1) = -state%nus(2:ubnd_fce - 1)*state%NN(2:ubnd_fce - 1)
 
          return
