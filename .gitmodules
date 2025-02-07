@@ -3,3 +3,6 @@
 	url = https://github.com/Eawag-AppliedSystemAnalysis/libaed2.git
 [submodule]
 	branch = master
+[submodule "lib/forbear"]
+	path = lib/forbear
+	url = https://github.com/d-vanzo/forbear.git
