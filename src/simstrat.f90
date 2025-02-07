@@ -218,7 +218,7 @@ contains
    subroutine run_simulation()
 
       !! run the marching time loop
-      call ok("Start day: "//real_to_str(simdata%sim_cfg%start_datum, '(F7.1)'))
+      call ok("Start day: "//real_to_str(simdata%sim_cfg%start_datum, '(F10.1)'))
       new_start_datum = simdata%sim_cfg%start_datum
       if (continue_from_snapshot) then
          call load_snapshot(snapshot_file_path, simdata%model_cfg%couple_aed2)
@@ -228,7 +228,7 @@ contains
       else
          call logger%log(simdata)
       end if
-      call ok("End day: "//real_to_str(simdata%sim_cfg%end_datum, '(F7.1)'))
+      call ok("End day: "//real_to_str(simdata%sim_cfg%end_datum, '(F10.1)'))
       call logger%start()
 
       ! initialize a bar with the progress percentage counter
