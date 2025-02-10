@@ -444,13 +444,13 @@ contains
          if (self%output_config%output_vars(i)%volume_grid) then
             ! Interpolate state on volume grid
             call self%grid%interpolate_from_vol(self%output_config%output_vars(i)%values, self%output_config%zout, values_on_zout, self%n_depths, self%output_config%output_depth_reference)
-            call output_helper%add_data_array(self%output_files(i), i, self%last_iteration_data, values_on_zout, "(ES14.4E3)")
+            call output_helper%add_data_array(self%output_files(i), i, self%last_iteration_data, values_on_zout, "(ES14.6E3)")
          else if (self%output_config%output_vars(i)%face_grid) then
             ! Interpolate state on face grid
             call self%grid%interpolate_from_face(self%output_config%output_vars(i)%values, self%output_config%zout, values_on_zout, self%n_depths, self%output_config%output_depth_reference)
-            call output_helper%add_data_array(self%output_files(i), i, self%last_iteration_data, values_on_zout, "(ES14.4E3)")
+            call output_helper%add_data_array(self%output_files(i), i, self%last_iteration_data, values_on_zout, "(ES14.6E3)")
          else
-            call output_helper%add_data_scalar(self%output_files(i), i, self%last_iteration_data, self%output_config%output_vars(i)%values_surf, "(ES14.4E3)")
+            call output_helper%add_data_scalar(self%output_files(i), i, self%last_iteration_data, self%output_config%output_vars(i)%values_surf, "(ES14.6E3)")
          end if
          call output_helper%next_row(self%output_files(i))
       end do
@@ -463,10 +463,10 @@ contains
             ! Interpolate state on volume grid
             if (i < (self%n_vars_Simstrat + self%n_vars_AED2_state + 1)) then
                call self%grid%interpolate_from_vol(self%output_config%output_vars_aed2_state%values(:,i - self%n_vars_Simstrat), self%output_config%zout, values_on_zout, self%n_depths, self%output_config%output_depth_reference)
-               call output_helper%add_data_array(self%output_files(i), i, self%last_iteration_data, values_on_zout, "(ES14.4E3)")
+               call output_helper%add_data_array(self%output_files(i), i, self%last_iteration_data, values_on_zout, "(ES14.6E3)")
             else if (i < (self%n_vars_Simstrat + self%n_vars_AED2_state + self%n_vars_AED2_diagnostic + 1)) then
                call self%grid%interpolate_from_vol(self%output_config%output_vars_aed2_diagnostic%values(:,i - self%n_vars_Simstrat - self%n_vars_AED2_state), self%output_config%zout, values_on_zout, self%n_depths, self%output_config%output_depth_reference)
-               call output_helper%add_data_array(self%output_files(i), i, self%last_iteration_data, values_on_zout, "(ES14.4E3)")
+               call output_helper%add_data_array(self%output_files(i), i, self%last_iteration_data, values_on_zout, "(ES14.6E3)")
             else
                call output_helper%add_data_scalar(self%output_files(i), i, self%last_iteration_data, self%output_config%output_vars_aed2_diagnostic_sheet%values_sheet(i - self%n_vars_Simstrat - self%n_vars_AED2_state - self%n_vars_AED2_diagnostic), "(ES14.4E3)")
             end if
