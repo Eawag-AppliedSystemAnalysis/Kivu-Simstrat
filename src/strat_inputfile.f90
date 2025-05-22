@@ -239,6 +239,20 @@ contains
                   self%simdata%output_cfg%output_vars(i)%volume_grid = .false.
                   self%simdata%output_cfg%output_vars(i)%face_grid = .true.
 
+               case('nus')
+                  ! Turbulent diffusivity for temperature [m2 s]
+                  self%simdata%output_cfg%output_vars(i)%name = "nuh"
+                  self%simdata%output_cfg%output_vars(i)%values => self%simdata%model%nuh
+                  self%simdata%output_cfg%output_vars(i)%volume_grid = .false.
+                  self%simdata%output_cfg%output_vars(i)%face_grid = .true.
+
+               case('nug')
+                  ! Turbulent diffusivity for temperature [m2 s]
+                  self%simdata%output_cfg%output_vars(i)%name = "nuh"
+                  self%simdata%output_cfg%output_vars(i)%values => self%simdata%model%nuh
+                  self%simdata%output_cfg%output_vars(i)%volume_grid = .false.
+                  self%simdata%output_cfg%output_vars(i)%face_grid = .true.
+
                case('NN')
                   ! Brunt-Väisälä frequency [s-1]
                   self%simdata%output_cfg%output_vars(i)%name = "NN"

@@ -26,7 +26,7 @@
     "SplitSeicheParameter"    : false,
     "StabilityFunction"       : 2,
     "FluxCondition"           : 1,
-    "Forcing"                 : 3,
+    "Forcing"                 : 5,
     "UserDefinedWaterAlbedo"  : false,
     "UseFilteredWind"         : false,
     "SeicheNormalization"     : 2,
