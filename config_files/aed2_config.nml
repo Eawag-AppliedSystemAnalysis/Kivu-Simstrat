@@ -177,6 +177,7 @@
    atm_ch4 = 1.9e-6    !atm
    ch4_piston_model = 1
    simCH4ebb = false
+   ch4_inflow = false
 /
 
 
