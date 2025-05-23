@@ -241,15 +241,15 @@ contains
 
                case('nus')
                   ! Turbulent diffusivity for temperature [m2 s]
-                  self%simdata%output_cfg%output_vars(i)%name = "nuh"
-                  self%simdata%output_cfg%output_vars(i)%values => self%simdata%model%nuh
+                  self%simdata%output_cfg%output_vars(i)%name = "nus"
+                  self%simdata%output_cfg%output_vars(i)%values => self%simdata%model%nus
                   self%simdata%output_cfg%output_vars(i)%volume_grid = .false.
                   self%simdata%output_cfg%output_vars(i)%face_grid = .true.
 
                case('nug')
                   ! Turbulent diffusivity for temperature [m2 s]
-                  self%simdata%output_cfg%output_vars(i)%name = "nuh"
-                  self%simdata%output_cfg%output_vars(i)%values => self%simdata%model%nuh
+                  self%simdata%output_cfg%output_vars(i)%name = "nug"
+                  self%simdata%output_cfg%output_vars(i)%values => self%simdata%model%nug
                   self%simdata%output_cfg%output_vars(i)%volume_grid = .false.
                   self%simdata%output_cfg%output_vars(i)%face_grid = .true.
 
@@ -433,7 +433,7 @@ contains
                   self%simdata%output_cfg%output_vars(i)%name = "LateralInput"
                   self%simdata%output_cfg%output_vars(i)%values => self%simdata%model%lateral_input
                   self%simdata%output_cfg%output_vars(i)%volume_grid = .false.
-                  self%simdata%output_cfg%output_vars(i)%face_grid = .false.
+                  self%simdata%output_cfg%output_vars(i)%face_grid = .true.
 
                case('Eseiche')
                   ! Total seiche energy [J]
