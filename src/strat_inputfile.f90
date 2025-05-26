@@ -174,8 +174,8 @@ contains
 
          ! Define variables that should be written
          if (output_cfg%output_all) then
-            output_cfg%number_output_vars = 37
-            output_cfg%output_var_names = [character(len=12) :: 'V','U','T','S','co2','ch4','num','nuh','nus','nug','NN','k','eps','P','B','Ps','HA','HW','HK','HV','Rad0','TotalIceH','BlackIceH','WhiteIceH','SnowH','WaterH','Qvert','rho','DiffHeatFlux','BuoyHeatFlux','AdvHeatFlux','DiffSaltFlux','AdvSaltFlux','VertVel','DensityRatio','LateralInput','Eseiche']
+            output_cfg%number_output_vars = 35
+            output_cfg%output_var_names = [character(len=12) :: 'V','U','T','S','num','nuh','nus','nug','NN','k','eps','P','B','Ps','HA','HW','HK','HV','Rad0','TotalIceH','BlackIceH','WhiteIceH','SnowH','WaterH','Qvert','rho','DiffHeatFlux','BuoyHeatFlux','AdvHeatFlux','DiffSaltFlux','AdvSaltFlux','VertVel','DensityRatio','LateralInput','Eseiche']
          else
             output_cfg%number_output_vars = size(output_cfg%output_var_names)
          end if
@@ -194,20 +194,6 @@ contains
                   ! Horizontal velocity in x direction [m s-1]
                   self%simdata%output_cfg%output_vars(i)%name = "U"
                   self%simdata%output_cfg%output_vars(i)%values => self%simdata%model%U
-                  self%simdata%output_cfg%output_vars(i)%volume_grid = .true.
-                  self%simdata%output_cfg%output_vars(i)%face_grid = .false.
-
-               case('co2')
-                  ! CO2 concentration in [mmol/m3] (from AED2)
-                  self%simdata%output_cfg%output_vars(i)%name = "co2"
-                  self%simdata%output_cfg%output_vars(i)%values => self%simdata%model%co2
-                  self%simdata%output_cfg%output_vars(i)%volume_grid = .true.
-                  self%simdata%output_cfg%output_vars(i)%face_grid = .false.
-
-               case('ch4')
-                  ! CH4 concentration in [mmol/m3] (from AED2)
-                  self%simdata%output_cfg%output_vars(i)%name = "ch4"
-                  self%simdata%output_cfg%output_vars(i)%values => self%simdata%model%ch4
                   self%simdata%output_cfg%output_vars(i)%volume_grid = .true.
                   self%simdata%output_cfg%output_vars(i)%face_grid = .false.
 

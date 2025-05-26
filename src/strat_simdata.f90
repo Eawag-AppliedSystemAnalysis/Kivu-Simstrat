@@ -174,7 +174,7 @@ module strat_simdata
 
       ! Variables located on z_cent grid
       ! Note that for these variables the value at 0 z.b. U(0) is not used
-      real(RK), dimension(:), allocatable :: U, V, co2, ch4 ! Water velocities [m/s]
+      real(RK), dimension(:), allocatable :: U, V ! Water velocities [m/s]
       real(RK), dimension(:), pointer :: T, S, R_rho ! Temperature [°C], Salinity [‰]
       real(RK), dimension(:), allocatable :: dS ! Source/sink for salinity
       real(RK), dimension(:, :), allocatable :: Q_inp ! Horizontal inflow [m^3/s]
@@ -279,8 +279,6 @@ contains
       !            https://en.wikipedia.org/wiki/Off-by-one_error#Fencepost_error ;-)
       allocate (self%U(state_size))
       allocate (self%V(state_size))
-      allocate (self%co2(state_size))
-      allocate (self%ch4(state_size))
       allocate (self%T(state_size))
       allocate (self%S(state_size))
       allocate (self%R_rho(state_size))
@@ -335,8 +333,6 @@ contains
       self%R_rho = 0.0_RK
       self%dS = 0.0_RK
       self%rho = 0.0_RK
-      self%co2 = 0.0_RK
-      self%ch4 = 0.0_RK
       self%buoy_heat_flux = 0.0_RK
       self%adv_heat_flux = 0.0_RK
       self%diff_salt_flux = 0.0_RK
