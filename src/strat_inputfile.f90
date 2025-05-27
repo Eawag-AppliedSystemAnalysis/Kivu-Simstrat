@@ -226,14 +226,14 @@ contains
                   self%simdata%output_cfg%output_vars(i)%face_grid = .true.
 
                case('nus')
-                  ! Turbulent diffusivity for temperature [m2 s]
+                  ! Turbulent diffusivity for salinity [m2 s]
                   self%simdata%output_cfg%output_vars(i)%name = "nus"
                   self%simdata%output_cfg%output_vars(i)%values => self%simdata%model%nus
                   self%simdata%output_cfg%output_vars(i)%volume_grid = .false.
                   self%simdata%output_cfg%output_vars(i)%face_grid = .true.
 
                case('nug')
-                  ! Turbulent diffusivity for temperature [m2 s]
+                  ! Turbulent diffusivity for gases [m2 s]
                   self%simdata%output_cfg%output_vars(i)%name = "nug"
                   self%simdata%output_cfg%output_vars(i)%values => self%simdata%model%nug
                   self%simdata%output_cfg%output_vars(i)%volume_grid = .false.
