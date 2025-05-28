@@ -263,7 +263,7 @@ contains
 
                ! Set parameters (could be moved to parameter file)
                threshold = 1e-10_RK
-               offset = 0.384 ! with improved DD from 0.3
+               offset = 0.384 ! with improved DD from 0.3, Modeste 2025
 
                ! Below 120 m (where double diffusive staircases exist)
                if ((grid%z_volume(i) < 365)) then
@@ -276,7 +276,7 @@ contains
                   log_NN = log(state%NN(i))
 
                   !state%nuh(i) = exp(-0.4745*log_NN - 17.67 - offset)
-                  state%nuh(i) = exp(-0.5483*log_NN - 17.67 - offset) ! with improved DD 
+                  state%nuh(i) = exp(-0.5483*log_NN - 17.67 - offset) ! with improved DD Modeste 2025
                   state%nus(i) = exp(-0.6294*log_NN - 22.66 - offset)                                                      
 
                   ! Diffusion cannot be lower than molecular
