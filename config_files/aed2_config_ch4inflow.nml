@@ -178,6 +178,7 @@
    ch4_piston_model = 1
    simCH4ebb = false
    ch4_inflow = true
+   kivu_mode = true
 /
 
 

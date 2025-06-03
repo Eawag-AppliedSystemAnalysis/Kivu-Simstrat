@@ -48,7 +48,7 @@
         "SnowModel"               : 0
     },
       "AED2Config" : {
-        "AED2ConfigFile"          : "config_files\\aed2_config.nml",
+        "AED2ConfigFile"          : "config_files\\aed2_config.nml", ! kivu_mode and ch4_inflow options can be switched ON or OFF in this file accordingly
         "PathAED2initial"         : "scenarios\\AED2_initcond\\",
         "PathAED2inflow"          : "scenarios\\AED2_inflow_ch4inflow\\",
         "ParticleMobility"        : 1,
