@@ -393,14 +393,26 @@ contains
 
             ! If lake level changes and if there is surface inflow, adjust inflow depth to keep relative inflow depth constant
             if ((.not. grid%lake_level == grid%lake_level_old) .and. self%has_surface_input(i)) then
+               
+               !if (i==2) print *, "Z_surf:", self%z_Inp(i, self%nval_deep(i) + 1:self%nval(i))!, "Z(1):", self%z_Inp(i, self%nval_deep(i) + 2), "Z(num_z):", self%z_Inp(i, self%nval(i)), "lake level old:", grid%lake_level_old, "lake level:", grid%lake_level
+               !if (i==2) print *, "Z_deep:", self%z_Inp(i, 1:self%nval_deep(i))
+               !!if (i==1) print *, "Qin_read_surf:", size(self%Qs_read_start(i,:)), "Q_Z(1):", self%Qs_read_start(i,1), "Q_Z(num_z):", self%Qs_read_start(i,size(self%Qs_read_start(i,:)))
+               !!if (i==1) print *, "Z_Inp_surf:", size(self%z_Inp(i, self%nval_deep(i) + 1:self%nval(i))), "Z(1):", self%z_Inp(i,1), "Z(num_z):", self%z_Inp(i,self%nval(i))
+               !!if (i==1) print *, "Qin_read_surf:", self%Qs_read_start(i,:)! self%nval_deep(i) + 1:self%nval(i))
+               !if (i==1) print *, "Qin_read_surf:", self%Qs_start(i, self%nval_deep(i) + 1:self%nval(i))
 
                ! Readjust surface input depths
+               !self%z_Inp(i, self%nval_deep(i) + 1:self%nval(i)) = self%z_Inp(i, self%nval_deep(i) + 1 :self%nval(i)) - grid%lake_level_old + grid%lake_level
                self%z_Inp(i, self%nval_deep(i) + 1:self%nval(i)) = self%z_Inp(i, self%nval_deep(i) + 1 :self%nval(i)) - grid%lake_level_old + grid%lake_level
 
                ! Adjust surface inflow to new lake level
                if (self%has_surface_input(i)) then
                   call grid%interpolate_to_face_from_second(self%z_Inp(i, self%nval_deep(i) + 1:self%nval(i)), self%Qs_read_start(i, :), self%nval_surface(i), self%Qs_start(i, :))
+                  !if (i==1) print *, "Interpolated_Q_surf_start:", size(self%Qs_read_start(i, :))
+                  !if (i==1) print *, "Interpolated_Q_surf_start:", self%Qs_read_start(i, :)
                   call grid%interpolate_to_face_from_second(self%z_Inp(i, self%nval_deep(i) + 1:self%nval(i)), self%Qs_read_end(i, :), self%nval_surface(i), self%Qs_end(i, :))
+                  !if (i==1) print *, "Interpolated_Q_surf_end:", size(self%Qs_read_end(i, :))
+                  !if (i==1) print *, "Interpolated_Q_surf_end:", self%Qs_read_end(i, :)
                end if
             end if ! end if not lake_level...
 
@@ -453,6 +465,9 @@ contains
                   do j=1,ubnd_fce
                      Q_inp(i,j) = (self%Qs_start(i,j)) + (datum - self%tb_start(i))/(self%tb_end(i) - self%tb_start(i))* &
                      (self%Qs_end(i,j) - self%Qs_start(i,j))
+                     !if ((j==ubnd_fce).and.(i==1)) print *, "datum", datum, "Q_start(ubnd_face-1):", self%Qs_start(i,j-1), "Qs_end(ubnd_face-1):", self%Qs_end(i,j-1), "Qs_inp(ubnd_face-1):", Q_inp(i,j-1)
+                     !if ((j==ubnd_fce).and.(i==1)) print *, "datum", datum, "Q_start(ubnd_face):", self%Qs_start(i,j), "Qs_end(ubnd_face):", self%Qs_end(i,j), "Qs_inp(ubnd_face):", Q_inp(i,j)
+                     !if ((j==ubnd_fce).and.(i==1)) print *, "datum", datum, "Q_start(ubnd_face+1):", self%Qs_start(i,j+1), "Qs_end(ubnd_face+1):", self%Qs_end(i,j+1), "Qs_inp(ubnd_face+1):", Q_inp(i,j+1)
                   end do
                else
                   ! For outflow (i==2), both surface and deep inputs are added to Q_inp
@@ -597,6 +612,7 @@ contains
             Q_vert(i) = Q_vert(i - 1) + Q_inp(1,i - 1) + Q_inp(2,i - 1)
             state%w(i) = Q_vert(i)/grid%Az(i)
             state%lateral_input(i) = Q_inp(1,i - 1)
+            !if (i==ubnd_fce) print *, "datum", datum, "lateralInput(-1):", Q_inp(1,i),"lateralInput(-2):", Q_inp(1,i-1)  !------ for debugging
          end do
       end associate
    end subroutine

@@ -57,22 +57,26 @@ contains
       ! Assign closest value if out of given grid
       posk1 = 1
       do while (zi(posk1) <= z(1))
+         !if ((num_z==8).and.(z(1)/=0)) print *, "posk1:", posk1, "y(1):", y(1)
          yi(posk1) = y(1)
          posk1 = posk1 + 1
       end do
       posk2 = num_zi
       do while (zi(posk2) >= z(num_z))
+         !if ((num_z==8).and.(z(1)/=0)) print *, "posk2:", posk2!, "y(num_z):", y(1:num_z)
          yi(posk2) = y(num_z)
          posk2 = posk2 - 1
       end do
-
+      !if ((z(1)/=0)) print *, "num_z:", num_z, "num_zi:", num_zi, "z(num_z):", z(num_z), "zi(num_zi):", zi(num_zi), "z(1):", z(1), "zi(1):", zi(1)
       ! Linear interpolation
       posi = 1
       do i = posk1, posk2
          do while (zi(i) > z(posi + 1))
             posi = posi + 1
+            !if ((num_z==8).and.(z(1)/=0)) print *, "posi:", posi, "y(num_z):", y(num_z)
          end do
          yi(i) = y(posi) + ((zi(i) - z(posi)) / (z(posi + 1) - z(posi))) * (y(posi + 1) - y(posi))
+         !if ((num_z==8).and.(z(1)/=0)) print *, "i_posk1_posk_2:", i, "yi(num_z):", yi(i), "y(posi):", y(posi), "y(posi+1):", y(posi+1)
       end do
 
       return
