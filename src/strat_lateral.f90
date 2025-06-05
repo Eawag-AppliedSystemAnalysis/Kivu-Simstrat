@@ -389,7 +389,7 @@ contains
                   end do
                   call ok('Input file successfully opened: '//fname)
                end if
-            end if ! if        
+            end if ! if     
 
             ! If lake level changes and if there is surface inflow, adjust inflow depth to keep relative inflow depth constant
             if ((.not. grid%lake_level == grid%lake_level_old) .and. self%has_surface_input(i)) then
@@ -597,7 +597,6 @@ contains
             Q_vert(i) = Q_vert(i - 1) + Q_inp(1,i - 1) + Q_inp(2,i - 1)
             state%w(i) = Q_vert(i)/grid%Az(i)
             state%lateral_input(i) = Q_inp(1,i - 1)
-            !if (i==ubnd_fce) print *, "datum", datum, "lateralInput(-1):", Q_inp(1,i),"lateralInput(-2):", Q_inp(1,i-1)  !------ for debugging
          end do
       end associate
    end subroutine
