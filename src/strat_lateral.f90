@@ -49,13 +49,13 @@ module strat_lateral
       ! Variables that where either marked with "save" before, or that have been
       ! global, but only used in the lateral environment:
       real(RK), dimension(:, :), allocatable   :: z_Inp, Q_start, Qs_start, Q_end, Qs_end, Q_read_start, Q_read_end
-      real(RK), dimension(:, :), allocatable   :: Inp_read_start, Inp_read_end, Qs_read_start, Qs_read_end
-      real(RK), dimension(:), allocatable  :: tb_start, tb_end ! Start time, end time
+      real(RK), dimension(:, :), allocatable   :: Inp_read_start, Inp_read_end, Qs_read_start, Qs_read_end, rei_values, wash_rei_values
+      real(RK), dimension(:), allocatable  :: tb_start, tb_end, ext_depths, wash_ext_depths  ! Start time, end time
       integer, dimension(:), allocatable  :: eof, nval, nval_deep, nval_surface, fnum
       integer, dimension(:), allocatable :: number_of_lines_read
       logical, dimension(:), allocatable :: has_surface_input, has_deep_input
       integer :: n_vars, n_ch4, n_dic, max_n_inflows
-      logical :: couple_aed2
+      logical :: couple_aed2, methane_extraction
       character(len=100) :: simstrat_path(n_simstrat), aed2_path
 
    contains
@@ -112,6 +112,8 @@ contains
          self%aed2_path = aed2_config%path_aed2_inflow
       end if
 
+      self%methane_extraction = model_config%methane_extraction ! Added by Modeste 2025
+
       self%max_n_inflows = model_config%max_length_input_data
 
       allocate(self%eof(self%n_vars))
@@ -139,6 +141,11 @@ contains
       allocate(state%Q_inp(1:self%n_vars,1:grid%nz_grid + 1))
       allocate(self%has_surface_input(1:self%n_vars))
       allocate(self%has_deep_input(1:self%n_vars))
+
+      allocate(self%ext_depths(1:4)) ! Added by Modeste 2025
+      allocate(self%rei_values(1:self%n_vars,1:4)) ! Find a way to get rid of 4
+      allocate(self%wash_ext_depths(1:4))
+      allocate(self%wash_rei_values(1:self%n_vars,1:4))
 
       self%n_ch4 = 0
       self%n_dic = 0
@@ -196,6 +203,9 @@ contains
          call save_matrix(80, self%Inp_read_end)
          call save_matrix(80, self%Qs_read_start)
          call save_matrix(80, self%Qs_read_end)
+
+         !call save_matrix(80, self%ext_depths) ! Added by Modeste 2025
+         !call save_matrix(80, self%rei_values)
       end if
    end subroutine
 
@@ -229,6 +239,9 @@ contains
          call read_matrix(81, self%Inp_read_end)
          call read_matrix(81, self%Qs_read_start)
          call read_matrix(81, self%Qs_read_end)
+
+         !call save_matrix(81, self%ext_depths) ! Added by Modeste 2025
+         !call save_matrix(81, self%rei_values)
       end if
    end subroutine
       
@@ -245,6 +258,8 @@ contains
       real(RK) :: Q_in(1:self%grid%ubnd_vol), h_in(1:self%grid%ubnd_vol)
       real(RK) :: T_in, S_in, co2_in, ch4_in, rho_in, CD_in, g_red, slope, Ri, E, Q_inp_inc
       real(RK) :: AED2_in(state%n_AED2_state)
+      real(RK) :: ext_z, ext_range, rei_z, wash_ext_z, wash_ext_range, wash_rei_z  ! Added by Modeste 2025
+      !real(RK), dimension(:), allocatable  :: ext_depths, rei_values ! added for now
       integer :: i, j, k, i1, i2, l, status
       character(len=100) :: fname
 
@@ -354,8 +369,84 @@ contains
                      call grid%interpolate_to_face_from_second(self%z_Inp(i, self%nval_deep(i) + 1:self%nval(i)), self%Qs_read_start(i, :), self%nval_surface(i), self%Qs_start(i, :))
                   end if
 
+                  !--------- For extraction case -----------------------
+                  if ((self%methane_extraction).and.(self%couple_aed2)) then ! this option should always go with coupleed aed2
+                     print *, "z_volume:", grid%z_volume
+                     !----For extraction process -----------
+                     ext_z = grid%z_zero - 450 ! convert extraction depth same as deep input depths
+                     ext_range = 2
+                     rei_z = grid%z_zero - 180 ! convert reinjection depth same as deep input depths
+                     ! For multiple extraction scenarios (loop will work perfect here to formulate ext_depths)
+                     self%ext_depths = [ext_z+(ext_range/2), ext_z+(ext_range/2), ext_z-(ext_range/2), ext_z-(ext_range/2)]
+
+                     !----For washing process -----------
+                     wash_ext_z = grid%z_zero - 60 ! convert extraction depth same as deep input depths
+                     wash_ext_range = 2
+                     wash_rei_z = grid%z_zero - 180 ! convert reinjection depth same as deep input depths
+                     ! For multiple extraction scenarios (loop will work perfect here to formulate ext_depths)
+                     self%wash_ext_depths = [wash_ext_z+(wash_ext_range/2), wash_ext_z+(wash_ext_range/2), wash_ext_z-(wash_ext_range/2), wash_ext_z-(wash_ext_range/2)]
+
+                     self%tb_end(i) = state%datum 
+                     self%Inp_read_end(i,1:self%nval_deep(i)) = self%Inp_read_start(i,1:self%nval_deep(i)) !simply, equalize Inp_read_end with Inp_read_start, then specific inflows should be updated below
+
+                     ! for lake chemistry ----------------------------------------------
+                     if (i > n_simstrat) then
+                         !if (i == 13) then
+                        !print *, "i=", i, "rei_values:", self%rei_values
+                        select case(trim(state%AED2_state_names(i)))
+                        case('OXY_oxy')
+                           do i2=1, size(self%ext_depths)
+                              self%Inp_read_end(i,i2) = state%AED2_state(ubnd_vol - minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1) + 2, 1)
+                              !---washing operation in each loop -----
+                              self%rei_values(i,i2) = self%Inp_read_end(i,i2)
+                           end do
+                        end select
+
+                        !if (i == 14) then
+                        select case(trim(state%AED2_state_names(i)))
+                        case('CAR_dic')
+                           do i2=1, size(self%ext_depths)
+                              self%Inp_read_end(i,i2) = state%AED2_state(ubnd_vol - minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1) + 2, 2)
+                              self%rei_values(i,i2) = self%Inp_read_end(i,i2)
+                           end do
+                        end select
+
+                        !if (i == 15) then
+                        select case(trim(state%AED2_state_names(i)))
+                        case('CAR_pH')
+                           do i2=1, size(self%ext_depths)
+                              self%Inp_read_end(i,i2) = state%AED2_state(ubnd_vol - minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1) + 2, 3)
+                              self%rei_values(i,i2) = self%Inp_read_end(i,i2)
+                           end do
+                        end select
+
+                        !if (i == 16) then
+                        select case(trim(state%AED2_state_names(i)))
+                        case('CAR_ch4')
+                           do i2=1, size(self%ext_depths)
+                              self%Inp_read_end(i,i2) = state%AED2_state(ubnd_vol - minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1) + 2, 4)
+                              self%rei_values(i,i2) = self%Inp_read_end(i,i2)
+                           end do
+                        end select 
+
+                     !-------==========------- For inflows temperature and temperature files ========------------------============
+                     else if ((i==3).or.(i==4)) then
+                        do i2=1, size(self%ext_depths)
+                           if (i==3) then
+                              self%Inp_read_end(i,i2) = state%T(ubnd_vol - minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1) + 2) !--- (temp) extract the nearest depth temp value to 450 m
+                              self%rei_values(i,i2) = self%Inp_read_end(i,i2)
+                           else
+                              self%Inp_read_end(i,i2) = state%S(ubnd_vol - minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1) + 2) !---(sal) extract the nearest depth temp value to 450 m
+                              self%rei_values(i,i2) = self%Inp_read_end(i,i2)
+                           end if
+                        end do
+                     end if
+                     self%Inp_read_end(i,11) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
+                  else
                   ! Read next line
-                  read(self%fnum(i),*,end=7) self%tb_end(i),(self%Inp_read_end(i,j),j=1,self%nval(i))
+                     read(self%fnum(i),*,end=7) self%tb_end(i),(self%Inp_read_end(i,j),j=1,self%nval(i))
+                  end if !----End extraction ----------------
+
                   call count_read(self, i)
 
                   ! If there is deep outflow (i==2)
@@ -420,9 +511,73 @@ contains
                   else
                      self%Inp_read_start(i,1:self%nval_deep(i)) = self%Inp_read_end(i,1:self%nval_deep(i))
                   end if
+                  
+                  !--------- For extraction case -----------------------
+                  if (((self%methane_extraction).and.(self%couple_aed2)).and.(self%tb_end(i)<=self%tb_end(2))) then ! this option should always go with coupleed aed2
+                     ext_z = grid%z_zero - 450 ! convert extraction depth same as deep input depths
+                     ext_range = 2
+                     rei_z = grid%z_zero - 180 ! convert reinjection depth same as deep input depths
 
-                  ! Read next line
-                  read(self%fnum(i),*,end=7) self%tb_end(i),(self%Inp_read_end(i,j),j=1,self%nval(i))
+                     ! For multiple extraction scenarios (loop will work perfect here to formulate ext_depths)
+                     self%ext_depths = [ext_z+(ext_range/2), ext_z+(ext_range/2), ext_z-(ext_range/2), ext_z-(ext_range/2)]
+
+                     self%tb_end(i) = state%datum 
+                     self%Inp_read_end(i,1:self%nval_deep(i)) = self%Inp_read_start(i,1:self%nval_deep(i)) !simply, equalize Inp_read_end with Inp_read_start, then specific inflows should be updated below
+
+                     ! for lake chemistry ----------------------------------------------
+                     if (i > n_simstrat) then
+                         !if (i == 13) then
+                        select case(trim(state%AED2_state_names(i)))
+                        case('OXY_oxy')
+                           do i2=1, size(self%ext_depths)
+                              self%Inp_read_end(i,i2) = state%AED2_state(ubnd_vol - minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1) + 2, 1)
+                              self%rei_values(i,i2) = self%Inp_read_end(i,i2)
+                           end do
+                        end select
+
+                        !if (i == 14) then
+                        select case(trim(state%AED2_state_names(i)))
+                        case('CAR_dic')
+                           do i2=1, size(self%ext_depths)
+                              self%Inp_read_end(i,i2) = state%AED2_state(ubnd_vol - minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1) + 2, 2)
+                              self%rei_values(i,i2) = self%Inp_read_end(i,i2)
+                           end do
+                        end select
+
+                        !if (i == 15) then
+                        select case(trim(state%AED2_state_names(i)))
+                        case('CAR_pH')
+                           do i2=1, size(self%ext_depths)
+                              self%Inp_read_end(i,i2) = state%AED2_state(ubnd_vol - minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1) + 2, 3)
+                              self%rei_values(i,i2) = self%Inp_read_end(i,i2)
+                           end do
+                        end select
+
+                        !if (i == 16) then
+                        select case(trim(state%AED2_state_names(i)))
+                        case('CAR_ch4')
+                           do i2=1, size(self%ext_depths)
+                              self%Inp_read_end(i,i2) = state%AED2_state(ubnd_vol - minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1) + 2, 4)
+                              self%rei_values(i,i2) = self%Inp_read_end(i,i2)
+                           end do
+                        end select 
+
+                     !-------==========------- For inflows temperature and temperature files ========------------------============
+                     else if ((i==3).or.(i==4)) then
+                        do i2=1, size(self%ext_depths)
+                           if (i==3) then
+                              self%Inp_read_end(i,i2) = state%T(ubnd_vol - minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1) + 2) !--- (temp) extract the nearest depth temp value to 450 m
+                           else
+                              self%Inp_read_end(i,i2) = state%S(ubnd_vol - minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1) + 2) !---(sal) extract the nearest depth temp value to 450 m
+                           end if
+                           self%rei_values(i,i2) = self%Inp_read_end(i,i2)
+                        end do
+                     end if
+                     self%Inp_read_end(i,11) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
+                  else
+                     ! Read next line
+                     read(self%fnum(i),*,end=7) self%tb_end(i),(self%Inp_read_end(i,j),j=1,self%nval(i))
+                  end if
                   call count_read(self, i)
 
                   ! If there is deep outflow (i==2)

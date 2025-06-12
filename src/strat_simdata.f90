@@ -118,6 +118,7 @@ module strat_simdata
       logical :: bottom_friction
       integer :: ice_model
       integer :: snow_model
+      logical :: methane_extraction
    end type
 
    ! AED2 configuration (read from file)

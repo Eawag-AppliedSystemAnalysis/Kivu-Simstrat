@@ -45,7 +45,8 @@
         "InflowMode"              : 2,
         "BottomFriction"          : true,
         "IceModel"                : 0,
-        "SnowModel"               : 0
+        "SnowModel"               : 0,
+        "MethaneExtraction"       : true
     },
       "AED2Config" : {
         "AED2ConfigFile"          : "config_files\\aed2_config.nml", ! kivu_mode and ch4_inflow options can be switched ON or OFF in this file accordingly

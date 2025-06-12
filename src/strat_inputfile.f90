@@ -736,6 +736,7 @@ contains
          call par_file%get("ModelConfig.BottomFriction", model_cfg%bottom_friction, found); call check_field(found, 'ModelConfig.BottomFriction', ParName)
          call par_file%get("ModelConfig.IceModel", model_cfg%ice_model, found); call check_field(found, 'ModelConfig.IceModel', ParName)
          call par_file%get("ModelConfig.SnowModel", model_cfg%snow_model, found); call check_field(found, 'ModelConfig.SnowModel', ParName)
+         call par_file%get("ModelConfig.MethaneExtraction", model_cfg%methane_extraction, found); call check_field(found, 'ModelConfig.MethaneExtraction', ParName) ! Added by Modeste 2025
 
          ! AED2 configuration (or another biogeochemical model if implemented)
          if (model_cfg%couple_aed2) then
