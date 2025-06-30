@@ -260,7 +260,7 @@ contains
       real(RK) :: AED2_in(state%n_AED2_state)
       real(RK) :: ext_z, ext_range, rei_z, wash_ext_z, wash_ext_range, wash_rei_z  ! Added by Modeste 2025
       !real(RK), dimension(:), allocatable  :: ext_depths, rei_values ! added for now
-      integer :: i, j, k, i1, i2, l, status
+      integer :: i, j, k, i1, i2, l, status, io_unit
       character(len=100) :: fname
 
       associate (datum=>state%datum, &
@@ -370,8 +370,7 @@ contains
                   end if
 
                   !--------- For extraction case -----------------------
-                  if ((self%methane_extraction).and.(self%couple_aed2)) then ! this option should always go with coupleed aed2
-                     print *, "z_volume:", grid%z_volume
+                  if (self%methane_extraction) then ! this option should always go with coupleed aed2
                      !----For extraction process -----------
                      ext_z = grid%z_zero - 450 ! convert extraction depth same as deep input depths
                      ext_range = 2
@@ -382,67 +381,83 @@ contains
                      !----For washing process -----------
                      wash_ext_z = grid%z_zero - 60 ! convert extraction depth same as deep input depths
                      wash_ext_range = 2
-                     wash_rei_z = grid%z_zero - 180 ! convert reinjection depth same as deep input depths
+                     wash_rei_z = grid%z_zero - 60 ! convert reinjection depth same as deep input depths
                      ! For multiple extraction scenarios (loop will work perfect here to formulate ext_depths)
                      self%wash_ext_depths = [wash_ext_z+(wash_ext_range/2), wash_ext_z+(wash_ext_range/2), wash_ext_z-(wash_ext_range/2), wash_ext_z-(wash_ext_range/2)]
 
-                     self%tb_end(i) = state%datum 
-                     self%Inp_read_end(i,1:self%nval_deep(i)) = self%Inp_read_start(i,1:self%nval_deep(i)) !simply, equalize Inp_read_end with Inp_read_start, then specific inflows should be updated below
-
                      ! for lake chemistry ----------------------------------------------
                      if (i > n_simstrat) then
-                         !if (i == 13) then
-                        !print *, "i=", i, "rei_values:", self%rei_values
-                        select case(trim(state%AED2_state_names(i)))
-                        case('OXY_oxy')
+                        self%tb_end(i) = state%datum 
+                        self%Inp_read_end(i,1:self%nval(i)) = self%Inp_read_start(i,1:self%nval(i)) !simply, equalize Inp_read_end with Inp_read_start, then specific inflows should be updated below
+                        
+                        !For OXY
+                        if (i == n_simstrat + 1) then
                            do i2=1, size(self%ext_depths)
-                              self%Inp_read_end(i,i2) = state%AED2_state(ubnd_vol - minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1) + 2, 1)
+                              self%Inp_read_end(i,i2) = state%AED2_state(minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1), 1)
                               !---washing operation in each loop -----
                               self%rei_values(i,i2) = self%Inp_read_end(i,i2)
                            end do
-                        end select
+                        end if
 
-                        !if (i == 14) then
-                        select case(trim(state%AED2_state_names(i)))
-                        case('CAR_dic')
+                        ! For CAR_dic
+                        if (i == n_simstrat + 2) then
                            do i2=1, size(self%ext_depths)
-                              self%Inp_read_end(i,i2) = state%AED2_state(ubnd_vol - minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1) + 2, 2)
+                              self%Inp_read_end(i,i2) = state%AED2_state(minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1), 2)
+                              self%rei_values(i,i2) = 0.7 * self%Inp_read_end(i,i2)
+                           end do
+                        end if
+                        
+                        ! For CAR_pH
+                        if (i == n_simstrat + 3) then
+                           do i2=1, size(self%ext_depths)
+                              self%Inp_read_end(i,i2) = state%AED2_state(minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1), 3)
                               self%rei_values(i,i2) = self%Inp_read_end(i,i2)
                            end do
-                        end select
+                        end if
 
-                        !if (i == 15) then
-                        select case(trim(state%AED2_state_names(i)))
-                        case('CAR_pH')
+                        ! For CAR_ch4
+                        if (i == n_simstrat + 4) then
                            do i2=1, size(self%ext_depths)
-                              self%Inp_read_end(i,i2) = state%AED2_state(ubnd_vol - minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1) + 2, 3)
-                              self%rei_values(i,i2) = self%Inp_read_end(i,i2)
+                              self%Inp_read_end(i,i2) = state%AED2_state(minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1), 4)
+                              self%rei_values(i,i2) = 0.17 * self%Inp_read_end(i,i2) ! 0.17 should later depend on the efficiency percentage
                            end do
-                        end select
-
-                        !if (i == 16) then
-                        select case(trim(state%AED2_state_names(i)))
-                        case('CAR_ch4')
-                           do i2=1, size(self%ext_depths)
-                              self%Inp_read_end(i,i2) = state%AED2_state(ubnd_vol - minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1) + 2, 4)
-                              self%rei_values(i,i2) = self%Inp_read_end(i,i2)
-                           end do
-                        end select 
+                        end if
+                        ! Average AED2 executed case for reinjection value
+                        self%Inp_read_end(i,11) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection 
+                     !end if
 
                      !-------==========------- For inflows temperature and temperature files ========------------------============
-                     else if ((i==3).or.(i==4)) then
+                     else if (i == 3) then ! for temperature
+                        self%tb_end(i) = state%datum 
+                        self%Inp_read_end(i,1:self%nval(i)) = self%Inp_read_start(i,1:self%nval(i)) !simply, equalize Inp_read_end with Inp_read_start, then specific inflows should be updated below
+
                         do i2=1, size(self%ext_depths)
-                           if (i==3) then
-                              self%Inp_read_end(i,i2) = state%T(ubnd_vol - minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1) + 2) !--- (temp) extract the nearest depth temp value to 450 m
-                              self%rei_values(i,i2) = self%Inp_read_end(i,i2)
-                           else
-                              self%Inp_read_end(i,i2) = state%S(ubnd_vol - minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1) + 2) !---(sal) extract the nearest depth temp value to 450 m
-                              self%rei_values(i,i2) = self%Inp_read_end(i,i2)
-                           end if
+                           self%Inp_read_end(i,i2) = state%T(minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1)) !--- (temp) extract the nearest depth temp value to 450 m
+                           self%rei_values(i,i2) = self%Inp_read_end(i,i2)
                         end do
+                        self%Inp_read_end(i,11) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
+                        !open(newunit=io_unit, file='state_outputs/T_output.dat', status='unknown', action='write', position='append')
+                        !write(io_unit,*) state%datum, self%tb_start(i), self%tb_end(i), self%Inp_read_start(i,1:self%nval(i))
+                        !write(io_unit,*) state%datum, self%tb_start(i), self%tb_end(i), self%Inp_read_end(i,1:self%nval(i))
+                        !close(io_unit)
+                     !end if
+
+                     else if (i == 4) then ! for salinity
+                        self%tb_end(i) = state%datum 
+                        self%Inp_read_end(i,1:self%nval(i)) = self%Inp_read_start(i,1:self%nval(i)) !simply, equalize Inp_read_end with Inp_read_start, then specific inflows should be updated below
+
+                        do i2=1, size(self%ext_depths)
+                           self%Inp_read_end(i,i2) = state%S(minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1)) !---(sal) extract the nearest depth temp value to 450 m
+                           self%rei_values(i,i2) = self%Inp_read_end(i,i2)
+                        end do
+                        self%Inp_read_end(i,11) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
+                     !end if
+
+                     else ! Non-extraction concern inflows (require when methaneextraction=true)
+                     ! Read next line
+                        read(self%fnum(i),*,end=7) self%tb_end(i),(self%Inp_read_end(i,j),j=1,self%nval(i))
                      end if
-                     self%Inp_read_end(i,11) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
-                  else
+                  else ! No methane extraction (when methaneextraction=false)
                   ! Read next line
                      read(self%fnum(i),*,end=7) self%tb_end(i),(self%Inp_read_end(i,j),j=1,self%nval(i))
                   end if !----End extraction ----------------
@@ -513,68 +528,96 @@ contains
                   end if
                   
                   !--------- For extraction case -----------------------
-                  if (((self%methane_extraction).and.(self%couple_aed2)).and.(self%tb_end(i)<=self%tb_end(2))) then ! this option should always go with coupleed aed2
+                  if ((self%methane_extraction).and.(self%tb_end(i)<=self%tb_end(2))) then ! this option should always go with coupled aed2 (not necessary)
+                     !----For extraction process -----------
                      ext_z = grid%z_zero - 450 ! convert extraction depth same as deep input depths
                      ext_range = 2
                      rei_z = grid%z_zero - 180 ! convert reinjection depth same as deep input depths
-
                      ! For multiple extraction scenarios (loop will work perfect here to formulate ext_depths)
                      self%ext_depths = [ext_z+(ext_range/2), ext_z+(ext_range/2), ext_z-(ext_range/2), ext_z-(ext_range/2)]
 
-                     self%tb_end(i) = state%datum 
-                     self%Inp_read_end(i,1:self%nval_deep(i)) = self%Inp_read_start(i,1:self%nval_deep(i)) !simply, equalize Inp_read_end with Inp_read_start, then specific inflows should be updated below
+                     !----For washing process -----------
+                     wash_ext_z = grid%z_zero - 60 ! convert extraction depth same as deep input depths
+                     wash_ext_range = 2
+                     wash_rei_z = grid%z_zero - 60 ! convert reinjection depth same as deep input depths
+                     ! For multiple extraction scenarios (loop will work perfect here to formulate ext_depths)
+                     self%wash_ext_depths = [wash_ext_z+(wash_ext_range/2), wash_ext_z+(wash_ext_range/2), wash_ext_z-(wash_ext_range/2), wash_ext_z-(wash_ext_range/2)]
 
                      ! for lake chemistry ----------------------------------------------
                      if (i > n_simstrat) then
-                         !if (i == 13) then
-                        select case(trim(state%AED2_state_names(i)))
-                        case('OXY_oxy')
+                        self%tb_end(i) = state%datum 
+                        self%Inp_read_end(i,1:self%nval(i)) = self%Inp_read_start(i,1:self%nval(i)) !simply, equalize Inp_read_end with Inp_read_start, then specific inflows should be updated below
+                        
+                        !For OXY
+                        if (i == n_simstrat + 1) then
                            do i2=1, size(self%ext_depths)
-                              self%Inp_read_end(i,i2) = state%AED2_state(ubnd_vol - minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1) + 2, 1)
+                              self%Inp_read_end(i,i2) = state%AED2_state(minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1), 1)
+                              !---washing operation in each loop -----
                               self%rei_values(i,i2) = self%Inp_read_end(i,i2)
                            end do
-                        end select
+                        end if
 
-                        !if (i == 14) then
-                        select case(trim(state%AED2_state_names(i)))
-                        case('CAR_dic')
+                        ! For CAR_dic
+                        if (i == n_simstrat + 2) then
                            do i2=1, size(self%ext_depths)
-                              self%Inp_read_end(i,i2) = state%AED2_state(ubnd_vol - minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1) + 2, 2)
+                              self%Inp_read_end(i,i2) = state%AED2_state(minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1), 2)
+                              self%rei_values(i,i2) = 0.7 * self%Inp_read_end(i,i2)
+                           end do
+                        end if
+                        
+                        ! For CAR_pH
+                        if (i == n_simstrat + 3) then
+                           do i2=1, size(self%ext_depths)
+                              self%Inp_read_end(i,i2) = state%AED2_state(minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1), 3)
                               self%rei_values(i,i2) = self%Inp_read_end(i,i2)
                            end do
-                        end select
+                        end if
 
-                        !if (i == 15) then
-                        select case(trim(state%AED2_state_names(i)))
-                        case('CAR_pH')
+                        ! For CAR_ch4
+                        if (i == n_simstrat + 4) then
                            do i2=1, size(self%ext_depths)
-                              self%Inp_read_end(i,i2) = state%AED2_state(ubnd_vol - minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1) + 2, 3)
-                              self%rei_values(i,i2) = self%Inp_read_end(i,i2)
+                              self%Inp_read_end(i,i2) = state%AED2_state(minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1), 4)
+                              self%rei_values(i,i2) = 0.17 * self%Inp_read_end(i,i2) ! 0.17 should later depend on the efficiency percentage
                            end do
-                        end select
+                        end if
 
-                        !if (i == 16) then
-                        select case(trim(state%AED2_state_names(i)))
-                        case('CAR_ch4')
-                           do i2=1, size(self%ext_depths)
-                              self%Inp_read_end(i,i2) = state%AED2_state(ubnd_vol - minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1) + 2, 4)
-                              self%rei_values(i,i2) = self%Inp_read_end(i,i2)
-                           end do
-                        end select 
+                        ! Average AED2 executed case for reinjection value
+                        self%Inp_read_end(i,11) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection 
+                     !end if
 
                      !-------==========------- For inflows temperature and temperature files ========------------------============
-                     else if ((i==3).or.(i==4)) then
+                     else if (i==3) then ! for temperature
+                        self%tb_end(i) = state%datum 
+                        self%Inp_read_end(i,1:self%nval(i)) = self%Inp_read_start(i,1:self%nval(i)) !simply, equalize Inp_read_end with Inp_read_start, then specific inflows should be updated below
+
                         do i2=1, size(self%ext_depths)
-                           if (i==3) then
-                              self%Inp_read_end(i,i2) = state%T(ubnd_vol - minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1) + 2) !--- (temp) extract the nearest depth temp value to 450 m
-                           else
-                              self%Inp_read_end(i,i2) = state%S(ubnd_vol - minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1) + 2) !---(sal) extract the nearest depth temp value to 450 m
-                           end if
+                           self%Inp_read_end(i,i2) = state%T(minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1)) !--- (temp) extract the nearest depth temp value to 450 m
                            self%rei_values(i,i2) = self%Inp_read_end(i,i2)
                         end do
+                        self%Inp_read_end(i,11) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
+
+                        !open(newunit=io_unit, file='state_outputs/T_output.dat', status='unknown', action='write', position='append')
+                        !write(io_unit,*) state%datum, self%tb_start(i), self%tb_end(i), self%Inp_read_start(i,1:self%nval(i))
+                        !write(io_unit,*) state%datum, self%tb_start(i), self%tb_end(i), self%Inp_read_end(i,1:self%nval(i))
+                        !close(io_unit)
+                        !end if
+
+                     else if (i==4) then ! for salinity
+                        self%tb_end(i) = state%datum 
+                        self%Inp_read_end(i,1:self%nval(i)) = self%Inp_read_start(i,1:self%nval(i)) !simply, equalize Inp_read_end with Inp_read_start, then specific inflows should be updated below
+
+                        do i2=1, size(self%ext_depths)
+                           self%Inp_read_end(i,i2) = state%S(minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1)) !---(sal) extract the nearest depth temp value to 450 m
+                           self%rei_values(i,i2) = self%Inp_read_end(i,i2)
+                        end do
+                        self%Inp_read_end(i,11) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
+                     !end if
+                     else ! Non-extraction concern inflows (require when methaneextraction=true)
+                     ! Read next line
+                        read(self%fnum(i),*,end=7) self%tb_end(i),(self%Inp_read_end(i,j),j=1,self%nval(i))
                      end if
-                     self%Inp_read_end(i,11) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
-                  else
+   
+                  else !No methane extraction (when methaneextraction=false)
                      ! Read next line
                      read(self%fnum(i),*,end=7) self%tb_end(i),(self%Inp_read_end(i,j),j=1,self%nval(i))
                   end if
