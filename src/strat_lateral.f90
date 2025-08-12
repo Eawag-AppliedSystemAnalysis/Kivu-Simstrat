@@ -260,7 +260,7 @@ contains
       real(RK) :: AED2_in(state%n_AED2_state)
       real(RK) :: ext_z, ext_range, rei_z, wash_ext_z, wash_ext_range, wash_rei_z  ! Added by Modeste 2025
       !real(RK), dimension(:), allocatable  :: ext_depths, rei_values ! added for now
-      integer :: i, j, k, i1, i2, l, status, io_unit
+      integer :: i, j, k, i1, i2, l, status, io_unit, rei_z_idx
       character(len=100) :: fname
 
       associate (datum=>state%datum, &
@@ -347,6 +347,9 @@ contains
 
                   ! Read input depths
                   read(self%fnum(i),*,end=9) dummy, (self%z_Inp(i,j),j=1,self%nval(i))
+                  if (i==2) then
+                     print *, "Inflow depths:", (self%z_Inp(i, j), j=1,self%nval(i))
+                  end if
                   call count_read(self, i)
 
                   ! Convert deep input depths
@@ -369,12 +372,17 @@ contains
                      call grid%interpolate_to_face_from_second(self%z_Inp(i, self%nval_deep(i) + 1:self%nval(i)), self%Qs_read_start(i, :), self%nval_surface(i), self%Qs_start(i, :))
                   end if
 
+                  if (i==2) then
+                     print *, "Inflow depths:", (self%z_Inp(i, j), j=1,self%nval(i))
+                  end if
+
                   !--------- For extraction case -----------------------
                   if (self%methane_extraction) then ! this option should always go with coupleed aed2
                      !----For extraction process -----------
                      ext_z = grid%z_zero - 450 ! convert extraction depth same as deep input depths
                      ext_range = 2
                      rei_z = grid%z_zero - 180 ! convert reinjection depth same as deep input depths
+                     rei_z_idx = 11 !reinjection depth index
                      ! For multiple extraction scenarios (loop will work perfect here to formulate ext_depths)
                      self%ext_depths = [ext_z+(ext_range/2), ext_z+(ext_range/2), ext_z-(ext_range/2), ext_z-(ext_range/2)]
 
@@ -392,9 +400,15 @@ contains
                         
                         !For OXY
                         if (i == n_simstrat + 1) then
+                           !---ext and rei operations -----
                            do i2=1, size(self%ext_depths)
                               self%Inp_read_end(i,i2) = state%AED2_state(minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1), 1)
-                              !---washing operation in each loop -----
+                              self%rei_values(i,i2) = self%Inp_read_end(i,i2)
+                           end do
+
+                           !---ext and rei operations -----
+                           do i2=1, size(self%wash_ext_depths)
+                              self%Inp_read_end(i,i2) = state%AED2_state(minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1), 1)
                               self%rei_values(i,i2) = self%Inp_read_end(i,i2)
                            end do
                         end if
@@ -423,7 +437,7 @@ contains
                            end do
                         end if
                         ! Average AED2 executed case for reinjection value
-                        self%Inp_read_end(i,11) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection 
+                        self%Inp_read_end(i,rei_z_idx) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection 
                      !end if
 
                      !-------==========------- For inflows temperature and temperature files ========------------------============
@@ -435,7 +449,7 @@ contains
                            self%Inp_read_end(i,i2) = state%T(minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1)) !--- (temp) extract the nearest depth temp value to 450 m
                            self%rei_values(i,i2) = self%Inp_read_end(i,i2)
                         end do
-                        self%Inp_read_end(i,11) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
+                        self%Inp_read_end(i,rei_z_idx) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
                         !open(newunit=io_unit, file='state_outputs/T_output.dat', status='unknown', action='write', position='append')
                         !write(io_unit,*) state%datum, self%tb_start(i), self%tb_end(i), self%Inp_read_start(i,1:self%nval(i))
                         !write(io_unit,*) state%datum, self%tb_start(i), self%tb_end(i), self%Inp_read_end(i,1:self%nval(i))
@@ -450,7 +464,7 @@ contains
                            self%Inp_read_end(i,i2) = state%S(minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1)) !---(sal) extract the nearest depth temp value to 450 m
                            self%rei_values(i,i2) = self%Inp_read_end(i,i2)
                         end do
-                        self%Inp_read_end(i,11) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
+                        self%Inp_read_end(i,rei_z_idx) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
                      !end if
 
                      else ! Non-extraction concern inflows (require when methaneextraction=true)
@@ -533,6 +547,7 @@ contains
                      ext_z = grid%z_zero - 450 ! convert extraction depth same as deep input depths
                      ext_range = 2
                      rei_z = grid%z_zero - 180 ! convert reinjection depth same as deep input depths
+                     rei_z_idx = 11 ! reinjection depth index
                      ! For multiple extraction scenarios (loop will work perfect here to formulate ext_depths)
                      self%ext_depths = [ext_z+(ext_range/2), ext_z+(ext_range/2), ext_z-(ext_range/2), ext_z-(ext_range/2)]
 
@@ -582,7 +597,7 @@ contains
                         end if
 
                         ! Average AED2 executed case for reinjection value
-                        self%Inp_read_end(i,11) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection 
+                        self%Inp_read_end(i,rei_z_idx) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection 
                      !end if
 
                      !-------==========------- For inflows temperature and temperature files ========------------------============
@@ -594,7 +609,7 @@ contains
                            self%Inp_read_end(i,i2) = state%T(minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1)) !--- (temp) extract the nearest depth temp value to 450 m
                            self%rei_values(i,i2) = self%Inp_read_end(i,i2)
                         end do
-                        self%Inp_read_end(i,11) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
+                        self%Inp_read_end(i,rei_z_idx) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
 
                         !open(newunit=io_unit, file='state_outputs/T_output.dat', status='unknown', action='write', position='append')
                         !write(io_unit,*) state%datum, self%tb_start(i), self%tb_end(i), self%Inp_read_start(i,1:self%nval(i))
@@ -610,7 +625,7 @@ contains
                            self%Inp_read_end(i,i2) = state%S(minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1)) !---(sal) extract the nearest depth temp value to 450 m
                            self%rei_values(i,i2) = self%Inp_read_end(i,i2)
                         end do
-                        self%Inp_read_end(i,11) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
+                        self%Inp_read_end(i,rei_z_idx) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
                      !end if
                      else ! Non-extraction concern inflows (require when methaneextraction=true)
                      ! Read next line

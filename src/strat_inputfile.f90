@@ -805,6 +805,16 @@ contains
          call par_file%get("Simulation.Continue from last snapshot", sim_cfg%continue_from_snapshot, found)
          call par_file%get("Simulation.Save text restart", sim_cfg%save_text_restart, found); call check_field(found, 'Simulation.Save text restart', ParName)
          call par_file%get("Simulation.Use text restart", sim_cfg%use_text_restart, found); call check_field(found, 'Simulation.Use text restart', ParName)
+         !------For extraction------------------------------
+         if (model_cfg%methane_extraction) then
+            call par_file%get("Simulation.Extraction number", sim_cfg%num_extractions, found); call check_field(found, 'Simulation.Extraction number', ParName)
+            call par_file%get("Simulation.Extraction depths", sim_cfg%ext_depth_indices, found); call check_field(found, 'Simulation.Extraction depths', ParName)
+            call par_file%get("Simulation.Wash extraction depths", sim_cfg%wash_ext_depth_indices, found); call check_field(found, 'Simulation.Wash extraction depths', ParName)
+            call par_file%get("Simulation.Reinjection depths", sim_cfg%rei_depth_indices, found); call check_field(found, 'Simulation.Reinjection depths', ParName)
+            call par_file%get("Simulation.Wash reinjection depths", sim_cfg%wash_rei_depth_indices, found); call check_field(found, 'Simulation.Wash reinjection depths', ParName)
+            call par_file%get("Simulation.Extraction dates", sim_cfg%ext_dates, found); call check_field(found, 'Simulation.Extraction dates', ParName)
+         end if
+         
          call par_file%get("Simulation.Show progress bar", sim_cfg%show_bar, found); call check_field(found, 'Simulation.Show progress bar', ParName)
 
          call par_file%destroy()
