@@ -145,7 +145,7 @@ program simstrat_main
          ! User defined inflow depths
          mod_lateral => mod_lateral_rho
       end if
-      call mod_lateral%init(simdata%model, simdata%model_cfg, simdata%input_cfg, simdata%aed2_cfg, simdata%model_param, simdata%grid)
+      call mod_lateral%init(simdata%model, simdata%model_cfg, simdata%input_cfg, simdata%aed2_cfg, simdata%model_param, simdata%sim_cfg, simdata%grid)
    else
       call warn('Lake in-/outflow is turned off')
    end if

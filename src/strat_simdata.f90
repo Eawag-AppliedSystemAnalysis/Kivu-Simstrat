@@ -99,8 +99,8 @@ module strat_simdata
       logical :: use_text_restart = .false.
       logical :: show_bar = .true.
       real(RK):: num_extractions
-      real(RK), dimension(:,:), allocatable:: ext_depth_indices
-      real(RK), dimension(:,:), allocatable:: wash_ext_depth_indices
+      real(RK), dimension(:), allocatable:: ext_depth_indices
+      real(RK), dimension(:), allocatable:: wash_ext_depth_indices
       real(RK), dimension(:), allocatable:: rei_depth_indices
       real(RK), dimension(:), allocatable:: wash_rei_depth_indices
       real(RK), dimension(:), allocatable:: ext_dates

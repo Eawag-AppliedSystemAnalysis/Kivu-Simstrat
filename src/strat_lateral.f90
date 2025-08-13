@@ -45,6 +45,7 @@ module strat_lateral
       class(ModelConfig), pointer :: cfg
       class(StaggeredGrid), pointer :: grid
       class(ModelParam), pointer :: param
+      class(SimConfig), pointer :: sim_cfg
 
       ! Variables that where either marked with "save" before, or that have been
       ! global, but only used in the lateral environment:
@@ -83,7 +84,7 @@ contains
       class(ModelState) :: state
    end subroutine
 
-   subroutine lateral_generic_init(self, state, model_config, input_config, aed2_config, model_param, grid)
+   subroutine lateral_generic_init(self, state, model_config, input_config, aed2_config, model_param, sim_config, grid)
       implicit none
       class(GenericLateralModule) :: self
       class(ModelState) :: state
@@ -92,11 +93,13 @@ contains
       class(InputConfig), target :: input_config
       class(AED2Config), target :: aed2_config
       class(ModelParam), target :: model_param
+      class(SimConfig), target :: sim_config
 
       ! Locals
       integer :: i
 
       self%cfg => model_config
+      self%sim_cfg => sim_config
       self%param => model_param
       self%grid => grid
 
@@ -378,6 +381,7 @@ contains
 
                   !--------- For extraction case -----------------------
                   if (self%methane_extraction) then ! this option should always go with coupleed aed2
+                     print *, "Extraction depth indices:", self%sim_cfg%ext_depth_indices
                      !----For extraction process -----------
                      ext_z = grid%z_zero - 450 ! convert extraction depth same as deep input depths
                      ext_range = 2
@@ -402,12 +406,6 @@ contains
                         if (i == n_simstrat + 1) then
                            !---ext and rei operations -----
                            do i2=1, size(self%ext_depths)
-                              self%Inp_read_end(i,i2) = state%AED2_state(minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1), 1)
-                              self%rei_values(i,i2) = self%Inp_read_end(i,i2)
-                           end do
-
-                           !---ext and rei operations -----
-                           do i2=1, size(self%wash_ext_depths)
                               self%Inp_read_end(i,i2) = state%AED2_state(minloc(abs(grid%z_volume-self%ext_depths(i2)), dim=1), 1)
                               self%rei_values(i,i2) = self%Inp_read_end(i,i2)
                            end do
