@@ -509,7 +509,7 @@ contains
                               !-- wash extraction
                               wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
                               self%Inp_read_end(i,wash_ext_z_idx) = state%S(minloc(abs(grid%z_volume-self%z_Inp(i,wash_ext_z_idx)), dim=1)) !---(sal) extract the nearest depth temp value to 450 m
-                              self%rei_values(i,i2) = self%Inp_read_end(i,wash_ext_z_idx)                              
+                              self%wash_rei_values(i,i2) = self%Inp_read_end(i,wash_ext_z_idx)                              
                            end do
                            !-- reinjection
                            rei_z_idx = self%sim_cfg%rei_depth_indices(n)
@@ -727,7 +727,7 @@ contains
                               !-- wash extraction
                               wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
                               self%Inp_read_end(i,wash_ext_z_idx) = state%S(minloc(abs(grid%z_volume-self%z_Inp(i,wash_ext_z_idx)), dim=1)) !---(sal) extract the nearest depth temp value to 450 m
-                              self%rei_values(i,i2) = self%Inp_read_end(i,wash_ext_z_idx)
+                              self%wash_rei_values(i,i2) = self%Inp_read_end(i,wash_ext_z_idx)
                            end do
                            !-- reinjection
                            rei_z_idx = self%sim_cfg%rei_depth_indices(n)
