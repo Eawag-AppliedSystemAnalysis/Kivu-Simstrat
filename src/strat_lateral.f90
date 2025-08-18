@@ -395,11 +395,11 @@ contains
                         self%Inp_read_end(i,1:self%nval(i)) = self%Inp_read_start(i,1:self%nval(i)) !simply, equalize Inp_read_end with Inp_read_start, then specific inflows should be updated below
                         
                         do n=1, self%sim_cfg%num_extractions
-                           if (state%datum >= self%sim_cfg%start_ext_dates(n)) and (state%datum <= self%sim_cfg%end_ext_dates(n)) then
+                           if ((state%datum >= self%sim_cfg%start_ext_dates(n)) .and. (state%datum <= self%sim_cfg%end_ext_dates(n))) then
                               !For OXY
                               if (i == n_simstrat + 1) then
                                  !---ext and rei operations -----
-                                 do i2=1, size(self%sim_cfg%ext_depth_indices) ! a good way will be: do i2=1+(n-1)*4, n*4
+                                 do i2 = 1+4*(n-1), 4*n ! size(self%sim_cfg%ext_depth_indices) ! a good way will be: do i2=1+(n-1)*4, n*4
                                     !--extraction
                                     ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
                                     self%Inp_read_end(i,ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1), 1)
@@ -414,7 +414,7 @@ contains
 
                               ! For CAR_dic
                               if (i == n_simstrat + 2) then
-                                 do i2=1, size(self%sim_cfg%ext_depth_indices)
+                                 do i2 = 1+4*(n-1), 4*n ! size(self%sim_cfg%ext_depth_indices)
                                     !--extraction
                                     ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
                                     self%Inp_read_end(i,ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1), 2)
@@ -430,7 +430,7 @@ contains
                               ! For CAR_pH
                               if (i == n_simstrat + 3) then
                                  !-- extraction
-                                 do i2=1, size(self%sim_cfg%ext_depth_indices)
+                                 do i2 = 1+4*(n-1), 4*n ! size(self%sim_cfg%ext_depth_indices)
                                     ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
                                     self%Inp_read_end(i,ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1), 3)
                                     self%rei_values(i,i2) = self%Inp_read_end(i,ext_z_idx)
@@ -444,7 +444,7 @@ contains
 
                               ! For CAR_ch4
                               if (i == n_simstrat + 4) then
-                                 do i2=1, size(self%sim_cfg%ext_depth_indices)
+                                 do i2 = 1+4*(n-1), 4*n ! size(self%sim_cfg%ext_depth_indices)
                                     ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
                                     self%Inp_read_end(i,ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1), 4)
                                     self%rei_values(i,i2) = 0.17*self%Inp_read_end(i,ext_z_idx)
@@ -464,7 +464,7 @@ contains
                               wash_rei_z_idx = self%sim_cfg%wash_rei_depth_indices(n)
                               self%Inp_read_end(i,wash_rei_z_idx) = sum(self%wash_rei_values(i,:)) / size(self%wash_rei_values(i,:)) ! average the appended values for reinjection
                            else !out of the extraction date
-                              do i2=1, size(self%sim_cfg%ext_depth_indices)
+                              do i2 = 1+4*(n-1), 4*n ! size(self%sim_cfg%ext_depth_indices)
                                  ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
                                  self%Inp_read_end(i,ext_z_idx) = 0
                                  !self%rei_values(i,i2) = 0 ! no longer needed at this case, is zero anywhere
@@ -492,8 +492,8 @@ contains
                         self%Inp_read_end(i,1:self%nval(i)) = self%Inp_read_start(i,1:self%nval(i)) !simply, equalize Inp_read_end with Inp_read_start, then specific inflows should be updated below
                         
                         do n=1, self%sim_cfg%num_extractions
-                           if (state%datum >= self%sim_cfg%start_ext_dates(n)) and (state%datum <= self%sim_cfg%end_ext_dates(n)) then
-                              do i2=1, size(self%sim_cfg%ext_depth_indices)
+                           if ((state%datum >= self%sim_cfg%start_ext_dates(n)) .and. (state%datum <= self%sim_cfg%end_ext_dates(n))) then
+                              do i2 = 1+4*(n-1), 4*n !size(self%sim_cfg%ext_depth_indices)
                                  !--extraction
                                  ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
                                  self%Inp_read_end(i,ext_z_idx) = state%T(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1)) !--- (temp) extract the nearest depth temp value to 450 m
@@ -512,7 +512,7 @@ contains
                               wash_rei_z_idx = self%sim_cfg%wash_rei_depth_indices(n)
                               self%Inp_read_end(i,wash_rei_z_idx) = sum(self%wash_rei_values(i,:)) / size(self%wash_rei_values(i,:)) ! average the appended values for reinjection
                            else !out of the extraction date
-                              do i2=1, size(self%sim_cfg%ext_depth_indices)
+                              do i2 = 1+4*(n-1), 4*n !size(self%sim_cfg%ext_depth_indices)
                                  ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
                                  self%Inp_read_end(i,ext_z_idx) = 0
                                  !self%rei_values(i,i2) = 0 ! no longer needed at this case, is zero anywhere
@@ -538,8 +538,8 @@ contains
                         self%Inp_read_end(i,1:self%nval(i)) = self%Inp_read_start(i,1:self%nval(i)) !simply, equalize Inp_read_end with Inp_read_start, then specific inflows should be updated below
                         
                         do n=1, self%sim_cfg%num_extractions
-                           if (state%datum >= self%sim_cfg%start_ext_dates(n)) and (state%datum <= self%sim_cfg%end_ext_dates(n)) then
-                              do i2=1, size(self%sim_cfg%ext_depth_indices) ! here four can work perfect
+                           if ((state%datum >= self%sim_cfg%start_ext_dates(n)) .and. (state%datum <= self%sim_cfg%end_ext_dates(n))) then
+                              do i2 = 1+4*(n-1), 4*n !size(self%sim_cfg%ext_depth_indices) ! here four can work perfect
                                  !-- extraction
                                  ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
                                  self%Inp_read_end(i,ext_z_idx) = state%S(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1)) !---(sal) extract the nearest depth temp value to 450 m
@@ -557,7 +557,7 @@ contains
                               wash_rei_z_idx = self%sim_cfg%wash_rei_depth_indices(n)
                               self%Inp_read_end(i,wash_rei_z_idx) = sum(self%wash_rei_values(i,:)) / size(self%wash_rei_values(i,:)) ! average the appended values for reinjection
                            else !out of the extraction date
-                              do i2=1, size(self%sim_cfg%ext_depth_indices)
+                              do i2 = 1+4*(n-1), 4*n !size(self%sim_cfg%ext_depth_indices)
                                  ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
                                  self%Inp_read_end(i,ext_z_idx) = 0
                                  !self%rei_values(i,i2) = 0 ! no longer needed at this case, is zero anywhere
@@ -676,11 +676,11 @@ contains
                         self%Inp_read_end(i,1:self%nval(i)) = self%Inp_read_start(i,1:self%nval(i)) !simply, equalize Inp_read_end with Inp_read_start, then specific inflows should be updated below
                         
                         do n=1, self%sim_cfg%num_extractions
-                           if (state%datum >= self%sim_cfg%start_ext_dates(n)) and (state%datum <= self%sim_cfg%end_ext_dates(n)) then
+                           if ((state%datum >= self%sim_cfg%start_ext_dates(n)) .and. (state%datum <= self%sim_cfg%end_ext_dates(n))) then
                               !For OXY
                               if (i == n_simstrat + 1) then
                                  !---ext and rei operations -----
-                                 do i2=1, size(self%sim_cfg%ext_depth_indices) ! a good way will be: do i2=1+(n-1)*4, n*4
+                                 do i2 = 1+4*(n-1), 4*n !size(self%sim_cfg%ext_depth_indices) ! a good way will be: do i2=1+(n-1)*4, n*4
                                     !--extraction
                                     ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
                                     self%Inp_read_end(i,ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1), 1)
@@ -695,7 +695,7 @@ contains
 
                               ! For CAR_dic
                               if (i == n_simstrat + 2) then
-                                 do i2=1, size(self%sim_cfg%ext_depth_indices)
+                                 do i2 = 1+4*(n-1), 4*n !size(self%sim_cfg%ext_depth_indices)
                                     !--extraction
                                     ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
                                     self%Inp_read_end(i,ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1), 2)
@@ -711,7 +711,7 @@ contains
                               ! For CAR_pH
                               if (i == n_simstrat + 3) then
                                  !-- extraction
-                                 do i2=1, size(self%sim_cfg%ext_depth_indices)
+                                 do i2 = 1+4*(n-1), 4*n ! size(self%sim_cfg%ext_depth_indices)
                                     ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
                                     self%Inp_read_end(i,ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1), 3)
                                     self%rei_values(i,i2) = self%Inp_read_end(i,ext_z_idx)
@@ -725,7 +725,7 @@ contains
 
                               ! For CAR_ch4
                               if (i == n_simstrat + 4) then
-                                 do i2=1, size(self%sim_cfg%ext_depth_indices)
+                                 do i2 = 1+4*(n-1), 4*n ! size(self%sim_cfg%ext_depth_indices)
                                     ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
                                     self%Inp_read_end(i,ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1), 4)
                                     self%rei_values(i,i2) = 0.17*self%Inp_read_end(i,ext_z_idx)
@@ -745,7 +745,7 @@ contains
                               wash_rei_z_idx = self%sim_cfg%wash_rei_depth_indices(n)
                               self%Inp_read_end(i,wash_rei_z_idx) = sum(self%wash_rei_values(i,:)) / size(self%wash_rei_values(i,:)) ! average the appended values for reinjection
                            else !out of the extraction date
-                              do i2=1, size(self%sim_cfg%ext_depth_indices)
+                              do i2 = 1+4*(n-1), 4*n ! size(self%sim_cfg%ext_depth_indices)
                                  ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
                                  self%Inp_read_end(i,ext_z_idx) = 0
                                  !self%rei_values(i,i2) = 0 ! no longer needed at this case, is zero anywhere
@@ -773,8 +773,8 @@ contains
                         self%Inp_read_end(i,1:self%nval(i)) = self%Inp_read_start(i,1:self%nval(i)) !simply, equalize Inp_read_end with Inp_read_start, then specific inflows should be updated below
                         
                         do n=1, self%sim_cfg%num_extractions
-                           if (state%datum >= self%sim_cfg%start_ext_dates(n)) and (state%datum <= self%sim_cfg%end_ext_dates(n)) then
-                              do i2=1, size(self%sim_cfg%ext_depth_indices)
+                           if ((state%datum >= self%sim_cfg%start_ext_dates(n)) .and. (state%datum <= self%sim_cfg%end_ext_dates(n))) then
+                              do i2 = 1+4*(n-1), 4*n ! size(self%sim_cfg%ext_depth_indices)
                                  !--extraction
                                  ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
                                  self%Inp_read_end(i,ext_z_idx) = state%T(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1)) !--- (temp) extract the nearest depth temp value to 450 m
@@ -793,7 +793,7 @@ contains
                               wash_rei_z_idx = self%sim_cfg%wash_rei_depth_indices(n)
                               self%Inp_read_end(i,wash_rei_z_idx) = sum(self%wash_rei_values(i,:)) / size(self%wash_rei_values(i,:)) ! average the appended values for reinjection
                            else !out of the extraction date
-                              do i2=1, size(self%sim_cfg%ext_depth_indices)
+                              do i2 = 1+4*(n-1), 4*n ! size(self%sim_cfg%ext_depth_indices)
                                  ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
                                  self%Inp_read_end(i,ext_z_idx) = 0
                                  !self%rei_values(i,i2) = 0 ! no longer needed at this case, is zero anywhere
@@ -819,8 +819,8 @@ contains
                         self%Inp_read_end(i,1:self%nval(i)) = self%Inp_read_start(i,1:self%nval(i)) !simply, equalize Inp_read_end with Inp_read_start, then specific inflows should be updated below
                         
                         do n=1, self%sim_cfg%num_extractions
-                           if (state%datum >= self%sim_cfg%start_ext_dates(n)) and (state%datum <= self%sim_cfg%end_ext_dates(n)) then
-                              do i2=1, size(self%sim_cfg%ext_depth_indices) ! here four can work perfect
+                           if ((state%datum >= self%sim_cfg%start_ext_dates(n)) .and. (state%datum <= self%sim_cfg%end_ext_dates(n))) then
+                              do i2 = 1+4*(n-1), 4*n !size(self%sim_cfg%ext_depth_indices) ! here four can work perfect
                                  !-- extraction
                                  ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
                                  self%Inp_read_end(i,ext_z_idx) = state%S(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1)) !---(sal) extract the nearest depth temp value to 450 m
@@ -838,7 +838,7 @@ contains
                               wash_rei_z_idx = self%sim_cfg%wash_rei_depth_indices(n)
                               self%Inp_read_end(i,wash_rei_z_idx) = sum(self%wash_rei_values(i,:)) / size(self%wash_rei_values(i,:)) ! average the appended values for reinjection
                            else !out of the extraction date
-                              do i2=1, size(self%sim_cfg%ext_depth_indices)
+                              do i2 = 1+4*(n-1), 4*n !size(self%sim_cfg%ext_depth_indices)
                                  ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
                                  self%Inp_read_end(i,ext_z_idx) = 0
                                  !self%rei_values(i,i2) = 0 ! no longer needed at this case, is zero anywhere
