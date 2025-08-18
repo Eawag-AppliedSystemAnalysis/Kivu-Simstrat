@@ -103,7 +103,8 @@ module strat_simdata
       real(RK), dimension(:), allocatable:: wash_ext_depth_indices
       real(RK), dimension(:), allocatable:: rei_depth_indices
       real(RK), dimension(:), allocatable:: wash_rei_depth_indices
-      real(RK), dimension(:), allocatable:: ext_dates
+      real(RK), dimension(:), allocatable:: start_ext_dates
+      real(RK), dimension(:), allocatable:: end_ext_dates
    end type
 
    ! Model configuration (read from file)

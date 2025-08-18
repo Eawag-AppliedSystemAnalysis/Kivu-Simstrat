@@ -812,7 +812,8 @@ contains
             call par_file%get("Simulation.Wash extraction depths", sim_cfg%wash_ext_depth_indices, found); call check_field(found, 'Simulation.Wash extraction depths', ParName)
             call par_file%get("Simulation.Reinjection depths", sim_cfg%rei_depth_indices, found); call check_field(found, 'Simulation.Reinjection depths', ParName)
             call par_file%get("Simulation.Wash reinjection depths", sim_cfg%wash_rei_depth_indices, found); call check_field(found, 'Simulation.Wash reinjection depths', ParName)
-            call par_file%get("Simulation.Extraction dates", sim_cfg%ext_dates, found); call check_field(found, 'Simulation.Extraction dates', ParName)
+            call par_file%get("Simulation.Start extraction dates", sim_cfg%start_ext_dates, found); call check_field(found, 'Simulation.Start extraction dates', ParName)
+            call par_file%get("Simulation.End extraction dates", sim_cfg%end_ext_dates, found); call check_field(found, 'Simulation.End extraction dates', ParName)
          end if
 
          call par_file%get("Simulation.Show progress bar", sim_cfg%show_bar, found); call check_field(found, 'Simulation.Show progress bar', ParName)

@@ -395,74 +395,95 @@ contains
                         self%Inp_read_end(i,1:self%nval(i)) = self%Inp_read_start(i,1:self%nval(i)) !simply, equalize Inp_read_end with Inp_read_start, then specific inflows should be updated below
                         
                         do n=1, self%sim_cfg%num_extractions
-                           !For OXY
-                           if (i == n_simstrat + 1) then
-                              !---ext and rei operations -----
-                              do i2=1, size(self%sim_cfg%ext_depth_indices) ! a good way will be: do i2=1+(n-1)*4, n*4
-                                 !--extraction
-                                 ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
-                                 self%Inp_read_end(i,ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1), 1)
-                                 self%rei_values(i,i2) = self%Inp_read_end(i,ext_z_idx)
+                           if (state%datum >= self%sim_cfg%start_ext_dates(n)) and (state%datum <= self%sim_cfg%end_ext_dates(n)) then
+                              !For OXY
+                              if (i == n_simstrat + 1) then
+                                 !---ext and rei operations -----
+                                 do i2=1, size(self%sim_cfg%ext_depth_indices) ! a good way will be: do i2=1+(n-1)*4, n*4
+                                    !--extraction
+                                    ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
+                                    self%Inp_read_end(i,ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1), 1)
+                                    self%rei_values(i,i2) = self%Inp_read_end(i,ext_z_idx)
 
-                                 !--wash extraction
-                                 wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
-                                 self%Inp_read_end(i,wash_ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,wash_ext_z_idx)), dim=1), 1)
-                                 self%wash_rei_values(i,i2) = self%Inp_read_end(i,wash_ext_z_idx)
-                              end do
-                           end if
+                                    !--wash extraction
+                                    wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
+                                    self%Inp_read_end(i,wash_ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,wash_ext_z_idx)), dim=1), 1)
+                                    self%wash_rei_values(i,i2) = self%Inp_read_end(i,wash_ext_z_idx)
+                                 end do
+                              end if
 
-                           ! For CAR_dic
-                           if (i == n_simstrat + 2) then
+                              ! For CAR_dic
+                              if (i == n_simstrat + 2) then
+                                 do i2=1, size(self%sim_cfg%ext_depth_indices)
+                                    !--extraction
+                                    ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
+                                    self%Inp_read_end(i,ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1), 2)
+                                    self%rei_values(i,i2) = 0.74*self%Inp_read_end(i,ext_z_idx)
+
+                                    !--wash extraction
+                                    wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
+                                    self%Inp_read_end(i,wash_ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,wash_ext_z_idx)), dim=1), 2)
+                                    self%wash_rei_values(i,i2) = 0.25*self%Inp_read_end(i,wash_ext_z_idx)
+                                 end do
+                              end if
+                              
+                              ! For CAR_pH
+                              if (i == n_simstrat + 3) then
+                                 !-- extraction
+                                 do i2=1, size(self%sim_cfg%ext_depth_indices)
+                                    ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
+                                    self%Inp_read_end(i,ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1), 3)
+                                    self%rei_values(i,i2) = self%Inp_read_end(i,ext_z_idx)
+
+                                    !--wash extraction
+                                    wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
+                                    self%Inp_read_end(i,wash_ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,wash_ext_z_idx)), dim=1), 3)
+                                    self%wash_rei_values(i,i2) = self%Inp_read_end(i,wash_ext_z_idx)
+                                 end do
+                              end if
+
+                              ! For CAR_ch4
+                              if (i == n_simstrat + 4) then
+                                 do i2=1, size(self%sim_cfg%ext_depth_indices)
+                                    ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
+                                    self%Inp_read_end(i,ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1), 4)
+                                    self%rei_values(i,i2) = 0.17*self%Inp_read_end(i,ext_z_idx)
+
+                                    !--wash extraction
+                                    wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
+                                    self%Inp_read_end(i,wash_ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,wash_ext_z_idx)), dim=1), 4)
+                                    self%wash_rei_values(i,i2) = 0.04*self%Inp_read_end(i,wash_ext_z_idx)                                 
+                                 end do
+                              end if
+                              ! Average AED2 executed case for reinjection value
+                              !-- reinjection
+                              rei_z_idx = self%sim_cfg%rei_depth_indices(n)
+                              self%Inp_read_end(i,rei_z_idx) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
+                              
+                              !-- wash reinjection
+                              wash_rei_z_idx = self%sim_cfg%wash_rei_depth_indices(n)
+                              self%Inp_read_end(i,wash_rei_z_idx) = sum(self%wash_rei_values(i,:)) / size(self%wash_rei_values(i,:)) ! average the appended values for reinjection
+                           else !out of the extraction date
                               do i2=1, size(self%sim_cfg%ext_depth_indices)
-                                 !--extraction
                                  ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
-                                 self%Inp_read_end(i,ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1), 2)
-                                 self%rei_values(i,i2) = 0.74*self%Inp_read_end(i,ext_z_idx)
+                                 self%Inp_read_end(i,ext_z_idx) = 0
+                                 !self%rei_values(i,i2) = 0 ! no longer needed at this case, is zero anywhere
 
                                  !--wash extraction
                                  wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
-                                 self%Inp_read_end(i,wash_ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,wash_ext_z_idx)), dim=1), 2)
-                                 self%wash_rei_values(i,i2) = 0.25*self%Inp_read_end(i,wash_ext_z_idx)
+                                 self%Inp_read_end(i,wash_ext_z_idx) = 0
+                                 !self%wash_rei_values(i,i2) = 0     ! no longer needed at this case, is zero anywhere                            
                               end do
-                           end if
-                           
-                           ! For CAR_pH
-                           if (i == n_simstrat + 3) then
-                              !-- extraction
-                              do i2=1, size(self%sim_cfg%ext_depth_indices)
-                                 ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
-                                 self%Inp_read_end(i,ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1), 3)
-                                 self%rei_values(i,i2) = self%Inp_read_end(i,ext_z_idx)
-
-                                 !--wash extraction
-                                 wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
-                                 self%Inp_read_end(i,wash_ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,wash_ext_z_idx)), dim=1), 3)
-                                 self%wash_rei_values(i,i2) = self%Inp_read_end(i,wash_ext_z_idx)
-                              end do
-                           end if
-
-                           ! For CAR_ch4
-                           if (i == n_simstrat + 4) then
-                              do i2=1, size(self%sim_cfg%ext_depth_indices)
-                                 ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
-                                 self%Inp_read_end(i,ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1), 4)
-                                 self%rei_values(i,i2) = 0.17*self%Inp_read_end(i,ext_z_idx)
-
-                                 !--wash extraction
-                                 wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
-                                 self%Inp_read_end(i,wash_ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,wash_ext_z_idx)), dim=1), 4)
-                                 self%wash_rei_values(i,i2) = 0.04*self%Inp_read_end(i,wash_ext_z_idx)                                 
-                              end do
-                           end if
-                           ! Average AED2 executed case for reinjection value
-                           !-- reinjection
-                           rei_z_idx = self%sim_cfg%rei_depth_indices(n)
-                           self%Inp_read_end(i,rei_z_idx) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
-                           
-                           !-- wash reinjection
-                           wash_rei_z_idx = self%sim_cfg%wash_rei_depth_indices(n)
-                           self%Inp_read_end(i,wash_rei_z_idx) = sum(self%wash_rei_values(i,:)) / size(self%wash_rei_values(i,:)) ! average the appended values for reinjection
-                        end do 
+                              ! Average AED2 executed case for reinjection value
+                              !-- reinjection
+                              rei_z_idx = self%sim_cfg%rei_depth_indices(n)
+                              self%Inp_read_end(i,rei_z_idx) = 0 ! zero appended value for reinjection
+                              
+                              !-- wash reinjection
+                              wash_rei_z_idx = self%sim_cfg%wash_rei_depth_indices(n)
+                              self%Inp_read_end(i,wash_rei_z_idx) = 0 ! zero appended value for reinjection
+                           end if 
+                        end do ! end loop for number of extractions
                      !end if
 
                      !-------==========------- For inflows temperature and temperature files ========------------------============
@@ -471,53 +492,90 @@ contains
                         self%Inp_read_end(i,1:self%nval(i)) = self%Inp_read_start(i,1:self%nval(i)) !simply, equalize Inp_read_end with Inp_read_start, then specific inflows should be updated below
                         
                         do n=1, self%sim_cfg%num_extractions
-                           do i2=1, size(self%sim_cfg%ext_depth_indices)
-                              !--extraction
-                              ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
-                              self%Inp_read_end(i,ext_z_idx) = state%T(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1)) !--- (temp) extract the nearest depth temp value to 450 m
-                              self%rei_values(i,i2) = self%Inp_read_end(i,ext_z_idx)
+                           if (state%datum >= self%sim_cfg%start_ext_dates(n)) and (state%datum <= self%sim_cfg%end_ext_dates(n)) then
+                              do i2=1, size(self%sim_cfg%ext_depth_indices)
+                                 !--extraction
+                                 ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
+                                 self%Inp_read_end(i,ext_z_idx) = state%T(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1)) !--- (temp) extract the nearest depth temp value to 450 m
+                                 self%rei_values(i,i2) = self%Inp_read_end(i,ext_z_idx)
 
-                              !--wash extraction
-                              wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
-                              self%Inp_read_end(i,wash_ext_z_idx) = state%T(minloc(abs(grid%z_volume-self%z_Inp(i,wash_ext_z_idx)), dim=1)) !--- (temp) extract the nearest depth temp value to 450 m
-                              self%wash_rei_values(i,i2) = self%Inp_read_end(i,wash_ext_z_idx)                         
-                           end do
-                           !-- reinjection
-                           rei_z_idx = self%sim_cfg%rei_depth_indices(n)
-                           self%Inp_read_end(i,rei_z_idx) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
+                                 !--wash extraction
+                                 wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
+                                 self%Inp_read_end(i,wash_ext_z_idx) = state%T(minloc(abs(grid%z_volume-self%z_Inp(i,wash_ext_z_idx)), dim=1)) !--- (temp) extract the nearest depth temp value to 450 m
+                                 self%wash_rei_values(i,i2) = self%Inp_read_end(i,wash_ext_z_idx)                         
+                              end do
+                              !-- reinjection
+                              rei_z_idx = self%sim_cfg%rei_depth_indices(n)
+                              self%Inp_read_end(i,rei_z_idx) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
 
-                           !-- wash reinjection
-                           wash_rei_z_idx = self%sim_cfg%wash_rei_depth_indices(n)
-                           self%Inp_read_end(i,wash_rei_z_idx) = sum(self%wash_rei_values(i,:)) / size(self%wash_rei_values(i,:)) ! average the appended values for reinjection
+                              !-- wash reinjection
+                              wash_rei_z_idx = self%sim_cfg%wash_rei_depth_indices(n)
+                              self%Inp_read_end(i,wash_rei_z_idx) = sum(self%wash_rei_values(i,:)) / size(self%wash_rei_values(i,:)) ! average the appended values for reinjection
+                           else !out of the extraction date
+                              do i2=1, size(self%sim_cfg%ext_depth_indices)
+                                 ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
+                                 self%Inp_read_end(i,ext_z_idx) = 0
+                                 !self%rei_values(i,i2) = 0 ! no longer needed at this case, is zero anywhere
+
+                                 !--wash extraction
+                                 wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
+                                 self%Inp_read_end(i,wash_ext_z_idx) = 0
+                                 !self%wash_rei_values(i,i2) = 0     ! no longer needed at this case, is zero anywhere                            
+                              end do
+                              ! Average AED2 executed case for reinjection value
+                              !-- reinjection
+                              rei_z_idx = self%sim_cfg%rei_depth_indices(n)
+                              self%Inp_read_end(i,rei_z_idx) = 0 ! zero appended value for reinjection
+                              
+                              !-- wash reinjection
+                              wash_rei_z_idx = self%sim_cfg%wash_rei_depth_indices(n)
+                              self%Inp_read_end(i,wash_rei_z_idx) = 0 ! zero appended value for reinjection
+                           end if                              
                         end do
-                        !open(newunit=io_unit, file='state_outputs/T_output.dat', status='unknown', action='write', position='append')
-                        !write(io_unit,*) state%datum, self%tb_start(i), self%tb_end(i), self%Inp_read_start(i,1:self%nval(i))
-                        !write(io_unit,*) state%datum, self%tb_start(i), self%tb_end(i), self%Inp_read_end(i,1:self%nval(i))
-                        !close(io_unit)
-                     !end if
 
                      else if (i == 4) then ! for salinity
                         self%tb_end(i) = state%datum 
                         self%Inp_read_end(i,1:self%nval(i)) = self%Inp_read_start(i,1:self%nval(i)) !simply, equalize Inp_read_end with Inp_read_start, then specific inflows should be updated below
                         
                         do n=1, self%sim_cfg%num_extractions
-                           do i2=1, size(self%sim_cfg%ext_depth_indices) ! here four can work perfect
-                              !-- extraction
-                              ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
-                              self%Inp_read_end(i,ext_z_idx) = state%S(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1)) !---(sal) extract the nearest depth temp value to 450 m
-                              self%rei_values(i,i2) = self%Inp_read_end(i,ext_z_idx)
-                              !-- wash extraction
-                              wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
-                              self%Inp_read_end(i,wash_ext_z_idx) = state%S(minloc(abs(grid%z_volume-self%z_Inp(i,wash_ext_z_idx)), dim=1)) !---(sal) extract the nearest depth temp value to 450 m
-                              self%wash_rei_values(i,i2) = self%Inp_read_end(i,wash_ext_z_idx)                              
-                           end do
-                           !-- reinjection
-                           rei_z_idx = self%sim_cfg%rei_depth_indices(n)
-                           self%Inp_read_end(i,rei_z_idx) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
+                           if (state%datum >= self%sim_cfg%start_ext_dates(n)) and (state%datum <= self%sim_cfg%end_ext_dates(n)) then
+                              do i2=1, size(self%sim_cfg%ext_depth_indices) ! here four can work perfect
+                                 !-- extraction
+                                 ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
+                                 self%Inp_read_end(i,ext_z_idx) = state%S(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1)) !---(sal) extract the nearest depth temp value to 450 m
+                                 self%rei_values(i,i2) = self%Inp_read_end(i,ext_z_idx)
+                                 !-- wash extraction
+                                 wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
+                                 self%Inp_read_end(i,wash_ext_z_idx) = state%S(minloc(abs(grid%z_volume-self%z_Inp(i,wash_ext_z_idx)), dim=1)) !---(sal) extract the nearest depth temp value to 450 m
+                                 self%wash_rei_values(i,i2) = self%Inp_read_end(i,wash_ext_z_idx)                              
+                              end do
+                              !-- reinjection
+                              rei_z_idx = self%sim_cfg%rei_depth_indices(n)
+                              self%Inp_read_end(i,rei_z_idx) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
 
-                           !-- wash reinjection
-                           wash_rei_z_idx = self%sim_cfg%wash_rei_depth_indices(n)
-                           self%Inp_read_end(i,wash_rei_z_idx) = sum(self%wash_rei_values(i,:)) / size(self%wash_rei_values(i,:)) ! average the appended values for reinjection
+                              !-- wash reinjection
+                              wash_rei_z_idx = self%sim_cfg%wash_rei_depth_indices(n)
+                              self%Inp_read_end(i,wash_rei_z_idx) = sum(self%wash_rei_values(i,:)) / size(self%wash_rei_values(i,:)) ! average the appended values for reinjection
+                           else !out of the extraction date
+                              do i2=1, size(self%sim_cfg%ext_depth_indices)
+                                 ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
+                                 self%Inp_read_end(i,ext_z_idx) = 0
+                                 !self%rei_values(i,i2) = 0 ! no longer needed at this case, is zero anywhere
+
+                                 !--wash extraction
+                                 wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
+                                 self%Inp_read_end(i,wash_ext_z_idx) = 0
+                                 !self%wash_rei_values(i,i2) = 0     ! no longer needed at this case, is zero anywhere                            
+                              end do
+                              ! Average AED2 executed case for reinjection value
+                              !-- reinjection
+                              rei_z_idx = self%sim_cfg%rei_depth_indices(n)
+                              self%Inp_read_end(i,rei_z_idx) = 0 ! zero appended value for reinjection
+                              
+                              !-- wash reinjection
+                              wash_rei_z_idx = self%sim_cfg%wash_rei_depth_indices(n)
+                              self%Inp_read_end(i,wash_rei_z_idx) = 0 ! zero appended value for reinjection
+                           end if                               
                         end do
                      !end if
 
@@ -596,12 +654,12 @@ contains
                   end if
                   
                   !--------- For extraction case -----------------------
-                  if ((self%methane_extraction).and.(self%tb_end(i)<=self%tb_end(2))) then ! this option should always go with coupled aed2 (not necessary)
+                  if (self%methane_extraction) then ! this option should always go with coupleed aed2
                      !----For extraction process -----------
                      ext_z = grid%z_zero - 450 ! convert extraction depth same as deep input depths
                      ext_range = 2
                      rei_z = grid%z_zero - 180 ! convert reinjection depth same as deep input depths
-                     rei_z_idx = 11 ! reinjection depth index
+                     rei_z_idx = 11 !reinjection depth index
                      ! For multiple extraction scenarios (loop will work perfect here to formulate ext_depths)
                      self%ext_depths = [ext_z+(ext_range/2), ext_z+(ext_range/2), ext_z-(ext_range/2), ext_z-(ext_range/2)]
 
@@ -618,74 +676,95 @@ contains
                         self%Inp_read_end(i,1:self%nval(i)) = self%Inp_read_start(i,1:self%nval(i)) !simply, equalize Inp_read_end with Inp_read_start, then specific inflows should be updated below
                         
                         do n=1, self%sim_cfg%num_extractions
-                           !For OXY
-                           if (i == n_simstrat + 1) then
-                              !---ext and rei operations -----
-                              do i2=1, size(self%sim_cfg%ext_depth_indices) ! a good way will be: do i2=1+(n-1)*4, n*4
-                                 !--extraction
-                                 ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
-                                 self%Inp_read_end(i,ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1), 1)
-                                 self%rei_values(i,i2) = self%Inp_read_end(i,ext_z_idx)
+                           if (state%datum >= self%sim_cfg%start_ext_dates(n)) and (state%datum <= self%sim_cfg%end_ext_dates(n)) then
+                              !For OXY
+                              if (i == n_simstrat + 1) then
+                                 !---ext and rei operations -----
+                                 do i2=1, size(self%sim_cfg%ext_depth_indices) ! a good way will be: do i2=1+(n-1)*4, n*4
+                                    !--extraction
+                                    ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
+                                    self%Inp_read_end(i,ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1), 1)
+                                    self%rei_values(i,i2) = self%Inp_read_end(i,ext_z_idx)
 
-                                 !--wash extraction
-                                 wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
-                                 self%Inp_read_end(i,wash_ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,wash_ext_z_idx)), dim=1), 1)
-                                 self%wash_rei_values(i,i2) = self%Inp_read_end(i,wash_ext_z_idx)
-                              end do
-                           end if
+                                    !--wash extraction
+                                    wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
+                                    self%Inp_read_end(i,wash_ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,wash_ext_z_idx)), dim=1), 1)
+                                    self%wash_rei_values(i,i2) = self%Inp_read_end(i,wash_ext_z_idx)
+                                 end do
+                              end if
 
-                           ! For CAR_dic
-                           if (i == n_simstrat + 2) then
+                              ! For CAR_dic
+                              if (i == n_simstrat + 2) then
+                                 do i2=1, size(self%sim_cfg%ext_depth_indices)
+                                    !--extraction
+                                    ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
+                                    self%Inp_read_end(i,ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1), 2)
+                                    self%rei_values(i,i2) = 0.74*self%Inp_read_end(i,ext_z_idx)
+
+                                    !--wash extraction
+                                    wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
+                                    self%Inp_read_end(i,wash_ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,wash_ext_z_idx)), dim=1), 2)
+                                    self%wash_rei_values(i,i2) = 0.25*self%Inp_read_end(i,wash_ext_z_idx)
+                                 end do
+                              end if
+                              
+                              ! For CAR_pH
+                              if (i == n_simstrat + 3) then
+                                 !-- extraction
+                                 do i2=1, size(self%sim_cfg%ext_depth_indices)
+                                    ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
+                                    self%Inp_read_end(i,ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1), 3)
+                                    self%rei_values(i,i2) = self%Inp_read_end(i,ext_z_idx)
+
+                                    !--wash extraction
+                                    wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
+                                    self%Inp_read_end(i,wash_ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,wash_ext_z_idx)), dim=1), 3)
+                                    self%wash_rei_values(i,i2) = self%Inp_read_end(i,wash_ext_z_idx)
+                                 end do
+                              end if
+
+                              ! For CAR_ch4
+                              if (i == n_simstrat + 4) then
+                                 do i2=1, size(self%sim_cfg%ext_depth_indices)
+                                    ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
+                                    self%Inp_read_end(i,ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1), 4)
+                                    self%rei_values(i,i2) = 0.17*self%Inp_read_end(i,ext_z_idx)
+
+                                    !--wash extraction
+                                    wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
+                                    self%Inp_read_end(i,wash_ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,wash_ext_z_idx)), dim=1), 4)
+                                    self%wash_rei_values(i,i2) = 0.04*self%Inp_read_end(i,wash_ext_z_idx)                                 
+                                 end do
+                              end if
+                              ! Average AED2 executed case for reinjection value
+                              !-- reinjection
+                              rei_z_idx = self%sim_cfg%rei_depth_indices(n)
+                              self%Inp_read_end(i,rei_z_idx) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
+                              
+                              !-- wash reinjection
+                              wash_rei_z_idx = self%sim_cfg%wash_rei_depth_indices(n)
+                              self%Inp_read_end(i,wash_rei_z_idx) = sum(self%wash_rei_values(i,:)) / size(self%wash_rei_values(i,:)) ! average the appended values for reinjection
+                           else !out of the extraction date
                               do i2=1, size(self%sim_cfg%ext_depth_indices)
-                                 !--extraction
                                  ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
-                                 self%Inp_read_end(i,ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1), 2)
-                                 self%rei_values(i,i2) = 0.74*self%Inp_read_end(i,ext_z_idx)
+                                 self%Inp_read_end(i,ext_z_idx) = 0
+                                 !self%rei_values(i,i2) = 0 ! no longer needed at this case, is zero anywhere
 
                                  !--wash extraction
                                  wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
-                                 self%Inp_read_end(i,wash_ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,wash_ext_z_idx)), dim=1), 2)
-                                 self%wash_rei_values(i,i2) = 0.25*self%Inp_read_end(i,wash_ext_z_idx)
+                                 self%Inp_read_end(i,wash_ext_z_idx) = 0
+                                 !self%wash_rei_values(i,i2) = 0     ! no longer needed at this case, is zero anywhere                            
                               end do
-                           end if
-                           
-                           ! For CAR_pH
-                           if (i == n_simstrat + 3) then
-                              !-- extraction
-                              do i2=1, size(self%sim_cfg%ext_depth_indices)
-                                 ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
-                                 self%Inp_read_end(i,ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1), 3)
-                                 self%rei_values(i,i2) = self%Inp_read_end(i,ext_z_idx)
-
-                                 !--wash extraction
-                                 wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
-                                 self%Inp_read_end(i,wash_ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,wash_ext_z_idx)), dim=1), 3)
-                                 self%wash_rei_values(i,i2) = self%Inp_read_end(i,wash_ext_z_idx)
-                              end do
-                           end if
-
-                           ! For CAR_ch4
-                           if (i == n_simstrat + 4) then
-                              do i2=1, size(self%sim_cfg%ext_depth_indices)
-                                 ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
-                                 self%Inp_read_end(i,ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1), 4)
-                                 self%rei_values(i,i2) = 0.17*self%Inp_read_end(i,ext_z_idx)
-
-                                 !--wash extraction
-                                 wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
-                                 self%Inp_read_end(i,wash_ext_z_idx) = state%AED2_state(minloc(abs(grid%z_volume-self%z_Inp(i,wash_ext_z_idx)), dim=1), 4)
-                                 self%wash_rei_values(i,i2) = 0.04*self%Inp_read_end(i,wash_ext_z_idx)                                 
-                              end do
-                           end if
-                           ! Average AED2 executed case for reinjection value
-                           !-- reinjection
-                           rei_z_idx = self%sim_cfg%rei_depth_indices(n)
-                           self%Inp_read_end(i,rei_z_idx) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
-                           
-                           !-- wash reinjection
-                           wash_rei_z_idx = self%sim_cfg%wash_rei_depth_indices(n)
-                           self%Inp_read_end(i,wash_rei_z_idx) = sum(self%wash_rei_values(i,:)) / size(self%wash_rei_values(i,:)) ! average the appended values for reinjection
-                        end do 
+                              ! Average AED2 executed case for reinjection value
+                              !-- reinjection
+                              rei_z_idx = self%sim_cfg%rei_depth_indices(n)
+                              self%Inp_read_end(i,rei_z_idx) = 0 ! zero appended value for reinjection
+                              
+                              !-- wash reinjection
+                              wash_rei_z_idx = self%sim_cfg%wash_rei_depth_indices(n)
+                              self%Inp_read_end(i,wash_rei_z_idx) = 0 ! zero appended value for reinjection
+                           end if 
+                        end do ! end loop for number of extractions
                      !end if
 
                      !-------==========------- For inflows temperature and temperature files ========------------------============
@@ -694,24 +773,45 @@ contains
                         self%Inp_read_end(i,1:self%nval(i)) = self%Inp_read_start(i,1:self%nval(i)) !simply, equalize Inp_read_end with Inp_read_start, then specific inflows should be updated below
                         
                         do n=1, self%sim_cfg%num_extractions
-                           do i2=1, size(self%sim_cfg%ext_depth_indices)
-                              !--extraction
-                              ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
-                              self%Inp_read_end(i,ext_z_idx) = state%T(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1)) !--- (temp) extract the nearest depth temp value to 450 m
-                              self%rei_values(i,i2) = self%Inp_read_end(i,ext_z_idx)
+                           if (state%datum >= self%sim_cfg%start_ext_dates(n)) and (state%datum <= self%sim_cfg%end_ext_dates(n)) then
+                              do i2=1, size(self%sim_cfg%ext_depth_indices)
+                                 !--extraction
+                                 ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
+                                 self%Inp_read_end(i,ext_z_idx) = state%T(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1)) !--- (temp) extract the nearest depth temp value to 450 m
+                                 self%rei_values(i,i2) = self%Inp_read_end(i,ext_z_idx)
 
-                              !--wash extraction
-                              wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
-                              self%Inp_read_end(i,wash_ext_z_idx) = state%T(minloc(abs(grid%z_volume-self%z_Inp(i,wash_ext_z_idx)), dim=1)) !--- (temp) extract the nearest depth temp value to 450 m
-                              self%wash_rei_values(i,i2) = self%Inp_read_end(i,wash_ext_z_idx)                                                           
-                           end do
-                           !-- reinjection
-                           rei_z_idx = self%sim_cfg%rei_depth_indices(n)
-                           self%Inp_read_end(i,rei_z_idx) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
+                                 !--wash extraction
+                                 wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
+                                 self%Inp_read_end(i,wash_ext_z_idx) = state%T(minloc(abs(grid%z_volume-self%z_Inp(i,wash_ext_z_idx)), dim=1)) !--- (temp) extract the nearest depth temp value to 450 m
+                                 self%wash_rei_values(i,i2) = self%Inp_read_end(i,wash_ext_z_idx)                         
+                              end do
+                              !-- reinjection
+                              rei_z_idx = self%sim_cfg%rei_depth_indices(n)
+                              self%Inp_read_end(i,rei_z_idx) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
 
-                           !-- wash reinjection
-                           wash_rei_z_idx = self%sim_cfg%wash_rei_depth_indices(n)
-                           self%Inp_read_end(i,wash_rei_z_idx) = sum(self%wash_rei_values(i,:)) / size(self%wash_rei_values(i,:)) ! average the appended values for reinjection
+                              !-- wash reinjection
+                              wash_rei_z_idx = self%sim_cfg%wash_rei_depth_indices(n)
+                              self%Inp_read_end(i,wash_rei_z_idx) = sum(self%wash_rei_values(i,:)) / size(self%wash_rei_values(i,:)) ! average the appended values for reinjection
+                           else !out of the extraction date
+                              do i2=1, size(self%sim_cfg%ext_depth_indices)
+                                 ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
+                                 self%Inp_read_end(i,ext_z_idx) = 0
+                                 !self%rei_values(i,i2) = 0 ! no longer needed at this case, is zero anywhere
+
+                                 !--wash extraction
+                                 wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
+                                 self%Inp_read_end(i,wash_ext_z_idx) = 0
+                                 !self%wash_rei_values(i,i2) = 0     ! no longer needed at this case, is zero anywhere                            
+                              end do
+                              ! Average AED2 executed case for reinjection value
+                              !-- reinjection
+                              rei_z_idx = self%sim_cfg%rei_depth_indices(n)
+                              self%Inp_read_end(i,rei_z_idx) = 0 ! zero appended value for reinjection
+                              
+                              !-- wash reinjection
+                              wash_rei_z_idx = self%sim_cfg%wash_rei_depth_indices(n)
+                              self%Inp_read_end(i,wash_rei_z_idx) = 0 ! zero appended value for reinjection
+                           end if                              
                         end do
 
                      else if (i == 4) then ! for salinity
@@ -719,27 +819,48 @@ contains
                         self%Inp_read_end(i,1:self%nval(i)) = self%Inp_read_start(i,1:self%nval(i)) !simply, equalize Inp_read_end with Inp_read_start, then specific inflows should be updated below
                         
                         do n=1, self%sim_cfg%num_extractions
-                           do i2=1, size(self%sim_cfg%ext_depth_indices) ! here four can work perfect
-                              !-- extraction
-                              ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
-                              self%Inp_read_end(i,ext_z_idx) = state%S(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1)) !---(sal) extract the nearest depth temp value to 450 m
-                              self%rei_values(i,i2) = self%Inp_read_end(i,ext_z_idx)
-                              !-- wash extraction
-                              wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
-                              self%Inp_read_end(i,wash_ext_z_idx) = state%S(minloc(abs(grid%z_volume-self%z_Inp(i,wash_ext_z_idx)), dim=1)) !---(sal) extract the nearest depth temp value to 450 m
-                              self%wash_rei_values(i,i2) = self%Inp_read_end(i,wash_ext_z_idx)
-                           end do
-                           !-- reinjection
-                           rei_z_idx = self%sim_cfg%rei_depth_indices(n)
-                           self%Inp_read_end(i,rei_z_idx) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
+                           if (state%datum >= self%sim_cfg%start_ext_dates(n)) and (state%datum <= self%sim_cfg%end_ext_dates(n)) then
+                              do i2=1, size(self%sim_cfg%ext_depth_indices) ! here four can work perfect
+                                 !-- extraction
+                                 ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
+                                 self%Inp_read_end(i,ext_z_idx) = state%S(minloc(abs(grid%z_volume-self%z_Inp(i,ext_z_idx)), dim=1)) !---(sal) extract the nearest depth temp value to 450 m
+                                 self%rei_values(i,i2) = self%Inp_read_end(i,ext_z_idx)
+                                 !-- wash extraction
+                                 wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
+                                 self%Inp_read_end(i,wash_ext_z_idx) = state%S(minloc(abs(grid%z_volume-self%z_Inp(i,wash_ext_z_idx)), dim=1)) !---(sal) extract the nearest depth temp value to 450 m
+                                 self%wash_rei_values(i,i2) = self%Inp_read_end(i,wash_ext_z_idx)                              
+                              end do
+                              !-- reinjection
+                              rei_z_idx = self%sim_cfg%rei_depth_indices(n)
+                              self%Inp_read_end(i,rei_z_idx) = sum(self%rei_values(i,:)) / size(self%rei_values(i,:)) ! average the appended values for reinjection
 
-                           !-- wash reinjection
-                           wash_rei_z_idx = self%sim_cfg%wash_rei_depth_indices(n)
-                           self%Inp_read_end(i,wash_rei_z_idx) = sum(self%wash_rei_values(i,:)) / size(self%wash_rei_values(i,:)) ! average the appended values for reinjection
+                              !-- wash reinjection
+                              wash_rei_z_idx = self%sim_cfg%wash_rei_depth_indices(n)
+                              self%Inp_read_end(i,wash_rei_z_idx) = sum(self%wash_rei_values(i,:)) / size(self%wash_rei_values(i,:)) ! average the appended values for reinjection
+                           else !out of the extraction date
+                              do i2=1, size(self%sim_cfg%ext_depth_indices)
+                                 ext_z_idx = self%sim_cfg%ext_depth_indices(i2)
+                                 self%Inp_read_end(i,ext_z_idx) = 0
+                                 !self%rei_values(i,i2) = 0 ! no longer needed at this case, is zero anywhere
+
+                                 !--wash extraction
+                                 wash_ext_z_idx = self%sim_cfg%wash_ext_depth_indices(i2)
+                                 self%Inp_read_end(i,wash_ext_z_idx) = 0
+                                 !self%wash_rei_values(i,i2) = 0     ! no longer needed at this case, is zero anywhere                            
+                              end do
+                              ! Average AED2 executed case for reinjection value
+                              !-- reinjection
+                              rei_z_idx = self%sim_cfg%rei_depth_indices(n)
+                              self%Inp_read_end(i,rei_z_idx) = 0 ! zero appended value for reinjection
+                              
+                              !-- wash reinjection
+                              wash_rei_z_idx = self%sim_cfg%wash_rei_depth_indices(n)
+                              self%Inp_read_end(i,wash_rei_z_idx) = 0 ! zero appended value for reinjection
+                           end if                               
                         end do
                      !end if
                      else ! Non-extraction concern inflows (require when methaneextraction=true)
-                     ! Read next line
+                     ! Read next line (Qins and Qout can also be update here)
                         read(self%fnum(i),*,end=7) self%tb_end(i),(self%Inp_read_end(i,j),j=1,self%nval(i))
                      end if
    
