@@ -497,7 +497,7 @@ contains
       r_rho = (beta_S*(S1-S2) + beta_co2*(co2_1-co2_2) + beta_ch4*(ch4_1-ch4_2))/(alpha*(T1-T2))
    end subroutine
 
-   subroutine calculate_pH(TEM,SAL,DIC,pH)      ! Added by Modeste, 2025
+   subroutine calculate_pH(pH,TEM,SAL,DIC)      ! Added by Modeste, 2025
       implicit none
 
       real(RK),    intent(in)   :: TEM, SAL, DIC
@@ -519,17 +519,16 @@ contains
       TF  = 0.
       TSi = 0./1.e6
 
-      TC  = TC0 !/1.e6
-      TA  = TA0 !/1.e6
+      TC  = DIC /1.e6 ! convert from mmol/m3 to mol/L
+      TA  = TA0 
 
       PRE = 0.
 
       Call Cal_constants(TEM, SAL, PRE, K0, KS, KF, fH, KB, KW, KP1, KP2, KP3, &
                               & KSi,  K1, K2, TB, TP, TS, TF)
 
-      Call Cal_pHfromTATC(TA, DIC, pH, K1, K2, TB, KB, KW, KP1, KP2, KP3,&
+      Call Cal_pHfromTATC(TA, TC, pH, K1, K2, TB, KB, KW, KP1, KP2, KP3,&
                                  & TP, TSi, TS, KS, KSi, TF, KF)
-
 
    end subroutine calculate_pH
    
@@ -538,7 +537,7 @@ contains
                            & TPF, TSiF, TSF, KSF, KSiF, TFF, KFF)
       implicit none
 
-      real(RK),     intent(in) :: TAx, SAL, TCx
+      real(RK),     intent(in) :: TAx, TCx
       real(RK),     intent(in) :: K1F, K2F, TBF, KBF, KWF, KP1F, KP2F, KP3F, TPF, TSiF, TSF, KSF, TFF, KFF, KSiF
       real(RK),     intent(out):: pHx
 

@@ -812,6 +812,10 @@ contains
             call par_file%get("Simulation.Wash extraction depths", sim_cfg%wash_ext_depth_indices, found); call check_field(found, 'Simulation.Wash extraction depths', ParName)
             call par_file%get("Simulation.Reinjection depths", sim_cfg%rei_depth_indices, found); call check_field(found, 'Simulation.Reinjection depths', ParName)
             call par_file%get("Simulation.Wash reinjection depths", sim_cfg%wash_rei_depth_indices, found); call check_field(found, 'Simulation.Wash reinjection depths', ParName)
+            call par_file%get("Simulation.DIC reinjection percents", sim_cfg%dic_rei_percents, found); call check_field(found, 'Simulation.DIC reinjection percents', ParName)
+            call par_file%get("Simulation.DIC wash reinjection percents", sim_cfg%dic_wash_rei_percents, found); call check_field(found, 'Simulation.DIC wash reinjection percents', ParName)
+            call par_file%get("Simulation.CH4 reinjection percents", sim_cfg%ch4_rei_percents, found); call check_field(found, 'Simulation.CH4 reinjection percents', ParName)
+            call par_file%get("Simulation.CH4 wash reinjection percents", sim_cfg%ch4_wash_rei_percents, found); call check_field(found, 'Simulation.CH4 wash reinjection percents', ParName)
             call par_file%get("Simulation.Start extraction dates", sim_cfg%start_ext_dates, found); call check_field(found, 'Simulation.Start extraction dates', ParName)
             call par_file%get("Simulation.End extraction dates", sim_cfg%end_ext_dates, found); call check_field(found, 'Simulation.End extraction dates', ParName)
          end if
