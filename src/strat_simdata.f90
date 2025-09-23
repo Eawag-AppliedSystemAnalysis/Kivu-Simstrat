@@ -175,7 +175,7 @@ module strat_simdata
       ! Variables located on z_cent grid
       ! Note that for these variables the value at 0 z.b. U(0) is not used
       real(RK), dimension(:), allocatable :: U, V ! Water velocities [m/s]
-      real(RK), dimension(:), pointer :: T, S, R_rho ! Temperature [°C], Salinity [‰]
+      real(RK), dimension(:), pointer :: T, S, R_rho, Temp_in ! Temperature [°C], Salinity [‰]
       real(RK), dimension(:), allocatable :: dS ! Source/sink for salinity
       real(RK), dimension(:, :), allocatable :: Q_inp ! Horizontal inflow [m^3/s]
       real(RK), dimension(:), pointer :: rho ! Water density [kg/m^3]
@@ -280,6 +280,7 @@ contains
       allocate (self%U(state_size))
       allocate (self%V(state_size))
       allocate (self%T(state_size))
+      allocate (self%Temp_in(state_size))
       allocate (self%S(state_size))
       allocate (self%R_rho(state_size))
       allocate (self%dS(state_size))
@@ -329,6 +330,7 @@ contains
       self%U = 0.0_RK
       self%V = 0.0_RK
       self%T = 0.0_RK
+      self%Temp_in = 0.0_RK
       self%S = 0.0_RK
       self%R_rho = 0.0_RK
       self%dS = 0.0_RK

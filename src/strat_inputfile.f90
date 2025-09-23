@@ -174,8 +174,8 @@ contains
 
          ! Define variables that should be written
          if (output_cfg%output_all) then
-            output_cfg%number_output_vars = 35
-            output_cfg%output_var_names = [character(len=12) :: 'V','U','T','S','num','nuh','nus','nug','NN','k','eps','P','B','Ps','HA','HW','HK','HV','Rad0','TotalIceH','BlackIceH','WhiteIceH','SnowH','WaterH','Qvert','rho','DiffHeatFlux','BuoyHeatFlux','AdvHeatFlux','DiffSaltFlux','AdvSaltFlux','VertVel','DensityRatio','LateralInput','Eseiche']
+            output_cfg%number_output_vars = 36
+            output_cfg%output_var_names = [character(len=12) :: 'V','U','T','Temp_in','S','num','nuh','nus','nug','NN','k','eps','P','B','Ps','HA','HW','HK','HV','Rad0','TotalIceH','BlackIceH','WhiteIceH','SnowH','WaterH','Qvert','rho','DiffHeatFlux','BuoyHeatFlux','AdvHeatFlux','DiffSaltFlux','AdvSaltFlux','VertVel','DensityRatio','LateralInput','Eseiche']
          else
             output_cfg%number_output_vars = size(output_cfg%output_var_names)
          end if
@@ -426,6 +426,13 @@ contains
                   self%simdata%output_cfg%output_vars(i)%name = "Eseiche"
                   self%simdata%output_cfg%output_vars(i)%values_surf => self%simdata%model%E_seiche
                   self%simdata%output_cfg%output_vars(i)%volume_grid = .false.
+                  self%simdata%output_cfg%output_vars(i)%face_grid = .false.
+
+               case('Temp_in')
+                  ! Inflows' temperature [°C]
+                  self%simdata%output_cfg%output_vars(i)%name = "Temp_in"
+                  self%simdata%output_cfg%output_vars(i)%values => self%simdata%model%Temp_in
+                  self%simdata%output_cfg%output_vars(i)%volume_grid = .true.
                   self%simdata%output_cfg%output_vars(i)%face_grid = .false.
 
                case default
