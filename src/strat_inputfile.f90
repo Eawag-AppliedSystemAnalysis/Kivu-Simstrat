@@ -415,7 +415,7 @@ contains
                   self%simdata%output_cfg%output_vars(i)%face_grid = .false.
 
                case('LateralInput')
-                  ! Inflow rate [m2 s-1]
+                  ! Inflow rate [m3 s-1]
                   self%simdata%output_cfg%output_vars(i)%name = "LateralInput"
                   self%simdata%output_cfg%output_vars(i)%values => self%simdata%model%lateral_input
                   self%simdata%output_cfg%output_vars(i)%volume_grid = .false.
@@ -432,8 +432,8 @@ contains
                   ! Inflows' temperature [°C]
                   self%simdata%output_cfg%output_vars(i)%name = "Temp_in"
                   self%simdata%output_cfg%output_vars(i)%values => self%simdata%model%Temp_in
-                  self%simdata%output_cfg%output_vars(i)%volume_grid = .true.
-                  self%simdata%output_cfg%output_vars(i)%face_grid = .false.
+                  self%simdata%output_cfg%output_vars(i)%volume_grid = .false.
+                  self%simdata%output_cfg%output_vars(i)%face_grid = .true.
 
                case default
                   call error('Output variable specified in config file not found: ' // trim(output_cfg%output_var_names(i)))

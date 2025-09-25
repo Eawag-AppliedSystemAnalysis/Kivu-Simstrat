@@ -597,7 +597,7 @@ contains
             Q_vert(i) = Q_vert(i - 1) + Q_inp(1,i - 1) + Q_inp(2,i - 1)
             state%w(i) = Q_vert(i)/grid%Az(i)
             state%lateral_input(i) = Q_inp(1,i - 1)
-            state%Temp_in(i) = Q_inp(3,i-1)/Q_inp(1,i - 1)
+            state%Temp_in(i) = Q_inp(3,i-1)!/Q_inp(1,i - 1)
          end do
          !print *, "Lateral_Input size--------:",size(state%lateral_input)
          !print *, state%lateral_input
