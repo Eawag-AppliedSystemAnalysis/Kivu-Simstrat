@@ -262,7 +262,7 @@ contains
             if (self%cfg%apparent_diffusivity) then
 
                ! Set parameters (could be moved to parameter file)
-               threshold = 1e-10_RK
+               threshold = 4.288e-7_RK !Estimated NN threshold from 1e-10_RK
                offset = 0.384 ! with improved DD from 0.3, Modeste 2025
 
                ! Below 120 m (where double diffusive staircases exist)
