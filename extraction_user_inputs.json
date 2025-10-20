@@ -1,0 +1,33 @@
+{
+  "EXTRACTION": {
+    "power_production_MW": [200],
+    "extraction_depth_m": [450],
+    "extraction_range_m": [2],
+    "extraction_water_m3s": [47.9],
+    "ch4_extraction_efficiency_percent": [79]
+  },
+  "REINJECTION": {
+    "reinjection_depth_m": [240],
+    "reinjection_water_m3s": [47.9],
+	  "ch4_reinjection_percent": [17],
+	  "co2_reinjection_percent": [74]
+  },
+  "WASHING_EXTRACTION": {
+	  "washing_extraction_depth_m": [60],
+    "washing_extraction_range_m": [2],
+    "washing_extraction_water_m3s": [12]
+  },
+  "WASHING_REINJECTION": {
+    "washing_reinjection_depth_m": [60],
+    "washing_reinjection_water_m3s": [12],
+	  "ch4_washing_reinjection_percent": [4],
+	  "co2_washing_reinjection_percent": [25]
+  },
+  "EXTRACTION_PERIOD": {
+    "extraction_start_date": ["01-01-2016"],
+    "extraction_end_date": ["31-12-2115"]
+  },
+  "SIMULATION_MODEL":{
+    "kivu_simstrat_path":"/storage/lakekivu/1D_Model/WP_workspaces/WP2/Extraction_and_reinjection_adaptation/Extraction_Inflows_Processor"
+  }
+}
