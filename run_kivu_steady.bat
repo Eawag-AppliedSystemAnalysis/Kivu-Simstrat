@@ -1,1 +1,0 @@
-build\simstrat.exe config_files\simstrat_config_steady.par

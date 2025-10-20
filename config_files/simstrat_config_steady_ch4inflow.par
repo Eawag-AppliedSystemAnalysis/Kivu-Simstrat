@@ -1,29 +1,29 @@
 {
     "Input": {
-        "Initial conditions": "scenarios\\Initcond\\InitialConditions.dat",
+        "Initial conditions": "scenarios//Initcond//IC_necessary_pars.dat",
         "Grid": 243,
-        "Morphology": "scenarios\\Bathymetry.dat",
-        "Forcing": "scenarios\\Forcing\\Forcing_MiroC5_piC_2000y.dat",
-        "Absorption": "scenarios\\Absorption.dat",
-        "Inflow": "scenarios\\Inflow\\Qin.dat",
-        "Outflow": "scenarios\\Inflow\\Qout.dat",
-        "Inflow temperature": "scenarios\\Inflow\\Tin.dat",
-        "Inflow salinity": "scenarios\\Inflow\\Sin.dat",
+        "Morphology": "scenarios//Bathymetry.dat",
+        "Forcing": "scenarios//Forcing//Forcing_MiroC5_RCP6_500yrs.dat",
+        "Absorption": "scenarios//Absorption.dat",
+        "Inflow": "scenarios//Inflow//Qin.dat",
+        "Outflow": "scenarios//Inflow//Qout.dat",
+        "Inflow temperature": "scenarios//Inflow//Tin.dat",
+        "Inflow salinity": "scenarios//Inflow//Sin.dat"
     },
         "Output": {
-        "Path"  : "scenarios\\Results_steady\\",
+        "Path"  : "scenarios//Results_steady//",
         "Depths" : 2,
-        "Times"  : 288,
+        "Times"  : 480,
         "OutputDepthReference": "surface",
-        "All"   : false,
-        "Variables" : ["T", "S","HA","HW","HK","HV"]
+        "All"   : true,
+        "Variables" : ["T", "S", "NN", "rho"]
     },
     "Simulation": {
-        "Timestep s"                  : 300,
+        "Timestep s"                  : 1800,
         "Reference year"              : 1660,
-        "Start d"                     : 126374,
-        "End d"                       : 127374,
-        "DisplaySimulation"           : 1,
+        "Start d"                :130026,
+        "End d"                :166549,
+        "DisplaySimulation"           : 1, 
         "Continue from last snapshot" : false,
         "Show progress bar"           : true,
         "Save text restart"           : false,
@@ -49,14 +49,14 @@
         "MethaneExtraction"       : true
     },
       "AED2Config" : {
-        "AED2ConfigFile"          : "config_files\\aed2_config.nml", ! kivu_mode and ch4_inflow options can be switched ON or OFF in this file accordingly
-        "PathAED2initial"         : "scenarios\\AED2_initcond\\",
-        "PathAED2inflow"          : "scenarios\\AED2_inflow_ch4inflow\\",
+        "AED2ConfigFile"          : "config_files//aed2_config_ch4inflow.nml",
+        "PathAED2initial"         : "scenarios//AED2_initcond//",
+        "PathAED2inflow"          : "scenarios//AED2_inflow_ch4inflow//",
         "ParticleMobility"        : 1,
         "BioshadeFeedback"        : 0,
         "BackgroundExtinction"    : 0.2,
         "BenthicMode"             : 1,
-        "OutputDiagnosticVars"    : false
+        "OutputDiagnosticVars"    : true
   },
     "ModelParameters": {
         "lat"           : -2,
@@ -68,7 +68,7 @@
         "f_wind"        : 2.4,
         "c10"           : 1,
         "cd"            : 0.002,
-        "hgeo"          : 0.13,
+        "hgeo"          : 0.152,
         "p_sw_water"    : 0.95,
         "p_lw"          : 0.95,
         "p_windf"       : 1,

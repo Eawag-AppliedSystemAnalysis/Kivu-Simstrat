@@ -1,1 +1,0 @@
-build\simstrat.exe config_files\simstrat_config_longterm_ch4inflow.par
