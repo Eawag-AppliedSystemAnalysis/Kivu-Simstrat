@@ -1,9 +1,5 @@
 #--------This script contains all necessary functions to process inflows for Kivu-Simstrat model V.1.1 to simulate improved methane extraction operations---------
-import json
 import numpy as np
-from datetime import datetime, date
-import pandas as pd
-from pathlib import Path
 
 #=========== Fuction 12: read inflow file ================================
 def read_inflow_file(inflow_file_path):

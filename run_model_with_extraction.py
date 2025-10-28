@@ -1,77 +1,41 @@
-import load_user_inputs
-import kivu_simstrat_processor
-import write_inflows
-
 import sys
 from pathlib import Path
+import json
 import subprocess
 
-# Step 1: get path for current user input json file------------------
-# Check that a JSON file is provided
+# STEP 1: get path for current user input json file------------------
+
 if len(sys.argv) < 2:
     raise ValueError("Usage: python run_simulation_with_extraction.py <config.json>")
 
-# Get the JSON file path from the command line
 json_file_path = Path(sys.argv[1]).resolve()
 
-# STEP 2: read model path from the loaded json file
-model_path = load_user_inputs.load_model_path(json_file_path)
+# STEP 2: read model path from the loaded json file ---------------------------
 
-#---- CREATE SCENARIOS_EXTRACTION OR DESTROY IN CASE ----------
-scenarios_extraction_path = kivu_simstrat_processor.create_scenarios_extraction(model_path) #------check
+with open(f"{json_file_path}", 'r') as f:
+    config = json.load(f)
 
-# STEP 3: Load intrinsic paths
-def ensure_single_file(path_dir, list_file_paths):
-    if len(list_file_paths) == 0:
-        raise FileNotFoundError(f"No .dat file found in {path_dir}")
-    elif len(list_file_paths) > 1:
-        raise RuntimeError(f"Multiple .dat files found in {path_dir}: {[f.name for f in list_file_paths]}")
-    # If exactly one, use it
-    return list_file_paths[0].resolve()
-    
+print(f"<<<< Loaded user inputs from: {json_file_path} >>>>")
 
-# ------3.1: path for simstrat initial conditions-----------------
-# Define the directory containing the expected .dat file
-sim_initcond_dir = Path(model_path) / "scenarios" / "Initcond"
-# Search for all .dat files
-sim_dat_files = list(sim_initcond_dir.glob("*.dat"))
-simstrat_initcond_file = ensure_single_file(sim_initcond_dir, sim_dat_files)
+model_path = Path(config["SIMULATION_MODEL"]["kivu_simstrat_path"]).resolve()
 
-# ------3.2: path for simstrat inflows data-----------------
-simstrat_inflows_dir = Path(model_path) / "scenarios" / "Inflow"
+# --- validate the path --------------
+if not model_path.exists():
+    raise FileNotFoundError(f"Model path does not exist: {model_path}")
 
-# ------3.3: path for simstrat config file -----------------
-sim_config_dir = Path(model_path) / "config_files" 
+# STEP 3: prepare to run extraction simulation launcher file -------------
+launcher_file_path = model_path / "simulation_with_extraction_launcher.py" 
 
-# Delete any existing extraction config file first
-new_config_name = "simstrat_config_steady_ch4inflow_with_extraction.par"
-kivu_simstrat_processor.delete_existing_extraction_parfile(sim_config_dir, new_config_name) 
+if not launcher_file_path.exists():
+    raise FileNotFoundError(f"Target script not found: {launcher_file_path}")
 
-# Now Search for all .dat files to ensure only one exist
-sim_config_files = list(sim_config_dir.glob("*.par"))
-simstrat_config_file = ensure_single_file(sim_config_dir, sim_config_files) 
+# STEP 4: Run launcher file inside the model directory
+print(f"<<<Running secondary script: {launcher_file_path}>>>>")
+subprocess.run(
+    [sys.executable, str(launcher_file_path), str(json_file_path)],
+    cwd=model_path,
+    check=True
+)
 
 
-new_simstrat_config_file = kivu_simstrat_processor.copy_original_parfile(simstrat_config_file, new_config_name) 
 
-# ----- WRITE SIMSTRAT INFLOWS -----------
-write_inflows.write_simstrat_inflows_file(simstrat_inflows_dir, json_file_path, simstrat_initcond_file, new_simstrat_config_file, scenarios_extraction_path)
-
-
-# ------3.4: path for aed2 inflows and IC data-----------------
-aed2_inflows_dir = Path(model_path) / "scenarios" / "AED2_inflows_ch4inflows"
-aed2_initcond_dir = Path(model_path) / "scenarios" / "AED2_initcond"
-
-# ----- WRITE AED2 INFLOWS -----------
-write_inflows.write_aed_inflows_file(aed2_inflows_dir, json_file_path, aed2_initcond_dir, new_simstrat_config_file, scenarios_extraction_path)
-
-
-# ----- UPDATE CONFIG FILE -----------
-kivu_simstrat_processor.update_simstart_file_par(new_simstrat_config_file, json_file_path, simstrat_inflows_dir)
-
-
-# ----- RUN THE MODEL/ SIMULATION --------------
-script_path = model_path / "run_simstrat_aed2_with_extraction.sh"
-
-# This works on Linux and WSL (Windows Subsystem for Linux)
-subprocess.run(["bash", str(script_path)], cwd=model_path, check=True)

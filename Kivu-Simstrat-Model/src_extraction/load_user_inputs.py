@@ -1,9 +1,7 @@
 #--------This script contains all necessary functions to process inflows for Kivu-Simstrat model V.1.1 to simulate improved methane extraction operations---------
 import json
 import numpy as np
-from datetime import datetime, date
-import pandas as pd
-from pathlib import Path
+from datetime import datetime
 
 #=========== Fuction 1: validate first hand data consistence ====================================
 def check_inconsistence_data_length(config, section, required_keys=None):
@@ -305,16 +303,3 @@ def process_reinjection_efficieny(json_file_path):
         co2_rei_efficiencies[1][i] = co2_wash_rei_eff / 100
 
     return ch4_rei_efficiencies, co2_rei_efficiencies
-
-#====== Function 9: load the model path ======================
-def load_model_path(json_file_path):
-
-    with open(f"{json_file_path}", 'r') as f:
-        config = json.load(f)
-    print(f"<<<< Loaded user inputs from: {json_file_path} >>>>")
-
-    model_path = Path(config["SIMULATION_MODEL"]["kivu_simstrat_path"])
-    #--- validate the path--------------
-    if not model_path.exists():
-        raise FileNotFoundError(f"Model path does not exist: {model_path}")
-    return model_path
