@@ -5,6 +5,17 @@ import sys
 from pathlib import Path
 import subprocess
 
+
+#STEP 1: Get Json file path -----------------------------------------
+
+# Ensure a JSON file path was passed
+if len(sys.argv) < 2:
+    raise ValueError("Usage: python simulation_with_extraction_launcher.py <config.json>")
+
+# Get the JSON file path passed from run_file.py
+json_file_path = Path(sys.argv[1]).resolve()
+
+
 # STEP 2: load the current location / model path
 model_path = current_loc = Path(__file__).resolve().parent
 
