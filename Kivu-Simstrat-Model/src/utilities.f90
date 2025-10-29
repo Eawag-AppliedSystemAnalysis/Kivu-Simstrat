@@ -504,6 +504,7 @@ contains
       real(RK),    intent(out)  :: pH              
       ! LOCAL
       real(RK)                  :: TA0, PRE, K0, KS, KF, fH, KB, KW, KP1, KP2, KP3, KSi = 0., K1, K2, TB, TP, TS, TF, TSi, TC, TA
+      real(RK)                  :: a, b, c, dcf
 
       !===========Initialize the conditions =========================!
 
@@ -513,13 +514,22 @@ contains
       TA0 = TA0 / 1.0D6      ! change unit to mol/kgSW
       !ENDIF
 
+      !---Convert DIC to mol/kgSW (taken from Alk_mode==1)
+      a    =  8.24493d-1 - 4.0899d-3*TEM + 7.6438d-5*TEM**2 - 8.2467d-7*TEM**3 + 5.3875d-9*TEM**4
+      b    = -5.72466d-3 + 1.0227d-4*TEM - 1.6546d-6*TEM**2
+      c    =  4.8314d-4
+      dcf  = (999.842594 + 6.793952d-2*TEM- 9.095290d-3*TEM**2 + 1.001685d-4*TEM**3 &
+               - 1.120083d-6*TEM**4 + 6.536332d-9*TEM**5+a*SAL+b*SAL**1.5+c*SAL**2)/1.0D3
+
+      
+
       TB  = 0.
       TP  = 0./1.e6
       TS  = 0.
       TF  = 0.
       TSi = 0./1.e6
 
-      TC  = DIC /1.e6 ! convert from mmol/m3 to mol/L
+      TC  = DIC / (1.0D6*dcf) ! change unit to mol/kgSW
       TA  = TA0 
 
       PRE = 0.
@@ -598,7 +608,9 @@ contains
       ! local
       real(RK)                    :: TempK, RT, logTempK, sqrSal, TempK100, Pbar
       real(RK)                    :: lnK0, IonS, lnKS, lnKF, lnKBtop, lnKB, lnKW, lnKP1, &
-                                    & lnKP2, lnKP3, lnKSi, lnK1, lnK2, pK1, pK2
+                                    & lnKP2, lnKP3, lnKSi, lnK1, lnK2, pK1, pK2, Term_pK10, &
+                                    & Term_pK20, Term_A1, Term_A2, Term_B1, Term_B2, Term_C1, &
+                                    & Term_C2                                    
       real(RK)                    :: SWStoTOT, FREEtoTOT
       real(RK)                    ::   deltaV, kappa, lnK1fac, lnK2fac, lnKWfac, lnKFfac,&
                                     & lnKSfac, lnKP1fac, lnKP2fac, lnKP3fac, lnKSifac,    &
@@ -669,11 +681,25 @@ contains
             & (188.74/TempK - 1.5998)*IonS + (-12.1652/TempK + 0.07871)*(IonS**2)
 
       !--------K1 and K2 for carbonic acid------------!
-      pK1 = 3670.7/TempK-62.008+9.7944*logTempK-0.0118*Sal+0.000116*(Sal**2)
+      !pK1 = 3670.7/TempK-62.008+9.7944*logTempK-0.0118*Sal+0.000116*(Sal**2)
+      !K1  = 10.**(-pK1)  ! this is on the SWS pH scale in mol/kg-SW
+      !pK2 = 1394.7/TempK + 4.777 - 0.0184*Sal + 0.000118*(Sal**2)
+      !K2  = 10.**(-pK2)
+      !-------- K1 and K2 for carbonic acid --------! By Millero et al (2006) (ionic strength relations) =====> By Modeste 2025
+      Term_pK10 = -126.34048 + 6320.813 / TempK + 19.568224 * logTempK
+      Term_A1 = 93.9053*IonS**0.5 + 1.6549*IonS - 0.130*IonS**2
+      Term_B1 = -3706.9*IonS**0.5 - 303.7*IonS
+      Term_C1 = -14.4858*IonS**0.5
+      pK1 =  Term_pK10 + Term_A1 + Term_B1 / TempK + Term_C1 * logTempK
       K1  = 10.**(-pK1)  ! this is on the SWS pH scale in mol/kg-SW
-      pK2 = 1394.7/TempK + 4.777 - 0.0184*Sal + 0.000118*(Sal**2)
+         
+      Term_pK20 = -90.18333 + 5143.692 / TempK + 14.613358 * logTempK
+      Term_A2 = 147.2748*IonS**0.5 + 6.0876*IonS - 0.869*IonS**2
+      Term_B2 = -5400.9*IonS**0.5 - 968.4*IonS
+      Term_C2 = -23.2804*IonS**0.5
+      pK2 =  Term_pK20 + Term_A2 + Term_B2 / TempK + Term_C2 * logTempK
       K2  = 10.**(-pK2)
-
+      
       !============correct constants for pressure=================!
       !------correct K1, k2, kB for pressure----------!
       deltaV  = -25.5 + 0.1271*TempC
