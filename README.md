@@ -1,4 +1,4 @@
-# Kivu-Simstrat model: for methae extraction scenarios
+# Kivu-Simstrat Model: For Methane Extraction Scenarios
 This is the user-friendly model version adapted for Lake Kivu under the consideration of Methane extraction operations. 
 
 # How to run the model
