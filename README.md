@@ -6,13 +6,13 @@ To succefully run the model and simulate methane extraction scenarios, the follo
 ## 1. Download / clone the model repository
 
 ~~~bash
-link/or/path/to/be/passed
+link/or/path/to/be/passed-TBD
 ~~~
 
 ## 2. Install python
 In case you don't already have installed python, download it and follow installation via the link below: 
 ~~~bash
-link/for/python/installation
+link/for/python/installation-TBD
 ~~~
 ## 3. Install required packages
 After getting your python environment ready, install the listed packages.
