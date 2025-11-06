@@ -2,9 +2,10 @@
 import numpy as np
 import pandas as pd
 from pathlib import Path
-import load_user_inputs
-import inflow_processor
-import kivu_simstrat_processor
+
+from .load_user_inputs import process_extraction_depths, process_extraction_discharges,process_reinjection_depths, process_reinjection_discharges, process_reinjection_efficieny
+from .inflow_processor import read_inflow_file, get_state_inflow_depths_and_values, write_and_save_inflow_file, get_constant_inflow_depths_and_values
+from .kivu_simstrat_processor import convert_date_to_days
 
 #=========== Fuction 10: to interpolate simstrat inflows values ================================
 def interpolate_simstrat_initial_condition(simstrat_ic_file_path, intrp_z): # intrp_z has to be nedative
@@ -132,8 +133,8 @@ def formulate_given_aed_inflows(aed_ic_file_path, ext_and_wash_z, rei_and_wash_z
 def write_simstrat_inflows_file(data_dir, json_file_path, simstrat_ic_file_path, simstrat_config_path, scenarios_extraction_path):
     # Get all .dat files in the directory
     dat_files = sorted(Path(data_dir).glob("*.dat"))
-    ext_and_wash_z = load_user_inputs.process_extraction_depths(json_file_path)
-    rei_and_wash_z = load_user_inputs.process_reinjection_depths(json_file_path)
+    ext_and_wash_z = process_extraction_depths(json_file_path)
+    rei_and_wash_z = process_reinjection_depths(json_file_path)
     ext_and_wash_temp, rei_and_wash_temp, ext_and_wash_sal, rei_and_wash_sal = formulate_given_simstrat_inflows(simstrat_ic_file_path, ext_and_wash_z, rei_and_wash_z) # This will be called accordingly for Simstrat and Aed2
     #print(ext_and_wash_temp)
     
@@ -144,46 +145,46 @@ def write_simstrat_inflows_file(data_dir, json_file_path, simstrat_ic_file_path,
         if inflow_file_path.name == "Tin.dat":
             # original inflows data
             state_inflow = True # identify wehter the inflow is state or constant
-            inflow_header, n_deep_z, n_surface_z, depths, inflows_matrix = inflow_processor.read_inflow_file(inflow_file_path)
-            Tin_depths, Tin_values = inflow_processor.get_state_inflow_depths_and_values(ext_and_wash_z, rei_and_wash_z,ext_and_wash_temp, rei_and_wash_temp, n_deep_z, n_surface_z, depths, inflows_matrix)
+            inflow_header, n_deep_z, n_surface_z, depths, inflows_matrix = read_inflow_file(inflow_file_path)
+            Tin_depths, Tin_values = get_state_inflow_depths_and_values(ext_and_wash_z, rei_and_wash_z,ext_and_wash_temp, rei_and_wash_temp, n_deep_z, n_surface_z, depths, inflows_matrix)
             #new_file_path = inflow_file_path.with_name("Tin_new_1.dat")
             new_file_path = Path(scenarios_extraction_path) / "Inflow" / inflow_file_path.name
-            extraction_start_dates, _ = kivu_simstrat_processor.convert_date_to_days(json_file_path, simstrat_config_path) # for state inflow get only the first extraction starting date
-            inflow_processor.write_and_save_inflow_file(new_file_path, inflow_header, len(Tin_depths)-n_surface_z, n_surface_z, Tin_depths, Tin_values, extraction_start_dates, state_inflow)
+            extraction_start_dates, _ = convert_date_to_days(json_file_path, simstrat_config_path) # for state inflow get only the first extraction starting date
+            write_and_save_inflow_file(new_file_path, inflow_header, len(Tin_depths)-n_surface_z, n_surface_z, Tin_depths, Tin_values, extraction_start_dates, state_inflow)
         
         # For salinity inflows
         if inflow_file_path.name == "Sin.dat":
             # original inflows data
             state_inflow = True # identify wehter the inflow is state or constant
-            inflow_header, n_deep_z, n_surface_z, depths, inflows_matrix = inflow_processor.read_inflow_file(inflow_file_path)
-            Sin_depths, Sin_values = inflow_processor.get_state_inflow_depths_and_values(ext_and_wash_z, rei_and_wash_z,ext_and_wash_sal, rei_and_wash_sal, n_deep_z, n_surface_z, depths, inflows_matrix)
+            inflow_header, n_deep_z, n_surface_z, depths, inflows_matrix = read_inflow_file(inflow_file_path)
+            Sin_depths, Sin_values = get_state_inflow_depths_and_values(ext_and_wash_z, rei_and_wash_z,ext_and_wash_sal, rei_and_wash_sal, n_deep_z, n_surface_z, depths, inflows_matrix)
             new_file_path = Path(scenarios_extraction_path) / "Inflow" / inflow_file_path.name
-            extraction_start_dates, _ = kivu_simstrat_processor.convert_date_to_days(json_file_path, simstrat_config_path) # for state inflow get only the first extraction starting date
-            inflow_processor.write_and_save_inflow_file(new_file_path, inflow_header, len(Sin_depths)-n_surface_z, n_surface_z, Sin_depths, Sin_values, extraction_start_dates, state_inflow)
+            extraction_start_dates, _ = convert_date_to_days(json_file_path, simstrat_config_path) # for state inflow get only the first extraction starting date
+            write_and_save_inflow_file(new_file_path, inflow_header, len(Sin_depths)-n_surface_z, n_surface_z, Sin_depths, Sin_values, extraction_start_dates, state_inflow)
 
         # For salinity inflows
         if inflow_file_path.name == "Qin.dat":
             # original inflows data
             state_inflow = False # identify wehter the inflow is state or constant
-            inflow_header, n_deep_z, n_surface_z, depths, inflows_matrix = inflow_processor.read_inflow_file(inflow_file_path)
-            ext_and_wash_qins = np.zeros_like(load_user_inputs.process_extraction_discharges(json_file_path)) # zeros because its q_out
-            rei_and_wash_qins = load_user_inputs.process_reinjection_discharges(json_file_path)
-            extraction_start_dates, extraction_end_dates = kivu_simstrat_processor.convert_date_to_days(json_file_path, simstrat_config_path) # for constant inflow get all the extraction starting dates
-            Qin_depths, Qin_values, iterated_days = inflow_processor.get_constant_inflow_depths_and_values(ext_and_wash_z, rei_and_wash_z,ext_and_wash_qins, rei_and_wash_qins, n_deep_z, n_surface_z, depths, inflows_matrix, extraction_start_dates, extraction_end_dates)
+            inflow_header, n_deep_z, n_surface_z, depths, inflows_matrix = read_inflow_file(inflow_file_path)
+            ext_and_wash_qins = np.zeros_like(process_extraction_discharges(json_file_path)) # zeros because its q_out
+            rei_and_wash_qins = process_reinjection_discharges(json_file_path)
+            extraction_start_dates, extraction_end_dates = convert_date_to_days(json_file_path, simstrat_config_path) # for constant inflow get all the extraction starting dates
+            Qin_depths, Qin_values, iterated_days = get_constant_inflow_depths_and_values(ext_and_wash_z, rei_and_wash_z,ext_and_wash_qins, rei_and_wash_qins, n_deep_z, n_surface_z, depths, inflows_matrix, extraction_start_dates, extraction_end_dates)
             new_file_path = Path(scenarios_extraction_path) / "Inflow" / inflow_file_path.name
-            inflow_processor.write_and_save_inflow_file(new_file_path, inflow_header, len(Qin_depths)-n_surface_z, n_surface_z, Qin_depths, Qin_values, iterated_days, state_inflow)
+            write_and_save_inflow_file(new_file_path, inflow_header, len(Qin_depths)-n_surface_z, n_surface_z, Qin_depths, Qin_values, iterated_days, state_inflow)
 
         # For salinity inflows
         if inflow_file_path.name == "Qout.dat":
             # original inflows data
             state_inflow = False # identify wehter the inflow is state or constant
-            inflow_header, n_deep_z, n_surface_z, depths, inflows_matrix = inflow_processor.read_inflow_file(inflow_file_path)
-            ext_and_wash_qouts = load_user_inputs.process_extraction_discharges(json_file_path)
-            rei_and_wash_qouts = np.zeros_like(load_user_inputs.process_reinjection_discharges(json_file_path)) # zeros because its q_in
-            extraction_start_dates, extraction_end_dates = kivu_simstrat_processor.convert_date_to_days(json_file_path, simstrat_config_path) # for constant inflow get all the extraction starting dates
-            Qout_depths, Qout_values, iterated_days = inflow_processor.get_constant_inflow_depths_and_values(ext_and_wash_z, rei_and_wash_z,ext_and_wash_qouts, rei_and_wash_qouts, n_deep_z, n_surface_z, depths, inflows_matrix, extraction_start_dates, extraction_end_dates)
+            inflow_header, n_deep_z, n_surface_z, depths, inflows_matrix = read_inflow_file(inflow_file_path)
+            ext_and_wash_qouts = process_extraction_discharges(json_file_path)
+            rei_and_wash_qouts = np.zeros_like(process_reinjection_discharges(json_file_path)) # zeros because its q_in
+            extraction_start_dates, extraction_end_dates = convert_date_to_days(json_file_path, simstrat_config_path) # for constant inflow get all the extraction starting dates
+            Qout_depths, Qout_values, iterated_days = get_constant_inflow_depths_and_values(ext_and_wash_z, rei_and_wash_z,ext_and_wash_qouts, rei_and_wash_qouts, n_deep_z, n_surface_z, depths, inflows_matrix, extraction_start_dates, extraction_end_dates)
             new_file_path = Path(scenarios_extraction_path) / "Inflow" / inflow_file_path.name
-            inflow_processor.write_and_save_inflow_file(new_file_path, inflow_header, len(Qout_depths)-n_surface_z, n_surface_z, Qout_depths, Qout_values, iterated_days, state_inflow)
+            write_and_save_inflow_file(new_file_path, inflow_header, len(Qout_depths)-n_surface_z, n_surface_z, Qout_depths, Qout_values, iterated_days, state_inflow)
 
 
 
@@ -193,8 +194,8 @@ def write_aed_inflows_file(aed_inflow_dir, json_file_path, aed_ic_files_dir, sim
     # Get all .dat files in the directory
     inflow_dat_files = sorted(Path(aed_inflow_dir).glob("*.dat"))
     ic_dat_files = sorted(Path(aed_ic_files_dir).glob("*.dat"))
-    ext_and_wash_z = load_user_inputs.process_extraction_depths(json_file_path)
-    rei_and_wash_z = load_user_inputs.process_reinjection_depths(json_file_path)
+    ext_and_wash_z = process_extraction_depths(json_file_path)
+    rei_and_wash_z = process_reinjection_depths(json_file_path)
     
     # Iterate over each inflow file
     for inflow_file_path in inflow_dat_files:
@@ -207,57 +208,57 @@ def write_aed_inflows_file(aed_inflow_dir, json_file_path, aed_ic_files_dir, sim
                 ext_and_wash_ch4_bub, rei_and_wash_ch4_bub = formulate_given_aed_inflows(aed_ic_file_path, ext_and_wash_z, rei_and_wash_z) # for only Aed2
                 # original inflows data
                 state_inflow = True # identify wehter the inflow is state or constant
-                inflow_header, n_deep_z, n_surface_z, depths, inflows_matrix = inflow_processor.read_inflow_file(inflow_file_path)
-                ch4_bub_in_depths, ch4_bub_in_values = inflow_processor.get_state_inflow_depths_and_values(ext_and_wash_z, rei_and_wash_z, ext_and_wash_ch4_bub, rei_and_wash_ch4_bub, n_deep_z, n_surface_z, depths, inflows_matrix)
+                inflow_header, n_deep_z, n_surface_z, depths, inflows_matrix = read_inflow_file(inflow_file_path)
+                ch4_bub_in_depths, ch4_bub_in_values = get_state_inflow_depths_and_values(ext_and_wash_z, rei_and_wash_z, ext_and_wash_ch4_bub, rei_and_wash_ch4_bub, n_deep_z, n_surface_z, depths, inflows_matrix)
                 #new_file_path = inflow_file_path.with_name("CAR_ch4_bub_inflow_new_1.dat")
                 new_file_path = Path(scenarios_extraction_path) / "AED2_inflow_ch4inflow" / inflow_file_path.name
-                extraction_start_dates, _ = kivu_simstrat_processor.convert_date_to_days(json_file_path, simstrat_config_path) # for state inflow get only the first extraction starting date
-                inflow_processor.write_and_save_inflow_file(new_file_path, inflow_header, len(ch4_bub_in_depths)-n_surface_z, n_surface_z, ch4_bub_in_depths, ch4_bub_in_values, extraction_start_dates, state_inflow)
+                extraction_start_dates, _ = convert_date_to_days(json_file_path, simstrat_config_path) # for state inflow get only the first extraction starting date
+                write_and_save_inflow_file(new_file_path, inflow_header, len(ch4_bub_in_depths)-n_surface_z, n_surface_z, ch4_bub_in_depths, ch4_bub_in_values, extraction_start_dates, state_inflow)
 
             # For CAR_ch4 inflows
             if (inflow_file_path.name == "CAR_ch4_inflow.dat") and (aed_ic_file_path.name == "CAR_ch4_ini.dat"):
                 ext_and_wash_ch4, rei_and_wash_ch4 = formulate_given_aed_inflows(aed_ic_file_path, ext_and_wash_z, rei_and_wash_z) # for only Aed2
-                ch4_rei_eff, _ = load_user_inputs.process_reinjection_efficieny(json_file_path)
+                ch4_rei_eff, _ = process_reinjection_efficieny(json_file_path)
                 rei_and_wash_ch4 = ch4_rei_eff * rei_and_wash_ch4 #--element-wise multiplication
                 # original inflows data
                 state_inflow = True # identify wehter the inflow is state or constant
-                inflow_header, n_deep_z, n_surface_z, depths, inflows_matrix = inflow_processor.read_inflow_file(inflow_file_path)
-                ch4_in_depths, ch4_in_values = inflow_processor.get_state_inflow_depths_and_values(ext_and_wash_z, rei_and_wash_z, ext_and_wash_ch4, rei_and_wash_ch4, n_deep_z, n_surface_z, depths, inflows_matrix)
+                inflow_header, n_deep_z, n_surface_z, depths, inflows_matrix = read_inflow_file(inflow_file_path)
+                ch4_in_depths, ch4_in_values = get_state_inflow_depths_and_values(ext_and_wash_z, rei_and_wash_z, ext_and_wash_ch4, rei_and_wash_ch4, n_deep_z, n_surface_z, depths, inflows_matrix)
                 new_file_path = Path(scenarios_extraction_path) / "AED2_inflow_ch4inflow" / inflow_file_path.name
-                extraction_start_dates, _ = kivu_simstrat_processor.convert_date_to_days(json_file_path, simstrat_config_path) # for state inflow get only the first extraction starting date
-                inflow_processor.write_and_save_inflow_file(new_file_path, inflow_header, len(ch4_in_depths)-n_surface_z, n_surface_z, ch4_in_depths, ch4_in_values, extraction_start_dates, state_inflow)
+                extraction_start_dates, _ = convert_date_to_days(json_file_path, simstrat_config_path) # for state inflow get only the first extraction starting date
+                write_and_save_inflow_file(new_file_path, inflow_header, len(ch4_in_depths)-n_surface_z, n_surface_z, ch4_in_depths, ch4_in_values, extraction_start_dates, state_inflow)
 
             # For CAR_dic inflows
             if (inflow_file_path.name == "CAR_dic_inflow.dat") and (aed_ic_file_path.name == "CAR_dic_ini.dat"):
                 ext_and_wash_dic, rei_and_wash_dic = formulate_given_aed_inflows(aed_ic_file_path, ext_and_wash_z, rei_and_wash_z) # for only Aed2
-                dic_rei_eff, _ = load_user_inputs.process_reinjection_efficieny(json_file_path)
+                dic_rei_eff, _ = process_reinjection_efficieny(json_file_path)
                 rei_and_wash_dic = dic_rei_eff * rei_and_wash_dic #--element-wise multiplication
                 # original inflows data
                 state_inflow = True # identify wehter the inflow is state or constant
-                inflow_header, n_deep_z, n_surface_z, depths, inflows_matrix = inflow_processor.read_inflow_file(inflow_file_path)
-                dic_in_depths, dic_in_values = inflow_processor.get_state_inflow_depths_and_values(ext_and_wash_z, rei_and_wash_z, ext_and_wash_dic, rei_and_wash_dic, n_deep_z, n_surface_z, depths, inflows_matrix)
+                inflow_header, n_deep_z, n_surface_z, depths, inflows_matrix = read_inflow_file(inflow_file_path)
+                dic_in_depths, dic_in_values = get_state_inflow_depths_and_values(ext_and_wash_z, rei_and_wash_z, ext_and_wash_dic, rei_and_wash_dic, n_deep_z, n_surface_z, depths, inflows_matrix)
                 new_file_path = Path(scenarios_extraction_path) / "AED2_inflow_ch4inflow" / inflow_file_path.name
-                extraction_start_dates, _ = kivu_simstrat_processor.convert_date_to_days(json_file_path, simstrat_config_path) # for state inflow get only the first extraction starting date
-                inflow_processor.write_and_save_inflow_file(new_file_path, inflow_header, len(dic_in_depths)-n_surface_z, n_surface_z, dic_in_depths, dic_in_values, extraction_start_dates, state_inflow)
+                extraction_start_dates, _ = convert_date_to_days(json_file_path, simstrat_config_path) # for state inflow get only the first extraction starting date
+                write_and_save_inflow_file(new_file_path, inflow_header, len(dic_in_depths)-n_surface_z, n_surface_z, dic_in_depths, dic_in_values, extraction_start_dates, state_inflow)
 
             # For CAR_ph inflows
             if (inflow_file_path.name == "CAR_pH_inflow.dat") and (aed_ic_file_path.name == "CAR_pH_ini.dat"): #----------naming concern --------------
                 ext_and_wash_ph, rei_and_wash_ph = formulate_given_aed_inflows(aed_ic_file_path, ext_and_wash_z, rei_and_wash_z) # for only Aed2
                 # original inflows data
                 state_inflow = True # identify wehter the inflow is state or constant
-                inflow_header, n_deep_z, n_surface_z, depths, inflows_matrix = inflow_processor.read_inflow_file(inflow_file_path)
-                ph_in_depths, ph_in_values = inflow_processor.get_state_inflow_depths_and_values(ext_and_wash_z, rei_and_wash_z, ext_and_wash_ph, rei_and_wash_ph, n_deep_z, n_surface_z, depths, inflows_matrix)
+                inflow_header, n_deep_z, n_surface_z, depths, inflows_matrix = read_inflow_file(inflow_file_path)
+                ph_in_depths, ph_in_values = get_state_inflow_depths_and_values(ext_and_wash_z, rei_and_wash_z, ext_and_wash_ph, rei_and_wash_ph, n_deep_z, n_surface_z, depths, inflows_matrix)
                 new_file_path = Path(scenarios_extraction_path) / "AED2_inflow_ch4inflow" / inflow_file_path.name
-                extraction_start_dates, _ = kivu_simstrat_processor.convert_date_to_days(json_file_path, simstrat_config_path) # for state inflow get only the first extraction starting date
-                inflow_processor.write_and_save_inflow_file(new_file_path, inflow_header, len(ph_in_depths)-n_surface_z, n_surface_z, ph_in_depths, ph_in_values, extraction_start_dates, state_inflow,)
+                extraction_start_dates, _ = convert_date_to_days(json_file_path, simstrat_config_path) # for state inflow get only the first extraction starting date
+                write_and_save_inflow_file(new_file_path, inflow_header, len(ph_in_depths)-n_surface_z, n_surface_z, ph_in_depths, ph_in_values, extraction_start_dates, state_inflow,)
 
             # For OXY_oxy inflows
             if (inflow_file_path.name == "OXY_oxy_inflow.dat") and (aed_ic_file_path.name == "OXY_oxy_ini.dat"):
                 ext_and_wash_oxy, rei_and_wash_oxy = formulate_given_aed_inflows(aed_ic_file_path, ext_and_wash_z, rei_and_wash_z) # for only Aed2
                 # original inflows data
                 state_inflow = True # identify wehter the inflow is state or constant
-                inflow_header, n_deep_z, n_surface_z, depths, inflows_matrix = inflow_processor.read_inflow_file(inflow_file_path)
-                oxy_in_depths, oxy_in_values = inflow_processor.get_state_inflow_depths_and_values(ext_and_wash_z, rei_and_wash_z, ext_and_wash_oxy, rei_and_wash_oxy, n_deep_z, n_surface_z, depths, inflows_matrix)
+                inflow_header, n_deep_z, n_surface_z, depths, inflows_matrix = read_inflow_file(inflow_file_path)
+                oxy_in_depths, oxy_in_values = get_state_inflow_depths_and_values(ext_and_wash_z, rei_and_wash_z, ext_and_wash_oxy, rei_and_wash_oxy, n_deep_z, n_surface_z, depths, inflows_matrix)
                 new_file_path = Path(scenarios_extraction_path) / "AED2_inflow_ch4inflow" / inflow_file_path.name
-                extraction_start_dates, _ = kivu_simstrat_processor.convert_date_to_days(json_file_path, simstrat_config_path) # for state inflow get only the first extraction starting date
-                inflow_processor.write_and_save_inflow_file(new_file_path, inflow_header, len(oxy_in_depths)-n_surface_z, n_surface_z, oxy_in_depths, oxy_in_values, extraction_start_dates, state_inflow)
+                extraction_start_dates, _ = convert_date_to_days(json_file_path, simstrat_config_path) # for state inflow get only the first extraction starting date
+                write_and_save_inflow_file(new_file_path, inflow_header, len(oxy_in_depths)-n_surface_z, n_surface_z, oxy_in_depths, oxy_in_values, extraction_start_dates, state_inflow)

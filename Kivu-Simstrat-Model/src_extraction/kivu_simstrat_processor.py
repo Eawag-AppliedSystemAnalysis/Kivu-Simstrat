@@ -7,8 +7,8 @@ import shutil
 import re
 
 #=======<< Import modules >>======
-import load_user_inputs
-import inflow_processor
+from .load_user_inputs import process_extraction_periods, process_extraction_depths, process_reinjection_depths, process_reinjection_efficieny
+from .inflow_processor import read_inflow_file, combine_depths_and_track_indices
 
 #------ Function: main Function to create new scenarios with extraction directory -----------
 def create_scenarios_extraction(model_dir):
@@ -133,7 +133,7 @@ def convert_date_to_days(json_file_path, simstrat_config_path):
     referenced_start_dates = list()
     referenced_end_dates = list()
 
-    start_ext_periods, end_ext_periods = load_user_inputs.process_extraction_periods(json_file_path)
+    start_ext_periods, end_ext_periods = process_extraction_periods(json_file_path)
 
     # Extract reference year from par file
     reference_year = None
@@ -220,12 +220,12 @@ def update_simulation_days(json_file_path, simstrat_config_path):
 #=========== Fuction 23: add n_extractions, extraction_depths and dates ================================
 def add_extraction_inputs_config(simstrat_config_path, json_file_path, inflow_file_path):
     
-    ext_and_wash_z = load_user_inputs.process_extraction_depths(json_file_path)
-    rei_and_wash_z = load_user_inputs.process_reinjection_depths(json_file_path)
-    _, n_deep_z, _, depths, _ = inflow_processor.read_inflow_file(inflow_file_path)
-    _, ext_new_indices, wash_ext_new_indices, rei_new_indices, wash_rei_new_indices, _ = inflow_processor.combine_depths_and_track_indices(ext_and_wash_z, rei_and_wash_z, depths[0:n_deep_z])
+    ext_and_wash_z = process_extraction_depths(json_file_path)
+    rei_and_wash_z = process_reinjection_depths(json_file_path)
+    _, n_deep_z, _, depths, _ = read_inflow_file(inflow_file_path)
+    _, ext_new_indices, wash_ext_new_indices, rei_new_indices, wash_rei_new_indices, _ = combine_depths_and_track_indices(ext_and_wash_z, rei_and_wash_z, depths[0:n_deep_z])
     extraction_start_dates, extraction_end_dates = convert_date_to_days(json_file_path, simstrat_config_path)
-    ch4_rei_percents, co2_rei_percents = load_user_inputs.process_reinjection_efficieny(json_file_path)
+    ch4_rei_percents, co2_rei_percents = process_reinjection_efficieny(json_file_path)
     
     ext_new_indices = [ext_index + 1 for ext_index in ext_new_indices]
     wash_ext_new_indices = [wash_ext_index + 1 for wash_ext_index in wash_ext_new_indices]
