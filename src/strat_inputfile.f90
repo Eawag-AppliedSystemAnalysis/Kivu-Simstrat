@@ -800,7 +800,15 @@ contains
             call par_file%get("ModelParameters.snow_ini", model_param%snow_ini, found); call check_field(found, 'ModelParameters.snow_ini', ParName)
          end if
 
-         call par_file%get("ModelParameters.seiche_ini", model_param%seiche_ini, found); call check_field(found, 'ModelParameters.seiche_ini', ParName)
+         !call par_file%get("ModelParameters.seiche_ini", model_param%seiche_ini, found); call check_field(found, 'ModelParameters.seiche_ini', ParName)
+         !call par_file%get("ModelParameters.Tin_4_1", model_param%Tin_4_1, found); call check_field(found, 'ModelParameters.Tin_4_1', ParName) ! Pars are added --------
+         !call par_file%get("ModelParameters.Tin_5_2", model_param%Tin_5_2, found); call check_field(found, 'ModelParameters.Tin_5_2', ParName)
+         !call par_file%get("ModelParameters.Tin_4_3", model_param%Tin_4_3, found); call check_field(found, 'ModelParameters.Tin_4_3', ParName)
+         !call par_file%get("ModelParameters.Tin_4_4", model_param%Tin_4_4, found); call check_field(found, 'ModelParameters.Tin_4_4', ParName)
+         !call par_file%get("ModelParameters.Tin_4_5", model_param%Tin_4_5, found); call check_field(found, 'ModelParameters.Tin_4_5', ParName)
+         !call par_file%get("ModelParameters.Tin_4_6", model_param%Tin_4_6, found); call check_field(found, 'ModelParameters.Tin_4_6', ParName)
+         !call par_file%get("ModelParameters.Tin_4_9", model_param%Tin_4_9, found); call check_field(found, 'ModelParameters.Tin_4_9', ParName)
+         !call par_file%get("ModelParameters.Tin_4_10", model_param%Tin_4_10, found); call check_field(found, 'ModelParameters.Tin_4_10', ParName) ! --------- for calibration
 
          ! Simulation Parameter
          call par_file%get("Simulation.Timestep s", sim_cfg%timestep, found); call check_field(found, 'Simulation.Timestep s', ParName)

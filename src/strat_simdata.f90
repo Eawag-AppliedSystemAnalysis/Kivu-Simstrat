@@ -159,7 +159,14 @@ module strat_simdata
       real(RK) :: w_ice_ini
       real(RK) :: b_ice_ini
       real(RK) :: snow_ini
-      !real(RK) :: k_min
+      !real(RK) :: Tin_4_1 !Pars are added --------
+      !real(RK) :: Tin_5_2
+      !real(RK) :: Tin_4_3
+      !real(RK) :: Tin_4_4 
+      !real(RK) :: Tin_4_5
+      !real(RK) :: Tin_4_6
+      !real(RK) :: Tin_4_9 
+      !real(RK) :: Tin_4_10 !---- for calibration
    end type
 
    ! Model state (self is actually the simulation data!!!)
