@@ -1,0 +1,156 @@
+Hierarchical dependencies list of: ../src/simstrat.f90
+  ../src/strat_kinds.f90
+  ../src/strat_inputfile.f90
+    ../src/strat_kinds.f90
+    ../src/strat_simdata.f90
+    ../src/strat_grid.f90
+    ../src/strat_consts.f90
+    ../src/utilities.f90
+  ../src/strat_outputfile.f90
+    ../src/strat_kinds.f90
+    ../src/strat_simdata.f90
+    ../src/strat_grid.f90
+    ../src/simstrat_aed2.f90
+    ../src/utilities.f90
+  ../src/strat_simdata.f90
+    ../src/strat_kinds.f90
+    ../src/strat_grid.f90
+    ../src/strat_consts.f90
+    ../src/utilities.f90
+  ../src/strat_forcing.f90
+    ../src/strat_kinds.f90
+    ../src/strat_simdata.f90
+    ../src/strat_consts.f90
+    ../src/strat_grid.f90
+    ../src/utilities.f90
+  ../src/utilities.f90
+    ../src/strat_kinds.f90
+    ../src/strat_consts.f90
+  ../src/strat_stability.f90
+    ../src/strat_kinds.f90
+    ../src/strat_consts.f90
+    ../src/strat_grid.f90
+    ../src/strat_simdata.f90
+    ../src/utilities.f90
+  ../src/strat_windshear.f90
+    ../src/strat_kinds.f90
+    ../src/strat_consts.f90
+    ../src/strat_simdata.f90
+    ../src/strat_statevar.f90
+    ../src/strat_grid.f90
+    ../src/strat_solver.f90
+  ../src/strat_statevar.f90
+    ../src/strat_kinds.f90
+    ../src/strat_simdata.f90
+    ../src/strat_grid.f90
+    ../src/strat_discretization.f90
+    ../src/strat_solver.f90
+  ../src/strat_temp.f90
+    ../src/strat_kinds.f90
+    ../src/strat_consts.f90
+    ../src/strat_simdata.f90
+    ../src/strat_statevar.f90
+    ../src/strat_grid.f90
+    ../src/strat_solver.f90
+  ../src/strat_solver.f90
+    ../src/strat_kinds.f90
+  ../src/strat_discretization.f90
+    ../src/strat_kinds.f90
+    ../src/strat_simdata.f90
+    ../src/strat_grid.f90
+  ../src/strat_keps.f90
+    ../src/strat_kinds.f90
+    ../src/strat_consts.f90
+    ../src/strat_simdata.f90
+    ../src/strat_statevar.f90
+    ../src/strat_grid.f90
+    ../src/strat_solver.f90
+    ../src/utilities.f90
+  ../src/strat_turbulence.f90
+    ../src/strat_kinds.f90
+    ../src/strat_consts.f90
+    ../src/strat_grid.f90
+    ../src/strat_simdata.f90
+  ../src/strat_ice.f90
+    ../src/strat_forcing.f90
+    ../src/strat_consts.f90
+    ../src/strat_simdata.f90
+    ../src/strat_grid.f90
+  ../src/strat_transport.f90
+    ../src/strat_kinds.f90
+    ../src/strat_consts.f90
+    ../src/strat_simdata.f90
+    ../src/strat_statevar.f90
+    ../src/strat_grid.f90
+    ../src/strat_solver.f90
+  ../src/strat_absorption.f90
+    ../src/strat_kinds.f90
+    ../src/strat_simdata.f90
+    ../src/strat_consts.f90
+    ../src/strat_grid.f90
+    ../src/utilities.f90
+  ../src/strat_advection.f90
+    ../src/strat_kinds.f90
+    ../src/strat_simdata.f90
+    ../src/strat_consts.f90
+    ../src/strat_grid.f90
+    ../src/simstrat_aed2.f90
+    ../src/utilities.f90
+  ../src/simstrat_aed2.f90
+    ../src/strat_simdata.f90
+    ../src/strat_grid.f90
+    ../src/strat_solver.f90
+    ../src/utilities.f90
+    ../src/simstrat_aed2_subroutines.f90
+    ../src/simstrat_aed2_physics.f90
+  ../src/strat_lateral.f90
+    ../src/strat_kinds.f90
+    ../src/strat_simdata.f90
+    ../src/strat_consts.f90
+    ../src/strat_grid.f90
+    ../src/utilities.f90
+Complete ordered dependencies list of: ../src/simstrat.f90
+  ../src/strat_kinds.f90
+  ../src/strat_consts.f90
+  ../src/utilities.f90
+  ../src/strat_grid.f90
+  ../src/strat_simdata.f90
+  ../src/strat_solver.f90
+  ../src/strat_discretization.f90
+  ../src/strat_statevar.f90
+  ../src/simstrat_aed2_subroutines.f90
+  ../src/simstrat_aed2_physics.f90
+  ../src/simstrat_aed2.f90
+  ../src/strat_forcing.f90
+  ../src/strat_inputfile.f90
+  ../src/strat_outputfile.f90
+  ../src/strat_stability.f90
+  ../src/strat_windshear.f90
+  ../src/strat_temp.f90
+  ../src/strat_keps.f90
+  ../src/strat_turbulence.f90
+  ../src/strat_ice.f90
+  ../src/strat_transport.f90
+  ../src/strat_absorption.f90
+  ../src/strat_advection.f90
+  ../src/strat_lateral.f90
+  ../src/simstrat.f90
+Builder options
+  Directories
+    Building directory: "."
+    Compiled-objects .o   directory: "obj"
+    Compiled-objects .mod directory: "mod"
+  Included paths: ../lib/libaed2/mod ../lib/csv_fortran/static/mod ../lib/json_fortran/static/mod ../lib/forbear/static/mod ../src 
+  Linked libraries with full path: ../lib/libaed2/obj/aed2_bio_utils.o ../lib/libaed2/obj/aed2_carbon.o ../lib/libaed2/obj/aed2_chlorophylla.o ../lib/libaed2/obj/aed2_common.o ../lib/libaed2/obj/aed2_core.o ../lib/libaed2/obj/aed2_csv_reader.o ../lib/libaed2/obj/aed2_dummy.o ../lib/libaed2/obj/aed2_nitrogen.o ../lib/libaed2/obj/aed2_noncohesive.o ../lib/libaed2/obj/aed2_organic_matter.o ../lib/libaed2/obj/aed2_oxygen.o ../lib/libaed2/obj/aed2_phosphorus.o ../lib/libaed2/obj/aed2_phytoplankton.o ../lib/libaed2/obj/aed2_sedflux.o ../lib/libaed2/obj/aed2_silica.o ../lib/libaed2/obj/aed2_totals.o ../lib/libaed2/obj/aed2_tracer.o ../lib/libaed2/obj/aed2_util.o ../lib/libaed2/obj/aed2_zoop_utils.o ../lib/libaed2/obj/aed2_zooplankton.o ../lib/libaed2/obj/ufz_oxygen.o ../lib/csv_fortran/static/libcsv.a ../lib/json_fortran/static/libjson.a ../lib/forbear/static/libforbear.a 
+  Compiler options
+    Vendor: "gnu"
+    Compiler command: "gfortran"
+    Module directory switch: "-J"
+    Compiling flags: "-c -O2 -std=f2008 -ffree-line-length-none"
+    Linking flags: "-static-libgcc -static-libgfortran -static"
+    Preprocessing flags: ""
+    Coverage: False
+    Profile: False
+  Preprocessor used: None
+  Preprocessor output directory: None
+  Preprocessor extensions processed: []
