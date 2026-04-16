@@ -9,15 +9,29 @@ from src_extraction.write_inflows import write_simstrat_inflows_file, write_aed_
 #STEP 1: Get Json file path -----------------------------------------
 
 # Ensure a JSON file path was passed
-if len(sys.argv) < 2:
-    raise ValueError("Usage: python simulation_with_extraction_launcher.py <config.json>")
+#if len(sys.argv) < 2:
+    #raise ValueError("Usage: python simulation_with_extraction_launcher.py <config.json>")
 
 # Get the JSON file path passed from run_file.py
-json_file_path = Path(sys.argv[1]).resolve()
+#json_file_path = Path(sys.argv[1]).resolve()
 
 
 # STEP 2: load the current location / model path
-model_path = current_loc = Path(__file__).resolve().parent
+model_path = Path(__file__).resolve().parent
+
+# Get the JSON file is one level out, inside scenarios_save
+scenario_folder = model_path.parent / "scenarios_save"
+if not scenario_folder.exists():
+    raise FileNotFoundError(f"Scenario folder not found: {scenario_folder}")
+json_files = list(scenario_folder.glob("*.json"))
+if not json_files:
+    raise FileNotFoundError(f"No JSON scenario file found in: {scenario_folder}")
+
+# Use the first (and only) JSON file
+json_file_path = json_files[0]
+
+if not json_file_path.exists():
+    raise FileNotFoundError(f"Could not find scenario file at: {json_file_path}")
 
 #---- CREATE SCENARIOS_EXTRACTION OR DESTROY IN CASE ----------
 scenarios_extraction_path = create_scenarios_extraction(model_path) #------check

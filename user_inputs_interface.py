@@ -1,18 +1,23 @@
 import json
 import os
+import shutil
 import sys
 import subprocess
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 
+# Extraction scenarios folder creation
 SCENARIO_FOLDER = "scenarios_save"
-SCENARIO_FILE = os.path.join(SCENARIO_FOLDER, "scenarios.json")
+
+# Delete entire folder if it exists
+if os.path.exists(SCENARIO_FOLDER):
+    shutil.rmtree(SCENARIO_FOLDER)
+
+# Recreate empty folder
 os.makedirs(SCENARIO_FOLDER, exist_ok=True)
 
-# Remove existing scenarios.json if present
-SCENARIO_FILE = os.path.join(SCENARIO_FOLDER, "scenarios.json")
-if os.path.exists(SCENARIO_FILE):
-    os.remove(SCENARIO_FILE)
+# Json file path (file will be created later when saving)
+SCENARIO_FILE = os.path.join(SCENARIO_FOLDER, "user_inputs_config.json")
 
 # JSON structure template (values will be lists in the file)
 TEMPLATE = {
@@ -76,7 +81,6 @@ UNITS = {
     "kivu_simstrat_path": ""
 }
 
-
 class ScenarioUI:
     def __init__(self, root):
         self.root = root
@@ -101,6 +105,14 @@ class ScenarioUI:
 
         tk.Label(self.scenario_buttons_frame, text="Scenarios",
                  font=("Arial", 10, "bold")).pack(anchor="nw")
+        
+        load_btn = tk.Button(
+            self.scenario_buttons_frame,
+            text="Load Inputs",
+            command=self.load_inputs_from_file,
+            width=12
+        )
+        load_btn.pack(anchor="nw", pady=5) # added for load existing json file
 
         self.scenario_buttons_inner = tk.Frame(self.scenario_buttons_frame)
         self.scenario_buttons_inner.pack(anchor="nw", pady=5)
@@ -137,6 +149,75 @@ class ScenarioUI:
         self.build_scenario_buttons()
 
     # ---------- Data handling ----------
+
+    def pretty_label(self, key):
+        # Remove units suffixes
+        cleaned = key
+        for suffix in ["_MW", "_m", "_m3s", "_percent"]:
+            if cleaned.endswith(suffix):
+                cleaned = cleaned.replace(suffix, "")
+        # Replace underscores with spaces and capitalize
+        cleaned = cleaned.replace("_", " ").strip().capitalize()
+        return cleaned
+    
+    def load_inputs_from_file(self):
+        # Ask user to select a JSON file
+        filepath = filedialog.askopenfilename(
+            title="Select Scenario JSON File",
+            filetypes=[("JSON Files", "*.json"), ("All Files", "*.*")]
+        )
+        if not filepath:
+            return
+
+        # Load the external JSON
+        try:
+            with open(filepath, "r") as f:
+                imported = json.load(f)
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load file:\n{e}")
+            return
+
+        # Determine number of scenarios in the imported file
+        # Use any parameter list length
+        imported_count = None
+        for section, items in imported.items():
+            for key, lst in items.items():
+                imported_count = len(lst)
+                break
+            if imported_count is not None:
+                break
+
+        if imported_count is None:
+            messagebox.showerror("Error", "Invalid scenario file format.")
+            return
+
+        # Append imported scenarios to existing ones
+        for section, items in TEMPLATE.items():
+            for key in items:
+                existing_list = self.data[section][key]
+                imported_list = imported[section][key]
+
+                # Append each imported scenario value
+                for val in imported_list:
+                    existing_list.append(val)
+
+        # Update scenario count
+        self.scenario_count += imported_count
+
+        # Rebuild scenario buttons
+        self.build_scenario_buttons()
+
+        # Save updated data to config.json
+        with open(SCENARIO_FILE, "w") as f:
+            json.dump(self.data, f, indent=2)
+
+        # Load the last imported scenario into UI
+        self.current_scenario_index = self.scenario_count
+        self.update_scenario_label()
+        self.load_scenario(self.current_scenario_index)
+
+        messagebox.showinfo("Success", f"Loaded {imported_count} scenarios.")
+
 
     def load_or_init_data(self):
         if os.path.exists(SCENARIO_FILE):
@@ -175,7 +256,9 @@ class ScenarioUI:
                 row = tk.Frame(frame)
                 row.pack(fill="x", pady=1)
 
-                tk.Label(row, text=key, width=35, anchor="w").pack(side="left")
+                #tk.Label(row, text=key, width=35, anchor="w").pack(side="left")
+                tk.Label(row, text=self.pretty_label(key), width=35, anchor="w").pack(side="left")
+
 
                 field_key = f"{section}.{key}"
 
@@ -488,9 +571,9 @@ class ScenarioUI:
                 messagebox.showerror("Error", "Please select a model path first.")
                 return
 
-            run_script = os.path.join(path, "run_model.py")
+            run_script = os.path.join(path, "simulation_with_extraction_launcher.py")
             if not os.path.isfile(run_script):
-                messagebox.showerror("Error", f"'run_model.py' not found in:\n{path}")
+                messagebox.showerror("Error", f"'simulation_with_extraction_launcher.py' not found in:\n{path}")
                 return
 
             # Store path per scenario
@@ -510,7 +593,7 @@ class ScenarioUI:
             # Run the model
             try:
                 subprocess.Popen([sys.executable, run_script], cwd=path)
-                messagebox.showinfo("Simulation", "Simulation started (run_model.py).")
+                messagebox.showinfo("Simulation", "Simulation started (simulation_with_extraction_launcher.py).")
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to start simulation:\n{e}")
 

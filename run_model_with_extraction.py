@@ -6,7 +6,7 @@ import subprocess
 # STEP 1: get path for current user input json file------------------
 
 if len(sys.argv) < 2:
-    raise ValueError("Usage: python run_simulation_with_extraction.py <config.json>")
+    raise ValueError("Usage: python run_simulation_with_extraction.py </scenarios_save/config.json>")
 
 json_file_path = Path(sys.argv[1]).resolve()
 
