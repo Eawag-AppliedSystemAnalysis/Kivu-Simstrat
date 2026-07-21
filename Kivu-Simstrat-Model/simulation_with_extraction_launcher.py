@@ -91,3 +91,5 @@ script_path = model_path / "run_simstrat_aed2_with_extraction.sh"
 
 # This works on Linux and WSL (Windows Subsystem for Linux)
 subprocess.run(["bash", str(script_path)], cwd=model_path, check=True)
+
+

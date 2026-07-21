@@ -6,18 +6,16 @@ import subprocess
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 
-# Extraction scenarios folder creation
+# Extraction user input folder and file
 SCENARIO_FOLDER = "scenarios_save"
+SCENARIO_FILE = os.path.join(SCENARIO_FOLDER, "config.json")
 
-# Delete entire folder if it exists
-if os.path.exists(SCENARIO_FOLDER):
-    shutil.rmtree(SCENARIO_FOLDER)
-
-# Recreate empty folder
+# Ensure folder exists
 os.makedirs(SCENARIO_FOLDER, exist_ok=True)
 
-# Json file path (file will be created later when saving)
-SCENARIO_FILE = os.path.join(SCENARIO_FOLDER, "user_inputs_config.json")
+# Delete existing config.json if present
+if os.path.exists(SCENARIO_FILE):
+    os.remove(SCENARIO_FILE)
 
 # JSON structure template (values will be lists in the file)
 TEMPLATE = {
@@ -193,6 +191,9 @@ class ScenarioUI:
 
         # Append imported scenarios to existing ones
         for section, items in TEMPLATE.items():
+            if section == "SIMULATION_MODEL":
+                continue  # Do NOT import model paths
+                
             for key in items:
                 existing_list = self.data[section][key]
                 imported_list = imported[section][key]
@@ -200,6 +201,9 @@ class ScenarioUI:
                 # Append each imported scenario value
                 for val in imported_list:
                     existing_list.append(val)
+        
+        # --- end of import loop: retain the empty path section in case it was modified---
+        self.data["SIMULATION_MODEL"]["kivu_simstrat_path"] = []
 
         # Update scenario count
         self.scenario_count += imported_count
@@ -535,6 +539,10 @@ class ScenarioUI:
         # If everything is complete → proceed
         self.open_simulation_path_window()
 
+    # in case of closing interface windows
+    def _exit_if_requested(self):
+        if getattr(self, "should_exit", False):
+            sys.exit(0)
 
     # ---------- Simulation path window ----------
 
@@ -571,21 +579,24 @@ class ScenarioUI:
                 messagebox.showerror("Error", "Please select a model path first.")
                 return
 
-            run_script = os.path.join(path, "simulation_with_extraction_launcher.py")
+            run_script = os.path.join(path, "run_model.py")
             if not os.path.isfile(run_script):
-                messagebox.showerror("Error", f"'simulation_with_extraction_launcher.py' not found in:\n{path}")
+                messagebox.showerror("Error", f"'run_model.py' not found in:\n{path}")
                 return
 
             # Store path per scenario
-            path_list = self.data["SIMULATION_MODEL"]["kivu_simstrat_path"]
-            idx = self.current_scenario_index
-            if idx <= len(path_list):
-                path_list[idx - 1] = path
-            else:
+            #path_list = self.data["SIMULATION_MODEL"]["kivu_simstrat_path"]
+            #idx = self.current_scenario_index
+            #if idx <= len(path_list):
+                #path_list[idx - 1] = path
+            #else:
                 # Fill missing with None if needed
-                while len(path_list) < idx - 1:
-                    path_list.append(None)
-                path_list.append(path)
+                #while len(path_list) < idx - 1:
+                    #path_list.append(None)
+                #path_list.append(path)
+            # Store exactly one model path (no lists, no None)
+            self.data["SIMULATION_MODEL"]["kivu_simstrat_path"] = [path]
+
 
             with open(SCENARIO_FILE, "w") as f:
                 json.dump(self.data, f, indent=2)
@@ -593,11 +604,25 @@ class ScenarioUI:
             # Run the model
             try:
                 subprocess.Popen([sys.executable, run_script], cwd=path)
-                messagebox.showinfo("Simulation", "Simulation started (simulation_with_extraction_launcher.py).")
+                messagebox.showinfo("Simulation", "Simulation started (run_model.py).")
+                
+                # Close simulation window
+                win.destroy()
+
+                # Close entire GUI
+                for widget in self.root.winfo_children():
+                    widget.destroy()
+
+                self.root.quit()
+                self.root.destroy()
+
+                # Request exit AFTER callback finishes
+                self.should_exit = True
+                self.root.after(100, self._exit_if_requested)
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to start simulation:\n{e}")
 
-            win.destroy()
+            #win.destroy()
 
         tk.Button(win, text="Start Simulation", command=start_simulation).pack(pady=15)
 

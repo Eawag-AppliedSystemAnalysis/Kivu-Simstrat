@@ -1,108 +1,88 @@
 {
   "EXTRACTION": {
     "power_production_MW": [
-      0,
       26,
-      56
+      50
     ],
     "extraction_depth_m": [
-      450,
       355,
-      356
+      355
     ],
     "extraction_range_m": [
-      0,
       2,
       2
     ],
     "extraction_water_m3s": [
-      0,
-      47.9,
-      47.9
+      6.62,
+      11.11
     ],
     "ch4_extraction_efficiency_percent": [
-      0,
-      79,
-      79
+      69,
+      86
     ]
   },
   "REINJECTION": {
     "reinjection_depth_m": [
-      420,
       240,
       275
     ],
     "reinjection_water_m3s": [
-      0,
-      47.9,
-      47.9
+      6.62,
+      11.11
     ],
     "ch4_reinjection_percent": [
-      0,
-      17,
-      17
+      21,
+      11
     ],
     "co2_reinjection_percent": [
-      0,
-      74,
-      74
+      71,
+      67
     ]
   },
   "WASHING_EXTRACTION": {
     "washing_extraction_depth_m": [
-      410,
       40,
       60
     ],
     "washing_extraction_range_m": [
-      0,
       2,
       2
     ],
     "washing_extraction_water_m3s": [
-      0,
-      12,
-      12
+      1.54,
+      1.9
     ]
   },
   "WASHING_REINJECTION": {
     "washing_reinjection_depth_m": [
-      411,
       60,
       80
     ],
     "washing_reinjection_water_m3s": [
-      0,
-      12,
-      12
+      1.54,
+      1.9
     ],
     "ch4_washing_reinjection_percent": [
-      0,
-      4,
-      4
+      10,
+      3
     ],
     "co2_washing_reinjection_percent": [
-      0,
-      25,
-      25
+      28,
+      28
     ]
   },
   "EXTRACTION_PERIOD": {
     "extraction_start_date": [
-      "01-01-2013",
-      "01-01-2026",
+      "01-01-2016",
       "01-02-2023"
     ],
     "extraction_end_date": [
-      "01-01-2016",
-      "31-02-2048",
-      "31-02-2048"
+      "01-01-2025",
+      "31-12-2025"
     ]
   },
   "SIMULATION_MODEL": {
     "kivu_simstrat_path": [
-      null,
-      null,
       "/storage/lakekivu/1D_Model/WP_workspaces/WP2/Extraction_and_reinjection_adaptation/Simulators/Extraction_model/Kivu-Simstrat-Model"
     ]
   }

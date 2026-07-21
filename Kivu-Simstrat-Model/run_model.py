@@ -5,10 +5,23 @@ import subprocess
 
 # STEP 1: get path for current user input json file------------------
 
-if len(sys.argv) < 2:
-    raise ValueError("Usage: python run_simulation_with_extraction.py </scenarios_save/config.json>")
+#if len(sys.argv) < 2:
+    #raise ValueError("Usage: python run_simulation_with_extraction.py </scenarios_save/config.json>")
+#json_file_path = Path(sys.argv[1]).resolve()
 
-json_file_path = Path(sys.argv[1]).resolve()
+# Directory containing run_model.py
+script_dir = Path(__file__).resolve().parent
+
+# Parent directory (ext_model)
+parent_dir = script_dir.parent
+
+# Configuration file path
+json_file_path = parent_dir / "scenarios_save" / "config.json"
+
+print(f"Using configuration file: {json_file_path}")
+
+if not json_file_path.exists():
+    raise FileNotFoundError(f"Cannot find config file: {json_file_path}")
 
 # STEP 2: read model path from the loaded json file ---------------------------
 
@@ -17,7 +30,7 @@ with open(f"{json_file_path}", 'r') as f:
 
 print(f"<<<< Loaded user inputs from: {json_file_path} >>>>")
 
-model_path = Path(config["SIMULATION_MODEL"]["kivu_simstrat_path"]).resolve()
+model_path = Path(config["SIMULATION_MODEL"]["kivu_simstrat_path"][0]).resolve()
 
 # --- validate the path --------------
 if not model_path.exists():
