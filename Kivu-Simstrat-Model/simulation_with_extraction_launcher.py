@@ -23,12 +23,9 @@ model_path = Path(__file__).resolve().parent
 scenario_folder = model_path.parent / "scenarios_save"
 if not scenario_folder.exists():
     raise FileNotFoundError(f"Scenario folder not found: {scenario_folder}")
-json_files = list(scenario_folder.glob("*.json"))
+json_files = scenario_folder / "config.json"
 if not json_files:
-    raise FileNotFoundError(f"No JSON scenario file found in: {scenario_folder}")
-
-# Use the first (and only) JSON file
-json_file_path = json_files[0]
+    raise FileNotFoundError(f"config.json not found in: {scenario_folder}")
 
 if not json_file_path.exists():
     raise FileNotFoundError(f"Could not find scenario file at: {json_file_path}")
